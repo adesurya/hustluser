@@ -1,0 +1,15 @@
+{
+  "name": "Hazel - Your Best Pet's Favorite",
+  "short_name": "Hazel",
+  "description": "Hazel PWA application with Vue.js - Your best pet's favorite companion",
+  "theme_color": "#4F46E5",
+  "background_color": "#FFFFFF",
+  "display": "standalone",
+  "orientation": "portrait",
+  "scope": "/",
+  "start_url": "/",
+  "lang": "en",
+  "categories": ["productivity", "utilities", "lifestyle"],
+  "prefer_related_applications": false,
+  "icons": []
+}

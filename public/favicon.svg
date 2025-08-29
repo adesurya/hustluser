@@ -1,0 +1,23 @@
+<!-- Save this as public/favicon.svg -->
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background with gradient -->
+  <rect width="32" height="32" rx="8" fill="url(#gradient)"/>
+  
+  <!-- Cat emoji or icon -->
+  <text x="16" y="22" text-anchor="middle" font-size="16" fill="white" font-family="'Segoe UI Emoji', 'Apple Color Emoji', sans-serif">🐱</text>
+  
+  <!-- Gradient definition -->
+  <defs>
+    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#00D4FF"/>
+      <stop offset="100%" style="stop-color:#FF00E6"/>
+    </linearGradient>
+  </defs>
+</svg>
+
+<!-- Alternative: Simple text-based favicon -->
+<!-- Save this as public/favicon-text.svg -->
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="32" height="32" rx="8" fill="#4F46E5"/>
+  <text x="16" y="20" text-anchor="middle" font-size="14" fill="white" font-weight="bold" font-family="Arial, sans-serif">H</text>
+</svg>
