@@ -1,7 +1,7 @@
 /* Import Baloo 2 Font */
 @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;500;600;700;800&display=swap');
 
-/* Reset and Base Styles */
+/* Reset and Base Styles - Mobile First */
 * {
   margin: 0;
   padding: 0;
@@ -13,10 +13,11 @@ html, body {
   font-family: 'Baloo 2', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  font-size: 14px; /* Base mobile font size */
 }
 
 body {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: white;
   overflow-x: hidden;
 }
 
@@ -27,50 +28,51 @@ body {
 .font-bold { font-weight: 700; }
 .font-extrabold { font-weight: 800; }
 
-/* Common Page Styles */
+/* Mobile First - Page Styles */
 .page-header {
-  padding: 0 1.5rem 2rem;
+  padding: 0 1rem 1.5rem;
   text-align: center;
 }
 
 .page-title {
-  font-size: 1.75rem;
-  font-weight: 700; /* Bold for titles */
+  font-size: 1.375rem; /* Mobile: 22px */
+  font-weight: 700;
   color: #1F2937;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.5rem;
   line-height: 1.3;
   font-family: 'Baloo 2', sans-serif;
 }
 
 .page-subtitle {
   color: #6B7280;
-  font-size: 1rem;
-  margin-bottom: 2rem;
+  font-size: 0.875rem; /* Mobile: 14px */
+  margin-bottom: 1.5rem;
   line-height: 1.5;
-  font-weight: 400; /* Regular for subtitles */
+  font-weight: 400;
   font-family: 'Baloo 2', sans-serif;
 }
 
 .form-container {
-  padding: 0 1.5rem;
+  padding: 0 1rem;
   flex: 1;
   max-width: 100%;
 }
 
 .form-footer {
   text-align: center;
-  padding: 1.5rem 1.5rem 2rem;
-  font-size: 0.9rem;
+  padding: 1rem 1rem 1.5rem;
+  font-size: 0.8rem; /* Mobile: 12.8px */
   color: #6B7280;
   line-height: 1.6;
   font-weight: 400;
   font-family: 'Baloo 2', sans-serif;
+  margin-top: auto;
 }
 
 .auth-link {
   color: #4F46E5;
   text-decoration: none;
-  font-weight: 600; /* SemiBold for links */
+  font-weight: 600;
 }
 
 .auth-link:hover {
@@ -80,55 +82,108 @@ body {
 .resend-link {
   color: #10B981;
   text-decoration: none;
-  font-weight: 500; /* Medium for secondary links */
+  font-weight: 500;
   display: block;
-  margin-top: 1rem;
+  margin-top: 0.75rem;
 }
 
 .resend-link:hover {
   text-decoration: underline;
 }
 
-/* Success Container */
+/* Success Container - Mobile */
 .success-container {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 3rem 2rem;
+  padding: 2rem 1.5rem;
   text-align: center;
-  min-height: 70vh;
+  min-height: 60vh;
 }
 
 .success-title {
-  font-size: 1.75rem;
-  font-weight: 700; /* Bold for success titles */
+  font-size: 1.375rem; /* Mobile: 22px */
+  font-weight: 700;
   color: #10B981;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
   line-height: 1.3;
   font-family: 'Baloo 2', sans-serif;
 }
 
 .success-message {
   color: #6B7280;
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
   line-height: 1.6;
-  max-width: 350px;
-  font-size: 1rem;
-  font-weight: 400; /* Regular for messages */
+  max-width: 280px;
+  font-size: 0.875rem; /* Mobile: 14px */
+  font-weight: 400;
   font-family: 'Baloo 2', sans-serif;
 }
 
-/* Desktop Responsive Design */
+/* Tablet Design - 768px and up */
 @media (min-width: 768px) {
+  html, body {
+    font-size: 15px;
+  }
+
   .page-title {
-    font-size: 2rem;
+    font-size: 1.5rem; /* Tablet: 24px */
     font-weight: 700;
   }
 
   .page-subtitle {
-    font-size: 1.125rem;
+    font-size: 1rem; /* Tablet: 16px */
     font-weight: 400;
+  }
+
+  .page-header {
+    padding: 0 1.5rem 2rem;
+  }
+
+  .form-container {
+    padding: 0 1.5rem;
+  }
+
+  .form-footer {
+    padding: 1.5rem 1.5rem 2rem;
+    font-size: 0.875rem; /* Tablet: 14px */
+    font-weight: 400;
+  }
+
+  .success-container {
+    padding: 3rem 2rem;
+    min-height: 65vh;
+  }
+
+  .success-title {
+    font-size: 1.5rem; /* Tablet: 24px */
+    margin-bottom: 1.25rem;
+    font-weight: 700;
+  }
+
+  .success-message {
+    font-size: 1rem; /* Tablet: 16px */
+    max-width: 320px;
+    margin-bottom: 2rem;
+    font-weight: 400;
+  }
+}
+
+/* Desktop Small - 1024px and up */
+@media (min-width: 1024px) {
+  html, body {
+    font-size: 16px;
+  }
+
+  .page-title {
+    font-size: 1.75rem; /* Desktop: 28px */
+    font-weight: 800;
+  }
+
+  .page-subtitle {
+    font-size: 1.125rem; /* Desktop: 18px */
+    font-weight: 500;
   }
 
   .page-header {
@@ -141,117 +196,49 @@ body {
 
   .form-footer {
     padding: 2rem 2rem 2.5rem;
-    font-size: 1rem;
+    font-size: 1rem; /* Desktop: 16px */
     font-weight: 400;
   }
 
   .success-container {
-    padding: 4rem 3rem;
-    min-height: 75vh;
+    padding: 3.5rem 2.5rem;
+    min-height: 70vh;
   }
 
   .success-title {
-    font-size: 2.25rem;
-    margin-bottom: 2rem;
-    font-weight: 700;
+    font-size: 1.875rem; /* Desktop: 30px */
+    font-weight: 800;
+    margin-bottom: 1.5rem;
   }
 
   .success-message {
-    font-size: 1.125rem;
-    max-width: 400px;
+    font-size: 1.125rem; /* Desktop: 18px */
+    max-width: 360px;
     margin-bottom: 2.5rem;
     font-weight: 400;
   }
 }
 
-/* Large Desktop */
-@media (min-width: 1024px) {
+/* Desktop Large - 1200px and up */
+@media (min-width: 1200px) {
   .page-title {
-    font-size: 2.25rem;
-    font-weight: 800; /* ExtraBold for large screens */
+    font-size: 2rem; /* Large Desktop: 32px */
+    font-weight: 800;
   }
 
   .page-subtitle {
-    font-size: 1.25rem;
-    font-weight: 500; /* Medium for large screens */
+    font-size: 1.25rem; /* Large Desktop: 20px */
+    font-weight: 500;
   }
 
   .success-title {
-    font-size: 2.5rem;
-    font-weight: 800; /* ExtraBold for impact */
+    font-size: 2.125rem; /* Large Desktop: 34px */
+    font-weight: 800;
   }
 
   .success-message {
-    font-size: 1.25rem;
-    max-width: 450px;
-    font-weight: 400;
-  }
-}
-
-/* Mobile Responsive Design */
-@media (max-width: 767px) {
-  .page-header {
-    padding: 0 1rem 1.5rem;
-  }
-
-  .page-title {
-    font-size: 1.5rem;
-    font-weight: 700;
-  }
-
-  .page-subtitle {
-    font-size: 0.9rem;
-    font-weight: 400;
-  }
-
-  .form-container {
-    padding: 0 1rem;
-  }
-
-  .form-footer {
-    padding: 1rem 1rem 1.5rem;
-    font-size: 0.875rem;
-    font-weight: 400;
-  }
-
-  .success-container {
-    padding: 2rem 1.5rem;
-    min-height: 60vh;
-  }
-
-  .success-title {
-    font-size: 1.5rem;
-    margin-bottom: 1rem;
-    font-weight: 700;
-  }
-
-  .success-message {
-    font-size: 0.9rem;
-    max-width: 280px;
-    font-weight: 400;
-  }
-}
-
-/* Small Mobile */
-@media (max-width: 480px) {
-  .page-title {
-    font-size: 1.375rem;
-    font-weight: 700;
-  }
-
-  .page-subtitle {
-    font-size: 0.875rem;
-    font-weight: 400;
-  }
-
-  .success-title {
-    font-size: 1.375rem;
-    font-weight: 700;
-  }
-
-  .success-message {
-    font-size: 0.875rem;
-    max-width: 260px;
+    font-size: 1.25rem; /* Large Desktop: 20px */
+    max-width: 400px;
     font-weight: 400;
   }
 }
@@ -271,48 +258,40 @@ button {
 }
 
 .primary-btn {
-  font-weight: 600; /* SemiBold for primary buttons */
+  font-weight: 600;
 }
 
 .google-btn {
-  font-weight: 500; /* Medium for secondary buttons */
+  font-weight: 500;
 }
 
 /* Form Elements with Baloo 2 */
 input, textarea, select {
   font-family: 'Baloo 2', sans-serif;
-  font-weight: 400; /* Regular for input text */
+  font-weight: 400;
 }
 
 /* Utility classes */
-.text-center {
-  text-align: center;
-}
-
+.text-center { text-align: center; }
 .mb-1 { margin-bottom: 0.25rem; }
 .mb-2 { margin-bottom: 0.5rem; }
 .mb-3 { margin-bottom: 0.75rem; }
 .mb-4 { margin-bottom: 1rem; }
-
 .mt-1 { margin-top: 0.25rem; }
 .mt-2 { margin-top: 0.5rem; }
 .mt-3 { margin-top: 0.75rem; }
 .mt-4 { margin-top: 1rem; }
-
 .p-1 { padding: 0.25rem; }
 .p-2 { padding: 0.5rem; }
 .p-3 { padding: 0.75rem; }
 .p-4 { padding: 1rem; }
-
 .w-full { width: 100%; }
 .h-full { height: 100%; }
-
 .flex { display: flex; }
 .flex-col { flex-direction: column; }
 .items-center { align-items: center; }
 .justify-center { justify-content: center; }
 .justify-between { justify-content: space-between; }
-
 .hidden { display: none !important; }
 
 /* Animation utilities */

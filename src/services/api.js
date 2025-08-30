@@ -33,7 +33,35 @@ class ApiService {
       (error) => {
         if (error.response) {
           // Server responded with error status
-          const message = error.response.data?.message || 'An error occurred'
+          const errorData = error.response.data
+          
+          // Handle validation errors specifically
+          if (errorData.code === 'VALIDATION_ERROR' && errorData.data?.errors) {
+            // Extract validation error messages
+            const validationMessages = errorData.data.errors.map(err => {
+              // Format field-specific error messages
+              return `${err.field}: ${err.message}`
+            })
+            
+            // Create a custom error object with more details
+            const validationError = new Error(validationMessages[0]) // Show first error primarily
+            validationError.type = 'VALIDATION_ERROR'
+            validationError.validationErrors = errorData.data.errors
+            validationError.allMessages = validationMessages
+            throw validationError
+          }
+          
+          // Handle other specific error codes
+          if (errorData.code === 'DUPLICATE_EMAIL') {
+            throw new Error('This email is already registered. Please use a different email or try logging in.')
+          }
+          
+          if (errorData.code === 'DUPLICATE_USERNAME') {
+            throw new Error('This username is already taken. Please choose a different username.')
+          }
+          
+          // Handle other server errors
+          const message = errorData?.message || 'An error occurred'
           throw new Error(message)
         } else if (error.request) {
           // Request was made but no response received

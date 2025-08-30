@@ -90,6 +90,12 @@ export default {
       const result = await authStore.register(signupData)
       
       if (result.success) {
+        // Store success data for SignupSuccessView
+        sessionStorage.setItem('signupSuccess', JSON.stringify({
+          message: result.data.message,
+          email: signupData.email,
+          requiresEmailVerification: result.data.requiresEmailVerification
+        }))
         router.push('/signup-success')
       } else {
         errorMessage.value = result.error
@@ -108,3 +114,34 @@ export default {
   }
 }
 </script>
+
+<style scoped>
+/* Mobile First - Base styles */
+.signup-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: white;
+}
+
+/* Tablet - 768px and up */
+@media (min-width: 768px) {
+  .signup-page {
+    min-height: calc(100vh - 2rem);
+  }
+}
+
+/* Desktop Small - 1024px and up */
+@media (min-width: 1024px) {
+  .signup-page {
+    min-height: calc(100vh - 3rem);
+  }
+}
+
+/* Desktop Large - 1200px and up */
+@media (min-width: 1200px) {
+  .signup-page {
+    min-height: calc(100vh - 4rem);
+  }
+}
+</style>

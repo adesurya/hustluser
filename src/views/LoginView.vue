@@ -4,7 +4,7 @@
     
     <div class="page-header">
       <h1 class="page-title">Log in to your account.</h1>
-      <p class="page-subtitle">Enter your details below to log in.</p>
+      <p class="page-subtitle">Enter your email address and password to log in.</p>
     </div>
 
     <div class="form-container">
@@ -90,3 +90,34 @@ export default {
   }
 }
 </script>
+
+<style scoped>
+/* Mobile First - Base styles */
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: white;
+}
+
+/* Tablet - 768px and up */
+@media (min-width: 768px) {
+  .login-page {
+    min-height: calc(100vh - 2rem);
+  }
+}
+
+/* Desktop Small - 1024px and up */
+@media (min-width: 1024px) {
+  .login-page {
+    min-height: calc(100vh - 3rem);
+  }
+}
+
+/* Desktop Large - 1200px and up */
+@media (min-width: 1200px) {
+  .login-page {
+    min-height: calc(100vh - 4rem);
+  }
+}
+</style>

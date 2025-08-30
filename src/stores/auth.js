@@ -52,13 +52,28 @@ export const useAuthStore = defineStore('auth', () => {
       const response = await apiService.register(userData)
       
       if (response.success) {
-        return { success: true, data: response.data }
+        // Store user data but don't set as logged in since email verification is required
+        const registeredUser = response.data.user
+        
+        return { 
+          success: true, 
+          data: {
+            user: registeredUser,
+            requiresEmailVerification: response.data.requiresEmailVerification,
+            message: response.message
+          }
+        }
       } else {
         throw new Error(response.message || 'Registration failed')
       }
     } catch (err) {
-      error.value = err.message
-      return { success: false, error: err.message }
+      // Handle different types of errors
+      let errorMessage = err.message
+      
+      // If it's a validation error, the message should already be formatted correctly
+      // by the API service interceptor
+      error.value = errorMessage
+      return { success: false, error: errorMessage }
     } finally {
       isLoading.value = false
     }

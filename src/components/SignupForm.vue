@@ -30,7 +30,7 @@
 
     <div class="form-group">
       <div class="input-wrapper">
-        <span class="input-icon">📱</span>
+        <span class="input-icon">📞</span>
         <input 
           type="tel" 
           :value="phoneNumber"
@@ -123,12 +123,13 @@ export default {
 </script>
 
 <style scoped>
+/* Mobile First - Base styles */
 .auth-form {
   width: 100%;
 }
 
 .form-group {
-  margin-bottom: 1.25rem;
+  margin-bottom: 0.875rem;
 }
 
 .input-wrapper {
@@ -138,9 +139,9 @@ export default {
   background: #F9FAFB;
   border: 2px solid #E5E7EB;
   border-radius: 12px;
-  padding: 1rem 1.25rem;
+  padding: 0.75rem 0.875rem;
   transition: all 0.2s;
-  min-height: 56px;
+  min-height: 48px;
 }
 
 .input-wrapper:focus-within {
@@ -150,9 +151,12 @@ export default {
 }
 
 .input-icon {
-  margin-right: 1rem;
+  margin-right: 0.75rem;
   color: #9CA3AF;
-  font-size: 1.25rem;
+  font-size: 0.9rem;
+  width: 14px;
+  text-align: center;
+  flex-shrink: 0;
 }
 
 .form-input {
@@ -160,8 +164,9 @@ export default {
   border: none;
   background: transparent;
   outline: none;
-  font-size: 1rem;
+  font-size: 0.875rem;
   color: #1F2937;
+  font-family: 'Baloo 2', sans-serif;
 }
 
 .form-input::placeholder {
@@ -173,9 +178,10 @@ export default {
   border: none;
   color: #9CA3AF;
   cursor: pointer;
-  font-size: 1.25rem;
+  font-size: 0.9rem;
   padding: 0.25rem;
   margin-left: 0.5rem;
+  flex-shrink: 0;
 }
 
 .primary-btn {
@@ -183,14 +189,15 @@ export default {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border: none;
   border-radius: 12px;
-  padding: 1.25rem;
-  font-size: 1.1rem;
+  padding: 0.875rem;
+  font-size: 0.9rem;
   font-weight: 600;
   color: white;
   cursor: pointer;
   transition: all 0.2s;
-  margin-top: 1rem;
-  min-height: 56px;
+  margin-top: 0.75rem;
+  min-height: 48px;
+  font-family: 'Baloo 2', sans-serif;
 }
 
 .primary-btn:hover {
@@ -198,60 +205,8 @@ export default {
   box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
 }
 
-/* Desktop */
+/* Tablet - 768px and up */
 @media (min-width: 768px) {
-  .form-group {
-    margin-bottom: 1.5rem;
-  }
-
-  .input-wrapper {
-    padding: 1.125rem 1.5rem;
-    min-height: 60px;
-    border-radius: 14px;
-  }
-
-  .input-icon {
-    font-size: 1.375rem;
-    margin-right: 1.25rem;
-  }
-
-  .form-input {
-    font-size: 1.125rem;
-  }
-
-  .password-toggle {
-    font-size: 1.375rem;
-  }
-
-  .primary-btn {
-    padding: 1.375rem;
-    font-size: 1.125rem;
-    min-height: 60px;
-    border-radius: 14px;
-    margin-top: 1.5rem;
-  }
-}
-
-/* Large Desktop */
-@media (min-width: 1024px) {
-  .input-wrapper {
-    padding: 1.25rem 1.75rem;
-    min-height: 64px;
-  }
-
-  .form-input {
-    font-size: 1.25rem;
-  }
-
-  .primary-btn {
-    padding: 1.5rem;
-    font-size: 1.25rem;
-    min-height: 64px;
-  }
-}
-
-/* Mobile */
-@media (max-width: 767px) {
   .form-group {
     margin-bottom: 1rem;
   }
@@ -262,8 +217,9 @@ export default {
   }
 
   .input-icon {
-    font-size: 1.125rem;
-    margin-right: 0.75rem;
+    font-size: 1rem;
+    margin-right: 0.875rem;
+    width: 16px;
   }
 
   .form-input {
@@ -271,14 +227,82 @@ export default {
   }
 
   .password-toggle {
-    font-size: 1.125rem;
+    font-size: 1rem;
   }
 
   .primary-btn {
     padding: 1rem;
     font-size: 1rem;
     min-height: 52px;
-    margin-top: 0.75rem;
+    margin-top: 1rem;
+  }
+}
+
+/* Desktop Small - 1024px and up */
+@media (min-width: 1024px) {
+  .form-group {
+    margin-bottom: 1.25rem;
+  }
+
+  .input-wrapper {
+    padding: 1rem 1.25rem;
+    min-height: 56px;
+    border-radius: 14px;
+  }
+
+  .input-icon {
+    font-size: 1.125rem;
+    margin-right: 1rem;
+    width: 18px;
+  }
+
+  .form-input {
+    font-size: 1rem;
+  }
+
+  .password-toggle {
+    font-size: 1.125rem;
+  }
+
+  .primary-btn {
+    padding: 1.125rem;
+    font-size: 1.125rem;
+    min-height: 56px;
+    border-radius: 14px;
+    margin-top: 1.25rem;
+  }
+}
+
+/* Desktop Large - 1200px and up */
+@media (min-width: 1200px) {
+  .form-group {
+    margin-bottom: 1.5rem;
+  }
+
+  .input-wrapper {
+    padding: 1.125rem 1.5rem;
+    min-height: 60px;
+  }
+
+  .input-icon {
+    font-size: 1.25rem;
+    margin-right: 1.25rem;
+    width: 20px;
+  }
+
+  .form-input {
+    font-size: 1.125rem;
+  }
+
+  .password-toggle {
+    font-size: 1.25rem;
+  }
+
+  .primary-btn {
+    padding: 1.25rem;
+    font-size: 1.125rem;
+    min-height: 60px;
+    margin-top: 1.5rem;
   }
 }
 </style>

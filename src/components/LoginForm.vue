@@ -1,11 +1,10 @@
-<!-- LoginForm.vue - Updated with better sizing -->
 <template>
   <form @submit.prevent="$emit('submit')" class="auth-form">
     <div class="form-group">
       <div class="input-wrapper">
         <span class="input-icon">📧</span>
         <input 
-          type="email" 
+          type="text" 
           :value="identifier"
           @input="$emit('update:identifier', $event.target.value)"
           class="form-input" 
@@ -44,7 +43,7 @@
           @change="$emit('update:remember', $event.target.checked)"
           class="checkbox"
         />
-        <span>Remember me</span>
+        <span class="checkbox-text">Remember me</span>
       </label>
       <a href="#" class="forgot-link">Forgot Password?</a>
     </div>
@@ -77,12 +76,13 @@ export default {
 </script>
 
 <style scoped>
+/* Mobile First - Base styles */
 .auth-form {
   width: 100%;
 }
 
 .form-group {
-  margin-bottom: 1.25rem;
+  margin-bottom: 1rem;
 }
 
 .input-wrapper {
@@ -92,9 +92,9 @@ export default {
   background: #F9FAFB;
   border: 2px solid #E5E7EB;
   border-radius: 12px;
-  padding: 1rem 1.25rem;
+  padding: 0.875rem 1rem;
   transition: all 0.2s;
-  min-height: 56px;
+  min-height: 50px;
 }
 
 .input-wrapper:focus-within {
@@ -104,9 +104,11 @@ export default {
 }
 
 .input-icon {
-  margin-right: 1rem;
+  margin-right: 0.75rem;
   color: #9CA3AF;
-  font-size: 1.25rem;
+  font-size: 1rem;
+  width: 16px;
+  text-align: center;
 }
 
 .form-input {
@@ -114,8 +116,9 @@ export default {
   border: none;
   background: transparent;
   outline: none;
-  font-size: 1rem;
+  font-size: 0.9rem;
   color: #1F2937;
+  font-family: 'Baloo 2', sans-serif;
 }
 
 .form-input::placeholder {
@@ -127,7 +130,7 @@ export default {
   border: none;
   color: #9CA3AF;
   cursor: pointer;
-  font-size: 1.25rem;
+  font-size: 1rem;
   padding: 0.25rem;
   margin-left: 0.5rem;
 }
@@ -136,26 +139,33 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin: 1.5rem 0;
-  font-size: 0.9rem;
+  margin-bottom: 1.5rem;
+  font-size: 0.8rem;
 }
 
 .checkbox-wrapper {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
   cursor: pointer;
 }
 
 .checkbox {
-  width: 18px;
-  height: 18px;
+  margin-right: 0.5rem;
+  width: 16px;
+  height: 16px;
+}
+
+.checkbox-text {
+  color: #6B7280;
+  font-weight: 400;
+  font-family: 'Baloo 2', sans-serif;
 }
 
 .forgot-link {
   color: #4F46E5;
   text-decoration: none;
   font-weight: 500;
+  font-family: 'Baloo 2', sans-serif;
 }
 
 .forgot-link:hover {
@@ -167,13 +177,15 @@ export default {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border: none;
   border-radius: 12px;
-  padding: 1.25rem;
-  font-size: 1.1rem;
+  padding: 1rem;
+  font-size: 1rem;
   font-weight: 600;
   color: white;
   cursor: pointer;
   transition: all 0.2s;
-  min-height: 56px;
+  margin-top: 0.5rem;
+  min-height: 50px;
+  font-family: 'Baloo 2', sans-serif;
 }
 
 .primary-btn:hover {
@@ -181,8 +193,53 @@ export default {
   box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
 }
 
-/* Desktop */
+/* Tablet - 768px and up */
 @media (min-width: 768px) {
+  .form-group {
+    margin-bottom: 1.25rem;
+  }
+
+  .input-wrapper {
+    padding: 1rem 1.25rem;
+    min-height: 56px;
+    border-radius: 14px;
+  }
+
+  .input-icon {
+    font-size: 1.125rem;
+    margin-right: 1rem;
+    width: 18px;
+  }
+
+  .form-input {
+    font-size: 1rem;
+  }
+
+  .password-toggle {
+    font-size: 1.125rem;
+  }
+
+  .form-options {
+    margin-bottom: 1.75rem;
+    font-size: 0.875rem;
+  }
+
+  .checkbox {
+    width: 18px;
+    height: 18px;
+  }
+
+  .primary-btn {
+    padding: 1.125rem;
+    font-size: 1.125rem;
+    min-height: 56px;
+    border-radius: 14px;
+    margin-top: 0.75rem;
+  }
+}
+
+/* Desktop Small - 1024px and up */
+@media (min-width: 1024px) {
   .form-group {
     margin-bottom: 1.5rem;
   }
@@ -190,12 +247,12 @@ export default {
   .input-wrapper {
     padding: 1.125rem 1.5rem;
     min-height: 60px;
-    border-radius: 14px;
   }
 
   .input-icon {
-    font-size: 1.375rem;
+    font-size: 1.25rem;
     margin-right: 1.25rem;
+    width: 20px;
   }
 
   .form-input {
@@ -203,18 +260,11 @@ export default {
   }
 
   .password-toggle {
-    font-size: 1.375rem;
-  }
-
-  .primary-btn {
-    padding: 1.375rem;
-    font-size: 1.125rem;
-    min-height: 60px;
-    border-radius: 14px;
+    font-size: 1.25rem;
   }
 
   .form-options {
-    margin: 2rem 0;
+    margin-bottom: 2rem;
     font-size: 1rem;
   }
 
@@ -222,10 +272,17 @@ export default {
     width: 20px;
     height: 20px;
   }
+
+  .primary-btn {
+    padding: 1.25rem;
+    font-size: 1.125rem;
+    min-height: 60px;
+    margin-top: 1rem;
+  }
 }
 
-/* Large Desktop */
-@media (min-width: 1024px) {
+/* Desktop Large - 1200px and up */
+@media (min-width: 1200px) {
   .input-wrapper {
     padding: 1.25rem 1.75rem;
     min-height: 64px;
@@ -236,50 +293,9 @@ export default {
   }
 
   .primary-btn {
-    padding: 1.5rem;
+    padding: 1.375rem;
     font-size: 1.25rem;
     min-height: 64px;
-  }
-}
-
-/* Mobile */
-@media (max-width: 767px) {
-  .form-group {
-    margin-bottom: 1rem;
-  }
-
-  .input-wrapper {
-    padding: 0.875rem 1rem;
-    min-height: 52px;
-  }
-
-  .input-icon {
-    font-size: 1.125rem;
-    margin-right: 0.75rem;
-  }
-
-  .form-input {
-    font-size: 0.9rem;
-  }
-
-  .password-toggle {
-    font-size: 1.125rem;
-  }
-
-  .primary-btn {
-    padding: 1rem;
-    font-size: 1rem;
-    min-height: 52px;
-  }
-
-  .form-options {
-    margin: 1.25rem 0;
-    font-size: 0.875rem;
-  }
-
-  .checkbox {
-    width: 16px;
-    height: 16px;
   }
 }
 </style>
