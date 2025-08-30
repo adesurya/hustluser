@@ -754,7 +754,10 @@ export default {
 }
 </script>
 
-<style scoped>
+<style>
+/* Fixed CSS following ProfileView.vue pattern */
+
+/* Override main.css container restrictions for CategoryView */
 .category-view {
   min-height: 100vh;
   background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%);
@@ -762,6 +765,34 @@ export default {
   display: flex;
   flex-direction: column;
   overflow-y: auto;
+}
+
+/* Force full width on all screen sizes */
+.category-view .page-container {
+  max-width: none !important;
+  width: 100% !important;
+  background: transparent !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  border: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.category-view .app-main {
+  max-width: none !important;
+  width: 100% !important;
+  background: transparent !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  border: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  min-height: auto !important;
+  height: auto !important;
+  overflow: visible !important;
 }
 
 html, body {
@@ -894,39 +925,28 @@ html, body {
   transform: translateY(-1px);
 }
 
+/* Categories Grid - Consistent Mobile Layout */
 .categories-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 1rem;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
   margin-bottom: 1rem;
 }
 
-@media (max-width: 480px) {
-  .categories-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 0.75rem;
-  }
-}
-
-@media (min-width: 481px) and (max-width: 767px) {
-  .categories-grid {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 0.875rem;
-  }
-}
+/* Keep mobile layout consistent across all screen sizes */
 
 .category-card {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 1rem 0.75rem;
+  padding: 0.875rem 0.625rem;
   border-radius: 16px;
   border: 2px solid #E5E7EB;
   background: white;
   cursor: pointer;
   transition: all 0.2s;
   position: relative;
-  min-height: 130px;
+  min-height: 110px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
@@ -944,16 +964,16 @@ html, body {
 }
 
 .category-icon {
-  width: 56px;
-  height: 56px;
-  border-radius: 16px;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.75rem;
-  margin-bottom: 0.75rem;
+  font-size: 1.5rem;
+  margin-bottom: 0.625rem;
   color: white;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
   transition: all 0.2s;
 }
 
@@ -971,17 +991,17 @@ html, body {
 }
 
 .category-name {
-  font-size: 0.875rem;
+  font-size: 0.8rem;
   color: #1F2937;
   font-family: 'Baloo 2', sans-serif;
   font-weight: 600;
-  margin-bottom: 0.25rem;
+  margin-bottom: 0.2rem;
   line-height: 1.2;
   text-align: center;
 }
 
 .category-count-text {
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   color: #6B7280;
   font-family: 'Baloo 2', sans-serif;
   font-weight: 400;
@@ -1277,128 +1297,216 @@ html, body {
   white-space: nowrap;
 }
 
+/* Tablet Responsive - Keep Mobile Layout, Override main.css */
 @media (min-width: 768px) {
   .category-view {
-    background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%);
+    background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%) !important;
   }
   
-  .page-container,
-  .app-main {
-    background: transparent;
+  /* Override main.css constraints completely */
+  .category-view .page-container {
+    max-width: none !important;
+    width: 100% !important;
+    background: transparent !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    justify-content: flex-start !important;
+    align-items: stretch !important;
   }
 
+  .category-view .app-main {
+    max-width: none !important;
+    width: 100% !important;
+    background: transparent !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    min-height: auto !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  /* Keep mobile spacing and sizing */
   .dashboard-section {
-    margin: 0 1.5rem 1.5rem 1.5rem;
-    padding: 1.5rem;
-  }
-
-  .search-container {
-    padding: 1.125rem 1.5rem;
-  }
-
-  .categories-grid {
-    grid-template-columns: repeat(4, 1fr);
-    gap: 1.25rem;
-  }
-
-  .category-card {
-    min-height: 140px;
-    padding: 1.25rem 1rem;
-  }
-
-  .category-icon {
-    width: 64px;
-    height: 64px;
-    font-size: 2rem;
-  }
-
-  .products-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1.25rem;
-  }
-
-  .product-card {
+    margin: 0 1rem 1.5rem 1rem;
     padding: 1.25rem;
   }
 
-  .product-image {
-    height: 120px;
-  }
-}
-
-@media (min-width: 1024px) {
-  body {
-    background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%);
-  }
-  
-  .category-view {
-    background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%);
-    min-height: auto;
-  }
-  
-  .page-container {
-    background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%);
-    min-height: 100vh;
-    height: auto;
-    padding: 0;
-    justify-content: flex-start;
-    align-items: stretch;
-  }
-  
-  .app-main {
-    background: transparent;
-    box-shadow: none;
-    min-height: auto;
-    max-height: none;
-    height: auto;
-    overflow: visible;
-    max-width: none;
-    width: 100%;
-    border-radius: 0;
-  }
-
-  .dashboard-section {
-    margin: 0 2rem 2rem 2rem;
-    padding: 1.75rem;
+  .dashboard-section:first-child {
+    margin-top: 1rem;
   }
 
   .search-section {
-    margin: 0 0 2rem 0;
+    margin: 0 0 1.5rem 0;
+    padding: 1rem 1.25rem;
   }
 
   .search-container {
-    padding: 1.25rem 1.75rem;
-    max-width: 600px;
-    margin: 0 auto;
+    padding: 1rem 1.25rem;
   }
 
+  /* Keep exact mobile layout */
   .categories-grid {
-    grid-template-columns: repeat(4, 1fr);
-    gap: 1.5rem;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
   }
 
   .category-card {
-    min-height: 160px;
-    padding: 1.5rem 1.25rem;
+    min-height: 110px;
+    padding: 0.875rem 0.625rem;
   }
 
   .category-icon {
-    width: 72px;
-    height: 72px;
-    font-size: 2.25rem;
+    width: 48px;
+    height: 48px;
+    font-size: 1.5rem;
+  }
+
+  .category-name {
+    font-size: 0.8rem;
+  }
+
+  .category-count-text {
+    font-size: 0.7rem;
   }
 
   .products-grid {
     grid-template-columns: repeat(2, 1fr);
-    gap: 1.5rem;
+    gap: 1rem;
   }
 
   .product-card {
-    padding: 1.5rem;
+    padding: 1rem;
   }
 
   .product-image {
-    height: 140px;
+    height: 100px;
+  }
+
+  .product-name {
+    font-size: 0.875rem;
+  }
+
+  .product-price {
+    font-size: 0.875rem;
+  }
+}
+
+/* Desktop Responsive - Keep Mobile Layout, Override main.css */
+@media (min-width: 1024px) {
+  body {
+    background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%) !important;
+  }
+  
+  .category-view {
+    background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%) !important;
+    min-height: auto !important;
+  }
+  
+  /* Override main.css constraints completely */
+  .category-view .page-container {
+    max-width: none !important;
+    width: 100% !important;
+    background: transparent !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    justify-content: flex-start !important;
+    align-items: stretch !important;
+    min-height: 100vh !important;
+    height: auto !important;
+  }
+  
+  .category-view .app-main {
+    max-width: none !important;
+    width: 100% !important;
+    background: transparent !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    min-height: auto !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  /* Use exact mobile spacing */
+  .dashboard-section {
+    margin: 0 1rem 1.5rem 1rem;
+    padding: 1.25rem;
+  }
+
+  .dashboard-section:first-child {
+    margin-top: 1rem;
+  }
+
+  .search-section {
+    margin: 0 0 1.5rem 0;
+    padding: 1rem 1.25rem;
+  }
+
+  .search-container {
+    padding: 1rem 1.25rem;
+  }
+
+  /* Keep exact mobile 2-column layout */
+  .categories-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+  }
+
+  /* Keep exact mobile category card sizing */
+  .category-card {
+    min-height: 110px;
+    padding: 0.875rem 0.625rem;
+  }
+
+  .category-icon {
+    width: 48px;
+    height: 48px;
+    font-size: 1.5rem;
+  }
+
+  .category-name {
+    font-size: 0.8rem;
+  }
+
+  .category-count-text {
+    font-size: 0.7rem;
+  }
+
+  /* Keep exact mobile 2-column products layout */
+  .products-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+
+  .product-card {
+    padding: 1rem;
+  }
+
+  .product-image {
+    height: 100px;
+  }
+
+  .product-name {
+    font-size: 0.875rem;
+  }
+
+  .product-price {
+    font-size: 0.875rem;
   }
 }
 </style>
