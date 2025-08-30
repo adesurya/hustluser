@@ -1,5 +1,5 @@
 <template>
-  <div class="dashboard-view dashboard-page">
+  <div class="dashboard-view">
     <!-- Points Section -->
     <div class="dashboard-section points-section">
       <div class="points-card">
@@ -282,13 +282,23 @@ export default {
     }
 
     const navigateToTab = (tabId) => {
-      activeTab.value = tabId
-      if (tabId === 'account') {
-        router.push('/profile')
-      }
-      // Add other navigation logic here
-      console.log(`Navigate to ${tabId}`)
+    activeTab.value = tabId
+    if (tabId === 'account') {
+      router.push('/profile')
+    } else if (tabId === 'category') {
+      router.push('/category')
+    } else if (tabId === 'home') {
+      // Stay on dashboard
+      return
+    } else if (tabId === 'campaign') {
+      // TODO: Navigate to campaign page when implemented
+      console.log('Campaign page not yet implemented')
+    } else if (tabId === 'leaderboard') {
+      // TODO: Navigate to leaderboard page when implemented
+      console.log('Leaderboard page not yet implemented')
     }
+    console.log(`Navigate to ${tabId}`)
+  }
 
     // Initialize scrolling after component mounts
     onMounted(() => {
