@@ -1,57 +1,59 @@
 <template>
-  <form @submit.prevent="$emit('submit')" class="auth-form">
-    <div class="form-group">
-      <div class="input-wrapper">
-        <span class="input-icon">📧</span>
-        <input 
-          type="text" 
-          :value="identifier"
-          @input="$emit('update:identifier', $event.target.value)"
-          class="form-input" 
-          placeholder="Email"
-          required
-        />
+  <div class="login-form-container">
+    <form @submit.prevent="$emit('submit')" class="auth-form">
+      <div class="form-group">
+        <div class="input-wrapper">
+          <span class="input-icon">📧</span>
+          <input 
+            type="text" 
+            :value="identifier"
+            @input="$emit('update:identifier', $event.target.value)"
+            class="form-input" 
+            placeholder="Email"
+            required
+          />
+        </div>
       </div>
-    </div>
 
-    <div class="form-group">
-      <div class="input-wrapper">
-        <span class="input-icon">🔒</span>
-        <input 
-          :type="showPassword ? 'text' : 'password'"
-          :value="password"
-          @input="$emit('update:password', $event.target.value)"
-          class="form-input" 
-          placeholder="Password"
-          required
-        />
-        <button 
-          type="button" 
-          class="password-toggle"
-          @click="showPassword = !showPassword"
-        >
-          {{ showPassword ? '👁️' : '👁️‍🗨️' }}
-        </button>
+      <div class="form-group">
+        <div class="input-wrapper">
+          <span class="input-icon">🔒</span>
+          <input 
+            :type="showPassword ? 'text' : 'password'"
+            :value="password"
+            @input="$emit('update:password', $event.target.value)"
+            class="form-input" 
+            placeholder="Password"
+            required
+          />
+          <button 
+            type="button" 
+            class="password-toggle"
+            @click="showPassword = !showPassword"
+          >
+            {{ showPassword ? '👁️' : '👁️‍🗨️' }}
+          </button>
+        </div>
       </div>
-    </div>
 
-    <div class="form-options">
-      <label class="checkbox-wrapper">
-        <input 
-          type="checkbox" 
-          :checked="remember"
-          @change="$emit('update:remember', $event.target.checked)"
-          class="checkbox"
-        />
-        <span class="checkbox-text">Remember me</span>
-      </label>
-      <a href="#" class="forgot-link">Forgot Password?</a>
-    </div>
+      <div class="form-options">
+        <label class="checkbox-wrapper">
+          <input 
+            type="checkbox" 
+            :checked="remember"
+            @change="$emit('update:remember', $event.target.checked)"
+            class="checkbox"
+          />
+          <span class="checkbox-text">Remember me</span>
+        </label>
+        <a href="#" class="forgot-link">Forgot Password?</a>
+      </div>
 
-    <button type="submit" class="primary-btn">
-      Sign In
-    </button>
-  </form>
+      <button type="submit" class="primary-btn">
+        Sign In
+      </button>
+    </form>
+  </div>
 </template>
 
 <script>
@@ -76,39 +78,51 @@ export default {
 </script>
 
 <style scoped>
-/* Mobile First - Base styles */
+/* Container for the entire login form */
+.login-form-container {
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+/* Mobile First - Base styles with consistent proportions */
 .auth-form {
   width: 100%;
+  background: transparent;
+  padding: 0;
+  margin: 0;
 }
 
 .form-group {
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
 }
 
 .input-wrapper {
   position: relative;
   display: flex;
   align-items: center;
-  background: #F9FAFB;
+  background: #FFFFFF;
   border: 2px solid #E5E7EB;
-  border-radius: 12px;
-  padding: 0.875rem 1rem;
+  border-radius: 16px;
+  padding: 1.25rem 1.5rem;
   transition: all 0.2s;
-  min-height: 50px;
+  min-height: 60px;
 }
 
 .input-wrapper:focus-within {
   border-color: #4F46E5;
-  background: white;
+  background: #FFFFFF;
   box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
 }
 
 .input-icon {
-  margin-right: 0.75rem;
+  margin-right: 1rem;
   color: #9CA3AF;
-  font-size: 1rem;
-  width: 16px;
+  font-size: 1.25rem;
+  width: 20px;
   text-align: center;
+  flex-shrink: 0;
 }
 
 .form-input {
@@ -116,13 +130,15 @@ export default {
   border: none;
   background: transparent;
   outline: none;
-  font-size: 0.9rem;
-  color: #1F2937;
+  font-size: 1rem;
+  color: #000000 !important;
   font-family: 'Baloo 2', sans-serif;
+  font-weight: 500;
 }
 
 .form-input::placeholder {
-  color: #9CA3AF;
+  color: #9CA3AF !important;
+  font-weight: 400;
 }
 
 .password-toggle {
@@ -130,17 +146,21 @@ export default {
   border: none;
   color: #9CA3AF;
   cursor: pointer;
-  font-size: 1rem;
-  padding: 0.25rem;
-  margin-left: 0.5rem;
+  font-size: 1.25rem;
+  padding: 0.5rem;
+  position: absolute;
+  right: 1.25rem;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
 }
 
 .form-options {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1.5rem;
-  font-size: 0.8rem;
+  margin-bottom: 2rem;
+  font-size: 0.95rem;
 }
 
 .checkbox-wrapper {
@@ -150,21 +170,21 @@ export default {
 }
 
 .checkbox {
-  margin-right: 0.5rem;
-  width: 16px;
-  height: 16px;
+  margin-right: 0.75rem;
+  width: 18px;
+  height: 18px;
 }
 
 .checkbox-text {
-  color: #6B7280;
-  font-weight: 400;
+  color: #000000 !important;
+  font-weight: 500;
   font-family: 'Baloo 2', sans-serif;
 }
 
 .forgot-link {
-  color: #4F46E5;
+  color: #4F46E5 !important;
   text-decoration: none;
-  font-weight: 500;
+  font-weight: 600;
   font-family: 'Baloo 2', sans-serif;
 }
 
@@ -176,15 +196,15 @@ export default {
   width: 100%;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border: none;
-  border-radius: 12px;
-  padding: 1rem;
-  font-size: 1rem;
-  font-weight: 600;
+  border-radius: 16px;
+  padding: 1.25rem;
+  font-size: 1.125rem;
+  font-weight: 700;
   color: white;
   cursor: pointer;
   transition: all 0.2s;
-  margin-top: 0.5rem;
-  min-height: 50px;
+  margin-top: 1rem;
+  min-height: 60px;
   font-family: 'Baloo 2', sans-serif;
 }
 
@@ -193,22 +213,22 @@ export default {
   box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
 }
 
-/* Tablet - 768px and up */
+/* Tablet - Keep same proportions */
 @media (min-width: 768px) {
   .form-group {
-    margin-bottom: 1.25rem;
+    margin-bottom: 1.5rem;
   }
 
   .input-wrapper {
-    padding: 1rem 1.25rem;
-    min-height: 56px;
-    border-radius: 14px;
+    padding: 1.25rem 1.5rem;
+    min-height: 60px;
+    border-radius: 16px;
   }
 
   .input-icon {
-    font-size: 1.125rem;
+    font-size: 1.25rem;
     margin-right: 1rem;
-    width: 18px;
+    width: 20px;
   }
 
   .form-input {
@@ -216,12 +236,13 @@ export default {
   }
 
   .password-toggle {
-    font-size: 1.125rem;
+    font-size: 1.25rem;
+    right: 1.5rem;
   }
 
   .form-options {
-    margin-bottom: 1.75rem;
-    font-size: 0.875rem;
+    margin-bottom: 2rem;
+    font-size: 0.95rem;
   }
 
   .checkbox {
@@ -230,47 +251,48 @@ export default {
   }
 
   .primary-btn {
-    padding: 1.125rem;
+    padding: 1.25rem;
     font-size: 1.125rem;
-    min-height: 56px;
-    border-radius: 14px;
-    margin-top: 0.75rem;
+    min-height: 60px;
+    border-radius: 16px;
+    margin-top: 1rem;
   }
 }
 
-/* Desktop Small - 1024px and up */
+/* Desktop - Keep same proportions */
 @media (min-width: 1024px) {
   .form-group {
     margin-bottom: 1.5rem;
   }
 
   .input-wrapper {
-    padding: 1.125rem 1.5rem;
+    padding: 1.25rem 1.5rem;
     min-height: 60px;
   }
 
   .input-icon {
     font-size: 1.25rem;
-    margin-right: 1.25rem;
+    margin-right: 1rem;
     width: 20px;
   }
 
   .form-input {
-    font-size: 1.125rem;
+    font-size: 1rem;
   }
 
   .password-toggle {
     font-size: 1.25rem;
+    right: 1.5rem;
   }
 
   .form-options {
     margin-bottom: 2rem;
-    font-size: 1rem;
+    font-size: 0.95rem;
   }
 
   .checkbox {
-    width: 20px;
-    height: 20px;
+    width: 18px;
+    height: 18px;
   }
 
   .primary-btn {
@@ -278,24 +300,6 @@ export default {
     font-size: 1.125rem;
     min-height: 60px;
     margin-top: 1rem;
-  }
-}
-
-/* Desktop Large - 1200px and up */
-@media (min-width: 1200px) {
-  .input-wrapper {
-    padding: 1.25rem 1.75rem;
-    min-height: 64px;
-  }
-
-  .form-input {
-    font-size: 1.25rem;
-  }
-
-  .primary-btn {
-    padding: 1.375rem;
-    font-size: 1.25rem;
-    min-height: 64px;
   }
 }
 </style>

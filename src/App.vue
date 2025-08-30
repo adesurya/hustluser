@@ -1,6 +1,6 @@
 <template>
   <div id="app">
-    <div class="app-container">
+    <div class="app-main">
       <!-- Loading Overlay -->
       <LoadingOverlay v-if="authStore.isLoading" />
       
@@ -30,28 +30,61 @@ export default {
 </script>
 
 <style>
-/* Mobile First - Base styles for mobile */
+/* Full width layout with new smoother gradient */
 #app {
   min-height: 100vh;
-  background: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  margin: 0;
-}
-
-.app-container {
-  min-height: 100vh;
   width: 100%;
-  background: white;
+  background: linear-gradient(0deg, #FFFFFF, #FFFFFF), linear-gradient(180deg, rgba(35, 235, 250, 0.1) 0%, rgba(255, 0, 128, 0.1) 100%);
   position: relative;
   overflow-x: hidden;
   display: flex;
   flex-direction: column;
+  padding: 0;
+  margin: 0;
 }
 
-/* Sticky Layout untuk pages dengan header dan footer */
+/* App container - full width, no constraints */
+.app-main {
+  width: 100%;
+  min-height: 100vh;
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+}
+
+/* All screen sizes - maintain full width */
+@media (min-width: 768px) {
+  #app {
+    padding: 0;
+  }
+  
+  .app-main {
+    width: 100%;
+    min-height: 100vh;
+    box-shadow: none;
+    border-radius: 0;
+    overflow: visible;
+    margin: 0;
+    background: transparent;
+    backdrop-filter: none;
+    border: none;
+  }
+}
+
+@media (min-width: 1024px) {
+  #app {
+    padding: 0;
+  }
+  
+  .app-main {
+    width: 100%;
+    min-height: 100vh;
+    border-radius: 0;
+    box-shadow: none;
+  }
+}
+
+/* Sticky Layout */
 .page-with-sticky-layout {
   min-height: 100vh;
   display: flex;
@@ -62,74 +95,26 @@ export default {
   position: sticky;
   top: 0;
   z-index: 100;
-  background: white;
-  border-bottom: 1px solid #E5E7EB;
+  background: rgba(255, 255, 255, 0.95);
+  border-bottom: 1px solid rgba(229, 231, 235, 0.8);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
 }
 
 .sticky-footer {
   position: sticky;
   bottom: 0;
   z-index: 100;
-  background: white;
-  border-top: 1px solid #E5E7EB;
+  background: rgba(255, 255, 255, 0.95);
+  border-top: 1px solid rgba(229, 231, 235, 0.8);
   box-shadow: 0 -1px 3px rgba(0, 0, 0, 0.1);
   margin-top: auto;
+  backdrop-filter: blur(10px);
 }
 
 .scrollable-content {
   flex: 1;
   overflow-y: auto;
   padding-bottom: env(safe-area-inset-bottom);
-}
-
-/* Tablet - 768px and up */
-@media (min-width: 768px) {
-  #app {
-    padding: 1rem;
-  }
-  
-  .app-container {
-    min-height: calc(100vh - 2rem);
-    max-width: 420px;
-    margin: 0 auto;
-    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
-    border-radius: 16px;
-    overflow: hidden;
-  }
-}
-
-/* Desktop Small - 1024px and up */
-@media (min-width: 1024px) {
-  #app {
-    padding: 1.5rem;
-  }
-  
-  .app-container {
-    min-height: calc(100vh - 3rem);
-    max-width: 440px;
-    box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.15);
-    border-radius: 20px;
-  }
-}
-
-/* Desktop Large - 1200px and up */
-@media (min-width: 1200px) {
-  #app {
-    padding: 2rem;
-  }
-  
-  .app-container {
-    min-height: calc(100vh - 4rem);
-    max-width: 460px;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.2);
-  }
-}
-
-/* Ultra Wide - 1440px and up */
-@media (min-width: 1440px) {
-  .app-container {
-    max-width: 480px;
-  }
 }
 </style>

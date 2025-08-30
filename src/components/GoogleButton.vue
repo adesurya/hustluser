@@ -18,24 +18,23 @@ export default {
 </script>
 
 <style scoped>
-/* Mobile First - Base styles */
 .google-btn {
   width: 100%;
-  background: white;
+  background: #FFFFFF;
   border: 2px solid #E5E7EB;
-  border-radius: 12px;
-  padding: 0.875rem 1rem;
-  font-size: 0.9rem;
+  border-radius: 16px;
+  padding: 1.25rem 1.5rem;
+  font-size: 1rem;
   font-weight: 500;
-  color: #374151;
+  color: #000000 !important;
   cursor: pointer;
-  margin-bottom: 1.25rem;
+  margin-bottom: 2rem;
   transition: all 0.2s;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
-  min-height: 50px;
+  gap: 0.75rem;
+  min-height: 60px;
   font-family: 'Baloo 2', sans-serif;
 }
 
@@ -47,36 +46,20 @@ export default {
 }
 
 .google-icon {
-  width: 16px;
-  height: 16px;
+  width: 20px;
+  height: 20px;
   flex-shrink: 0;
 }
 
-/* Tablet - 768px and up */
+/* Responsive styles */
 @media (min-width: 768px) {
   .google-btn {
-    padding: 1rem 1.25rem;
+    padding: 1.25rem 1.5rem;
     font-size: 1rem;
-    margin-bottom: 1.5rem;
-    border-radius: 14px;
-    min-height: 56px;
-    gap: 0.75rem;
-  }
-
-  .google-icon {
-    width: 18px;
-    height: 18px;
-  }
-}
-
-/* Desktop Small - 1024px and up */
-@media (min-width: 1024px) {
-  .google-btn {
-    padding: 1.125rem 1.5rem;
-    font-size: 1.125rem;
     margin-bottom: 2rem;
+    border-radius: 16px;
     min-height: 60px;
-    gap: 1rem;
+    gap: 0.75rem;
   }
 
   .google-icon {
@@ -85,12 +68,13 @@ export default {
   }
 }
 
-/* Desktop Large - 1200px and up */
-@media (min-width: 1200px) {
+@media (min-width: 1024px) {
   .google-btn {
-    padding: 1.25rem 1.75rem;
-    font-size: 1.125rem;
-    min-height: 64px;
+    padding: 1.25rem 1.5rem;
+    font-size: 1rem;
+    margin-bottom: 2rem;
+    min-height: 60px;
+    gap: 0.75rem;
   }
 
   .google-icon {
