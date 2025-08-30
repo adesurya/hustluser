@@ -84,18 +84,8 @@
     </div>
 
     <!-- Bottom Navigation -->
-    <div class="bottom-nav">
-      <button 
-        v-for="nav in bottomNav" 
-        :key="nav.id"
-        class="nav-item"
-        :class="{ active: activeTab === nav.id }"
-        @click="navigateToTab(nav.id)"
-      >
-        <span class="nav-icon">{{ nav.icon }}</span>
-        <span class="nav-label">{{ nav.label }}</span>
-      </button>
-    </div>
+    <BottomNavigation />
+
   </div>
 </template>
 
@@ -103,13 +93,16 @@
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
+import BottomNavigation from '../components/BottomNavigation.vue'
 
 export default {
   name: 'ProfileView',
+  components: {
+    BottomNavigation
+  },
   setup() {
     const router = useRouter()
     const authStore = useAuthStore()
-    const activeTab = ref('account')
 
     // User data from auth store
     const userData = computed(() => ({
@@ -197,14 +190,6 @@ export default {
       }
     ])
 
-    // Bottom navigation
-    const bottomNav = ref([
-      { id: 'home', icon: '🏠', label: 'Home' },
-      { id: 'category', icon: '📋', label: 'Category' },
-      { id: 'campaign', icon: '🎯', label: 'Campaign' },
-      { id: 'leaderboard', icon: '🏆', label: 'Leaderboard' },
-      { id: 'account', icon: '👤', label: 'Akun' }
-    ])
 
     // Methods
     const formatDate = (dateString) => {
@@ -246,29 +231,17 @@ export default {
       }
     }
 
-    const navigateToTab = (tabId) => {
-      activeTab.value = tabId
-      if (tabId === 'home') {
-        router.push('/dashboard')
-      }
-      // Add other navigation logic here
-      console.log(`Navigate to ${tabId}`)
-    }
-
     return {
-      activeTab,
       userData,
       userInitials,
       userCoins,
       recentCoins,
       recentRedeems,
-      bottomNav,
       formatDate,
       handleRedeem,
       viewAllCoins,
       viewAllRedeems,
-      handleLogout,
-      navigateToTab
+      handleLogout
     }
   }
 }
@@ -590,20 +563,6 @@ html, body {
 }
 
 /* Bottom Navigation - Same as Dashboard */
-.bottom-nav {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: white;
-  border-top: 1px solid #E5E7EB;
-  padding: 0.75rem 0 calc(0.75rem + env(safe-area-inset-bottom));
-  display: flex;
-  justify-content: space-around;
-  z-index: 1001;
-  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.1);
-}
-
 .nav-item {
   display: flex;
   flex-direction: column;

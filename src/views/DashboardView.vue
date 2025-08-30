@@ -91,34 +91,24 @@
       </div>
     </div>
 
-    <!-- Bottom Navigation -->
-    <div class="bottom-nav">
-      <button 
-        v-for="nav in bottomNav" 
-        :key="nav.id"
-        class="nav-item"
-        :class="{ active: activeTab === nav.id }"
-        @click="navigateToTab(nav.id)"
-      >
-        <span class="nav-icon">{{ nav.icon }}</span>
-        <span class="nav-label">{{ nav.label }}</span>
-      </button>
-    </div>
+    <!-- Bottom Navigation Component -->
+    <BottomNavigation />
   </div>
 </template>
 
 <script>
 import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
+import BottomNavigation from '../components/BottomNavigation.vue'
 
 export default {
   name: 'DashboardView',
+  components: {
+    BottomNavigation
+  },
   setup() {
-    const router = useRouter()
     const authStore = useAuthStore()
     const searchQuery = ref('')
-    const activeTab = ref('home')
 
     // User points from auth store
     const userPoints = computed(() => authStore.userPoints || 1250)
@@ -224,7 +214,7 @@ export default {
         coins: 250,
         lastUpdated: '2025-08-30T07:45:00Z'
       }
-    ].sort((a, b) => new Date(b.lastUpdated) - new Date(a.lastUpdated))) // Sort by last updated
+    ].sort((a, b) => new Date(b.lastUpdated) - new Date(a.lastUpdated)))
 
     // Active campaign data
     const activeCampaign = ref({
@@ -235,15 +225,6 @@ export default {
       validity: 'Valid until Aug 31',
       image: '/api/placeholder/400/200'
     })
-
-    // Updated bottom navigation with 5 items
-    const bottomNav = ref([
-      { id: 'home', icon: '🏠', label: 'Home' },
-      { id: 'category', icon: '📋', label: 'Category' },
-      { id: 'campaign', icon: '🎯', label: 'Campaign' },
-      { id: 'leaderboard', icon: '🏆', label: 'Leaderboard' },
-      { id: 'account', icon: '👤', label: 'Akun' }
-    ])
 
     // Add touch scroll functionality for categories
     const initializeCategoryScrolling = () => {
@@ -281,25 +262,6 @@ export default {
       console.log('Search query:', searchQuery.value)
     }
 
-    const navigateToTab = (tabId) => {
-    activeTab.value = tabId
-    if (tabId === 'account') {
-      router.push('/profile')
-    } else if (tabId === 'category') {
-      router.push('/category')
-    } else if (tabId === 'home') {
-      // Stay on dashboard
-      return
-    } else if (tabId === 'campaign') {
-      // TODO: Navigate to campaign page when implemented
-      console.log('Campaign page not yet implemented')
-    } else if (tabId === 'leaderboard') {
-      // TODO: Navigate to leaderboard page when implemented
-      console.log('Leaderboard page not yet implemented')
-    }
-    console.log(`Navigate to ${tabId}`)
-  }
-
     // Initialize scrolling after component mounts
     onMounted(() => {
       initializeCategoryScrolling()
@@ -307,14 +269,11 @@ export default {
 
     return {
       searchQuery,
-      activeTab,
       userPoints,
       categories,
       featuredProducts,
       activeCampaign,
-      bottomNav,
-      handleSearch,
-      navigateToTab
+      handleSearch
     }
   }
 }
@@ -328,20 +287,7 @@ export default {
   padding-bottom: 100px;
   display: flex;
   flex-direction: column;
-  overflow-y: auto; /* Enable vertical scrolling */
-}
-
-/* Force scrolling on all screen sizes */
-html, body {
-  overflow-y: auto !important;
-  height: auto !important;
-}
-
-/* Override any container restrictions */
-.page-container,
-.app-main {
-  overflow-y: visible !important;
-  height: auto !important;
+  overflow-y: auto;
 }
 
 /* Dashboard Section - Clean containers */
@@ -481,9 +427,9 @@ html, body {
   overflow-y: hidden;
   scrollbar-width: none;
   -ms-overflow-style: none;
-  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
-  scroll-behavior: smooth; /* Smooth scrolling animation */
-  cursor: grab; /* Visual indicator for dragging */
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+  cursor: grab;
 }
 
 .categories-scroll-container:active {
@@ -500,7 +446,7 @@ html, body {
   padding: 0.5rem 0;
   width: max-content;
   min-width: 100%;
-  touch-action: pan-x; /* Enable horizontal touch scrolling */
+  touch-action: pan-x;
 }
 
 .category-card {
@@ -753,84 +699,17 @@ html, body {
   font-weight: 500;
 }
 
-/* Bottom Navigation */
-.bottom-nav {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: white;
-  border-top: 1px solid #E5E7EB;
-  padding: 0.75rem 0 calc(0.75rem + env(safe-area-inset-bottom));
-  display: flex;
-  justify-content: space-around;
-  z-index: 1001;
-  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.nav-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0.5rem 0.25rem;
-  transition: all 0.2s;
-  border-radius: 8px;
-  min-width: 0;
-  flex: 1;
-}
-
-.nav-item:hover {
-  background: rgba(79, 195, 247, 0.1);
-  transform: translateY(-1px);
-}
-
-.nav-item.active {
-  background: rgba(79, 195, 247, 0.15);
-}
-
-.nav-item.active .nav-icon,
-.nav-item.active .nav-label {
-  color: #4FC3F7;
-}
-
-.nav-icon {
-  font-size: 1.5rem;
-  margin-bottom: 0.25rem;
-  color: #6B7280;
-  transition: all 0.2s;
-}
-
-.nav-item.active .nav-icon {
-  transform: scale(1.1);
-}
-
-.nav-label {
-  font-size: 0.75rem;
-  color: #6B7280;
-  font-family: 'Baloo 2', sans-serif;
-  font-weight: 500;
-  text-align: center;
-  transition: color 0.2s;
-  white-space: nowrap;
-}
-
 /* Responsive Styling for Tablet and Desktop */
 @media (min-width: 768px) {
-  /* Ensure blue background shows on all screen sizes */
-  .dashboard-view {
+  .leaderboard-view {
     background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%) !important;
   }
   
-  /* Override any container background that might interfere */
   .page-container,
   .app-main {
     background: transparent !important;
   }
 
-  /* Ensure scrolling works on tablet */
   .categories-scroll-container {
     scroll-snap-type: x mandatory;
   }
@@ -841,7 +720,6 @@ html, body {
 }
 
 @media (min-width: 1024px) {
-  /* Ensure blue background is visible on desktop */
   body {
     background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%) !important;
   }
@@ -851,7 +729,6 @@ html, body {
     min-height: auto !important;
   }
   
-  /* Make sure container doesn't override background */
   .page-container {
     background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%) !important;
     min-height: 100vh !important;
@@ -873,7 +750,6 @@ html, body {
     border-radius: 0 !important;
   }
 
-  /* Enhanced scrolling for desktop */
   .categories-scroll-container {
     scrollbar-width: thin;
     scrollbar-color: rgba(79, 195, 247, 0.3) transparent;

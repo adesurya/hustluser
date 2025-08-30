@@ -107,31 +107,22 @@
     </div>
 
     <!-- Bottom Navigation -->
-    <div class="bottom-nav">
-      <button 
-        v-for="nav in bottomNav" 
-        :key="nav.id"
-        class="nav-item"
-        :class="{ active: activeTab === nav.id }"
-        @click="navigateToTab(nav.id)"
-      >
-        <span class="nav-icon">{{ nav.icon }}</span>
-        <span class="nav-label">{{ nav.label }}</span>
-      </button>
-    </div>
+    <BottomNavigation />
+
   </div>
 </template>
 
 <script>
 import { ref, computed, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import BottomNavigation from '../components/BottomNavigation.vue'
 
 export default {
   name: 'CategoryView',
+  components: {
+    BottomNavigation
+  },
   setup() {
-    const router = useRouter()
     const searchQuery = ref('')
-    const activeTab = ref('category')
     const selectedCategory = ref(null)
     const currentPage = ref(1)
     const productsPerPage = 10
@@ -618,14 +609,6 @@ export default {
       }
     ])
 
-    const bottomNav = ref([
-      { id: 'home', icon: '🏠', label: 'Home' },
-      { id: 'category', icon: '📋', label: 'Category' },
-      { id: 'campaign', icon: '🎯', label: 'Campaign' },
-      { id: 'leaderboard', icon: '🏆', label: 'Leaderboard' },
-      { id: 'account', icon: '👤', label: 'Akun' }
-    ])
-
     const filteredProducts = computed(() => {
       let products = allProducts.value
 
@@ -715,23 +698,12 @@ export default {
       }
     }
 
-    const navigateToTab = (tabId) => {
-      activeTab.value = tabId
-      if (tabId === 'home') {
-        router.push('/dashboard')
-      } else if (tabId === 'account') {
-        router.push('/profile')
-      }
-      console.log(`Navigate to ${tabId}`)
-    }
-
     watch([selectedCategory, searchQuery], () => {
       currentPage.value = 1
     })
 
     return {
       searchQuery,
-      activeTab,
       selectedCategory,
       currentPage,
       productsPerPage,
@@ -739,7 +711,6 @@ export default {
       filteredProducts,
       displayedProducts,
       totalPages,
-      bottomNav,
       handleSearch,
       clearSearch,
       selectCategory,
@@ -747,8 +718,7 @@ export default {
       toggleFavorite,
       shareProduct,
       goToPage,
-      loadMoreProducts,
-      navigateToTab
+      loadMoreProducts
     }
   }
 }
@@ -1234,19 +1204,6 @@ html, body {
   color: white;
 }
 
-.bottom-nav {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: white;
-  border-top: 1px solid #E5E7EB;
-  padding: 0.75rem 0 calc(0.75rem + env(safe-area-inset-bottom));
-  display: flex;
-  justify-content: space-around;
-  z-index: 1001;
-  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.1);
-}
 
 .nav-item {
   display: flex;
