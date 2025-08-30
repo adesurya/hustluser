@@ -92,32 +92,47 @@ export default {
 </script>
 
 <style scoped>
-/* Mobile First - Base styles */
+/* Login page uses mobile-first design with proper typography */
 .login-page {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: white;
+  background: transparent;
 }
 
-/* Tablet - 768px and up */
-@media (min-width: 768px) {
+/* On mobile, full screen layout */
+@media (max-width: 767px) {
   .login-page {
-    min-height: calc(100vh - 2rem);
+    background: linear-gradient(0deg, #FFFFFF, #FFFFFF), linear-gradient(180deg, rgba(35, 235, 250, 0.1) 0%, rgba(255, 0, 128, 0.1) 100%);
   }
 }
 
-/* Desktop Small - 1024px and up */
-@media (min-width: 1024px) {
-  .login-page {
-    min-height: calc(100vh - 3rem);
-  }
+/* Typography fixes */
+.page-title {
+  color: #1F2937 !important; /* Dark gray for visibility */
 }
 
-/* Desktop Large - 1200px and up */
-@media (min-width: 1200px) {
-  .login-page {
-    min-height: calc(100vh - 4rem);
-  }
+.page-subtitle {
+  color: #6B7280 !important; /* Medium gray for good contrast */
+}
+
+.form-footer {
+  color: #4B5563 !important; /* Dark gray for readability */
+}
+
+.form-footer p {
+  color: #4B5563 !important;
+}
+
+.auth-link {
+  color: #4F46E5 !important; /* Indigo for links */
+}
+
+.resend-link {
+  color: #6B7280 !important;
+}
+
+.resend-link:hover {
+  color: #4B5563 !important;
 }
 </style>

@@ -280,10 +280,7 @@ export default {
     font-size: 1rem;
   }
 
-  .password-toggle {
-    font-size: 1.25rem;
-    right: 1.5rem;
-  }
+  
 
   .form-options {
     margin-bottom: 2rem;

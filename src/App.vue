@@ -1,11 +1,10 @@
 <template>
   <div id="app">
-    <div class="app-main">
-      <!-- Loading Overlay -->
-      <LoadingOverlay v-if="authStore.isLoading" />
-      
-      <!-- Router View -->
-      <router-view />
+    <div class="page-container">
+      <div class="app-main">
+        <LoadingOverlay v-if="authStore.isLoading" />
+        <router-view />
+      </div>
     </div>
   </div>
 </template>
@@ -43,45 +42,115 @@ export default {
   margin: 0;
 }
 
-/* App container - full width, no constraints */
+
+/* Page container - full width on mobile */
+.page-container {
+  min-height: 100vh;
+  width: 100%;
+  background: linear-gradient(0deg, #FFFFFF, #FFFFFF), linear-gradient(180deg, rgba(35, 235, 250, 0.1) 0%, rgba(255, 0, 128, 0.1) 100%);
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+}
+
+/* App container - full width on mobile, centered box on tablet+ */
 .app-main {
   width: 100%;
   min-height: 100vh;
   background: transparent;
   display: flex;
   flex-direction: column;
+  margin: 0;
+  padding: 0;
 }
 
-/* All screen sizes - maintain full width */
+/* Tablet and up - centered container */
 @media (min-width: 768px) {
-  #app {
-    padding: 0;
+  .page-container {
+    justify-content: center;
+    align-items: center;
+    padding: 2rem;
+    min-height: 100vh;
   }
   
   .app-main {
     width: 100%;
-    min-height: 100vh;
-    box-shadow: none;
-    border-radius: 0;
-    overflow: visible;
-    margin: 0;
-    background: transparent;
-    backdrop-filter: none;
-    border: none;
+    max-width: 420px;
+    min-height: auto;
+    max-height: calc(100vh - 4rem);
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 24px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    overflow: hidden;
   }
 }
 
+/* Dashboard override - always full width */
+.dashboard-page {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  max-width: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  border: none !important;
+  background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%) !important;
+  z-index: 1000;
+}
+
+.dashboard-page .page-container,
+.dashboard-page .app-main {
+  width: 100% !important;
+  max-width: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  border: none !important;
+  background: transparent !important;
+}
+
+/* Desktop adjustments */
 @media (min-width: 1024px) {
-  #app {
-    padding: 0;
-  }
-  
   .app-main {
-    width: 100%;
-    min-height: 100vh;
-    border-radius: 0;
-    box-shadow: none;
+    max-width: 480px;
+    border-radius: 28px;
   }
+}
+
+@media (min-width: 1200px) {
+  .app-main {
+    max-width: 520px;
+    border-radius: 32px;
+  }
+}
+
+/* Dashboard specific - full width always */
+.dashboard-page {
+  width: 100% !important;
+  max-width: none !important;
+  border-radius: 0 !important;
+  min-height: 100vh;
+  background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%);
+}
+
+/* Override container for dashboard */
+.dashboard-page .page-container,
+.dashboard-page .app-main {
+  width: 100% !important;
+  max-width: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  border: none !important;
+  background: transparent !important;
 }
 
 /* Sticky Layout */

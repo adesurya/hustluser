@@ -30,7 +30,7 @@ export default {
 .header {
   padding: 1.5rem 1rem 1rem;
   text-align: center;
-  background: white;
+  background: transparent; /* Changed from white to transparent */
   flex-shrink: 0;
 }
 
@@ -69,8 +69,8 @@ export default {
 
 .logo-text {
   font-size: 1.375rem;
-  font-weight: 700; /* Bold for brand logo */
-  color: #FF00E6;
+  font-weight: 700;
+  color: #1F2937; /* Changed from #FF00E6 to dark gray for better visibility */
   letter-spacing: -0.025em;
   font-family: 'Baloo 2', sans-serif;
   display: flex;

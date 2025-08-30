@@ -194,17 +194,30 @@ export default {
 </script>
 
 <style scoped>
-/* Mobile First - Base styles */
+/* Dashboard should always be full width - override the container styling */
 .dashboard-page {
-  min-height: 100vh;
-  background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%);
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  max-width: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  border: none !important;
+  background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%) !important;
+  overflow-y: auto;
   padding-bottom: 80px;
+  z-index: 1000;
 }
 
 /* Points Section */
 .points-section {
   padding: 1rem;
-  background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%);
+  background: transparent;
 }
 
 .points-card {
@@ -251,7 +264,7 @@ export default {
 /* Search Section */
 .search-section {
   padding: 0 1rem 1rem;
-  background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%);
+  background: transparent;
 }
 
 .search-container {
@@ -524,7 +537,7 @@ export default {
   padding: 0.5rem 0 calc(0.5rem + env(safe-area-inset-bottom));
   display: flex;
   justify-content: space-around;
-  z-index: 100;
+  z-index: 1001;
 }
 
 .nav-item {
@@ -557,9 +570,18 @@ export default {
 
 /* Tablet */
 @media (min-width: 768px) {
+  /* Dashboard stays full width on all screen sizes */
   .dashboard-page {
-    max-width: 420px;
-    margin: 0 auto;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    max-width: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
   }
 
   .points-card {
@@ -584,7 +606,16 @@ export default {
 /* Desktop */
 @media (min-width: 1024px) {
   .dashboard-page {
-    max-width: 440px;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    max-width: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
   }
 
   .points-card {

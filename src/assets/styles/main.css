@@ -1,3 +1,5 @@
+/* src/assets/styles/main.css - UPDATED VERSION */
+
 /* Import Baloo 2 Font */
 @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;500;600;700;800&display=swap');
 
@@ -13,12 +15,12 @@ html, body {
   font-family: 'Baloo 2', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  font-size: 14px; /* Base font size for mobile */
+  font-size: 14px;
   font-weight: 500;
+  background: linear-gradient(0deg, #FFFFFF, #FFFFFF), linear-gradient(180deg, rgba(35, 235, 250, 0.1) 0%, rgba(255, 0, 128, 0.1) 100%);
 }
 
 body {
-  background: linear-gradient(180deg, #4FC3F7 0%, #E1BEE7 100%);
   overflow-x: hidden;
 }
 
@@ -29,6 +31,17 @@ body {
 .font-bold { font-weight: 700; }
 .font-extrabold { font-weight: 800; }
 
+/* Mobile First - Page Container */
+.page-container {
+  min-height: 100vh;
+  width: 100%;
+  background: linear-gradient(0deg, #FFFFFF, #FFFFFF), linear-gradient(180deg, rgba(35, 235, 250, 0.1) 0%, rgba(255, 0, 128, 0.1) 100%);
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+}
+
 /* Mobile First - Page Styles */
 .page-header {
   padding: 0 1rem 1.5rem;
@@ -36,24 +49,22 @@ body {
 }
 
 .page-title {
-  font-size: 1.75rem; /* Mobile: 28px - increased for better visibility */
-  font-weight: 800; /* Extra bold for better contrast */
-  color: white;
+  font-size: 1.75rem; /* Mobile: 28px */
+  font-weight: 800;
+  color: #1F2937; /* Dark gray instead of white */
   margin-bottom: 0.5rem;
   line-height: 1.2;
   font-family: 'Baloo 2', sans-serif;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   letter-spacing: -0.01em;
 }
 
 .page-subtitle {
-  color: rgba(255, 255, 255, 0.95);
-  font-size: 1rem; /* Mobile: 16px - increased */
+  color: #6B7280; /* Medium gray for good contrast */
+  font-size: 1rem; /* Mobile: 16px */
   margin-bottom: 1.5rem;
   line-height: 1.4;
-  font-weight: 500; /* Medium weight */
+  font-weight: 500;
   font-family: 'Baloo 2', sans-serif;
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
 }
 
 .form-container {
@@ -65,43 +76,39 @@ body {
 .form-footer {
   text-align: center;
   padding: 1rem 1rem 1.5rem;
-  font-size: 0.9rem; /* Mobile: 14.4px - increased */
-  color: rgba(255, 255, 255, 0.95);
+  font-size: 0.9rem;
+  color: #4B5563; /* Dark gray for readability */
   line-height: 1.5;
-  font-weight: 500; /* Medium weight for better readability */
+  font-weight: 500;
   font-family: 'Baloo 2', sans-serif;
   margin-top: auto;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 .auth-link {
-  color: white;
+  color: #4F46E5; /* Indigo color for links */
   text-decoration: none;
-  font-weight: 700; /* Bold for better visibility */
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+  font-weight: 700;
+  border-bottom: 1px solid rgba(79, 70, 229, 0.3);
   transition: all 0.2s ease;
 }
 
 .auth-link:hover {
   text-decoration: none;
-  color: white;
-  border-bottom-color: white;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  color: #6366F1;
+  border-bottom-color: #6366F1;
 }
 
 .resend-link {
-  color: rgba(255, 255, 255, 0.9);
+  color: #6B7280;
   text-decoration: none;
   font-weight: 600;
   display: block;
   margin-top: 0.75rem;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 .resend-link:hover {
   text-decoration: underline;
-  color: white;
+  color: #4B5563;
 }
 
 /* Success Container - Mobile */
@@ -116,24 +123,22 @@ body {
 }
 
 .success-title {
-  font-size: 1.375rem; /* Mobile: 22px */
+  font-size: 1.375rem;
   font-weight: 700;
-  color: white;
+  color: #10B981; /* Green for success */
   margin-bottom: 1rem;
   line-height: 1.3;
   font-family: 'Baloo 2', sans-serif;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .success-message {
-  color: rgba(255, 255, 255, 0.9);
+  color: #374151; /* Dark gray for readability */
   margin-bottom: 1.5rem;
   line-height: 1.6;
   max-width: 280px;
-  font-size: 0.875rem; /* Mobile: 14px */
+  font-size: 0.875rem;
   font-weight: 400;
   font-family: 'Baloo 2', sans-serif;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 /* Tablet Design - 768px and up */
@@ -142,13 +147,34 @@ body {
     font-size: 14px;
   }
 
+  /* Center container on tablet+ but maintain mobile design */
+  .page-container {
+    justify-content: center;
+    align-items: center;
+    padding: 2rem;
+  }
+
+  .app-main {
+    width: 100%;
+    max-width: 420px;
+    min-height: calc(100vh - 4rem);
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 24px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
   .page-title {
-    font-size: 1.5rem; /* Keep same size for mobile appearance */
+    font-size: 1.5rem;
     font-weight: 800;
   }
 
   .page-subtitle {
-    font-size: 0.875rem; /* Keep same size */
+    font-size: 0.875rem;
     font-weight: 500;
   }
 
@@ -191,13 +217,18 @@ body {
     font-size: 16px;
   }
 
+  .app-main {
+    max-width: 480px;
+    border-radius: 28px;
+  }
+
   .page-title {
-    font-size: 1.75rem; /* Desktop: 28px */
+    font-size: 1.75rem;
     font-weight: 800;
   }
 
   .page-subtitle {
-    font-size: 1.125rem; /* Desktop: 18px */
+    font-size: 1.125rem;
     font-weight: 500;
   }
 
@@ -211,7 +242,7 @@ body {
 
   .form-footer {
     padding: 2rem 2rem 2.5rem;
-    font-size: 1rem; /* Desktop: 16px */
+    font-size: 1rem;
     font-weight: 400;
   }
 
@@ -221,13 +252,13 @@ body {
   }
 
   .success-title {
-    font-size: 1.875rem; /* Desktop: 30px */
+    font-size: 1.875rem;
     font-weight: 800;
     margin-bottom: 1.5rem;
   }
 
   .success-message {
-    font-size: 1.125rem; /* Desktop: 18px */
+    font-size: 1.125rem;
     max-width: 360px;
     margin-bottom: 2.5rem;
     font-weight: 400;
@@ -236,23 +267,28 @@ body {
 
 /* Desktop Large - 1200px and up */
 @media (min-width: 1200px) {
+  .app-main {
+    max-width: 520px;
+    border-radius: 32px;
+  }
+
   .page-title {
-    font-size: 2rem; /* Large Desktop: 32px */
+    font-size: 2rem;
     font-weight: 800;
   }
 
   .page-subtitle {
-    font-size: 1.25rem; /* Large Desktop: 20px */
+    font-size: 1.25rem;
     font-weight: 500;
   }
 
   .success-title {
-    font-size: 2.125rem; /* Large Desktop: 34px */
+    font-size: 2.125rem;
     font-weight: 800;
   }
 
   .success-message {
-    font-size: 1.25rem; /* Large Desktop: 20px */
+    font-size: 1.25rem;
     max-width: 400px;
     font-weight: 400;
   }
@@ -263,11 +299,11 @@ button:focus,
 input:focus,
 select:focus,
 textarea:focus {
-  outline: 2px solid rgba(255, 255, 255, 0.8);
+  outline: 2px solid #4F46E5;
   outline-offset: 2px;
 }
 
-/* Enhanced Button Styles with Baloo 2 */
+/* Enhanced Button Styles */
 button {
   font-family: 'Baloo 2', sans-serif;
 }
@@ -280,7 +316,7 @@ button {
   font-weight: 500;
 }
 
-/* Form Elements with Baloo 2 */
+/* Form Elements */
 input, textarea, select {
   font-family: 'Baloo 2', sans-serif;
   font-weight: 400;
@@ -333,7 +369,7 @@ input, textarea, select {
   transform: translateX(-100%);
 }
 
-/* Google Button styling - should be applied globally */
+/* Google Button styling */
 .google-btn {
   width: 100%;
   background: #FFFFFF;
@@ -342,7 +378,7 @@ input, textarea, select {
   padding: 1.25rem 1.5rem;
   font-size: 1rem;
   font-weight: 500;
-  color: #000000 !important;
+  color: #374151 !important; /* Dark gray for visibility */
   cursor: pointer;
   margin-bottom: 2rem;
   transition: all 0.2s;
