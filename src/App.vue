@@ -42,7 +42,6 @@ export default {
   margin: 0;
 }
 
-
 /* Page container - full width on mobile */
 .page-container {
   min-height: 100vh;
@@ -88,8 +87,9 @@ export default {
   }
 }
 
-/* Dashboard override - always full width */
-.dashboard-page {
+/* Dashboard and Profile override - always full width on desktop */
+.dashboard-page,
+.profile-page {
   position: fixed !important;
   top: 0 !important;
   left: 0 !important;
@@ -104,10 +104,13 @@ export default {
   border: none !important;
   background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%) !important;
   z-index: 1000;
+  overflow-y: auto !important;
 }
 
 .dashboard-page .page-container,
-.dashboard-page .app-main {
+.dashboard-page .app-main,
+.profile-page .page-container,
+.profile-page .app-main {
   width: 100% !important;
   max-width: none !important;
   border-radius: 0 !important;
@@ -115,13 +118,51 @@ export default {
   backdrop-filter: none !important;
   border: none !important;
   background: transparent !important;
+  position: static !important;
+  height: auto !important;
+  min-height: auto !important;
+  max-height: none !important;
+  overflow: visible !important;
+  padding: 0 !important;
+  margin: 0 !important;
 }
 
-/* Desktop adjustments */
+/* Desktop adjustments for non-dashboard pages */
 @media (min-width: 1024px) {
   .app-main {
     max-width: 480px;
     border-radius: 28px;
+  }
+  
+  /* Dashboard and Profile specific overrides for desktop */
+  .dashboard-page,
+  .profile-page {
+    width: 100% !important;
+    max-width: none !important;
+    border-radius: 0 !important;
+    min-height: 100vh !important;
+    background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%) !important;
+    position: static !important;
+    overflow-y: auto !important;
+  }
+  
+  .dashboard-page .page-container,
+  .dashboard-page .app-main,
+  .profile-page .page-container, 
+  .profile-page .app-main {
+    width: 100% !important;
+    max-width: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    border: none !important;
+    background: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    height: auto !important;
+    min-height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
   }
 }
 
@@ -130,27 +171,6 @@ export default {
     max-width: 520px;
     border-radius: 32px;
   }
-}
-
-/* Dashboard specific - full width always */
-.dashboard-page {
-  width: 100% !important;
-  max-width: none !important;
-  border-radius: 0 !important;
-  min-height: 100vh;
-  background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%);
-}
-
-/* Override container for dashboard */
-.dashboard-page .page-container,
-.dashboard-page .app-main {
-  width: 100% !important;
-  max-width: none !important;
-  border-radius: 0 !important;
-  box-shadow: none !important;
-  backdrop-filter: none !important;
-  border: none !important;
-  background: transparent !important;
 }
 
 /* Sticky Layout */

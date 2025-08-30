@@ -1,5 +1,5 @@
 <template>
-  <div class="dashboard-view">
+  <div class="dashboard-view dashboard-page">
     <!-- Points Section -->
     <div class="dashboard-section points-section">
       <div class="points-card">
@@ -61,7 +61,9 @@
             <div class="product-price">{{ product.price }}</div>
             <div class="product-actions">
               <span class="earn-coins">🪙 Earn {{ product.coins }} Coins</span>
-              <button class="add-btn">➕</button>
+              <button class="share-btn">
+                <span class="share-icon">📤</span>
+              </button>
             </div>
           </div>
         </div>
@@ -96,7 +98,7 @@
         :key="nav.id"
         class="nav-item"
         :class="{ active: activeTab === nav.id }"
-        @click="activeTab = nav.id"
+        @click="navigateToTab(nav.id)"
       >
         <span class="nav-icon">{{ nav.icon }}</span>
         <span class="nav-label">{{ nav.label }}</span>
@@ -107,11 +109,13 @@
 
 <script>
 import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 
 export default {
   name: 'DashboardView',
   setup() {
+    const router = useRouter()
     const authStore = useAuthStore()
     const searchQuery = ref('')
     const activeTab = ref('home')
@@ -277,6 +281,15 @@ export default {
       console.log('Search query:', searchQuery.value)
     }
 
+    const navigateToTab = (tabId) => {
+      activeTab.value = tabId
+      if (tabId === 'account') {
+        router.push('/profile')
+      }
+      // Add other navigation logic here
+      console.log(`Navigate to ${tabId}`)
+    }
+
     // Initialize scrolling after component mounts
     onMounted(() => {
       initializeCategoryScrolling()
@@ -290,7 +303,8 @@ export default {
       featuredProducts,
       activeCampaign,
       bottomNav,
-      handleSearch
+      handleSearch,
+      navigateToTab
     }
   }
 }
@@ -630,8 +644,8 @@ html, body {
   font-weight: 600;
 }
 
-.add-btn {
-  background: #10B981;
+.share-btn {
+  background: #4FC3F7;
   color: white;
   border: none;
   border-radius: 50%;
@@ -643,11 +657,11 @@ html, body {
   align-items: center;
   justify-content: center;
   transition: all 0.2s;
-  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
+  box-shadow: 0 2px 6px rgba(79, 195, 247, 0.3);
 }
 
-.add-btn:hover {
-  background: #059669;
+.share-btn:hover {
+  background: #29B6F6;
   transform: scale(1.1);
 }
 
@@ -824,16 +838,29 @@ html, body {
   
   .dashboard-view {
     background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%) !important;
+    min-height: auto !important;
   }
   
   /* Make sure container doesn't override background */
   .page-container {
     background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%) !important;
+    min-height: 100vh !important;
+    height: auto !important;
+    padding: 0 !important;
+    justify-content: flex-start !important;
+    align-items: stretch !important;
   }
   
   .app-main {
     background: transparent !important;
     box-shadow: none !important;
+    min-height: auto !important;
+    max-height: none !important;
+    height: auto !important;
+    overflow: visible !important;
+    max-width: none !important;
+    width: 100% !important;
+    border-radius: 0 !important;
   }
 
   /* Enhanced scrolling for desktop */
