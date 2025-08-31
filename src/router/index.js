@@ -47,6 +47,18 @@ const routes = [
     meta: { requiresAuth: true }
   },
   {
+    path: '/campaign/:id',
+    name: 'CampaignDetail',
+    component: () => import('../views/CampaignDetailView.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/product/:id',
+    name: 'ProductDetail',
+    component: () => import('../views/ProductDetailView.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
     path: '/leaderboard',
     name: 'Leaderboard',
     component: () => import('../views/LeaderboardView.vue'),

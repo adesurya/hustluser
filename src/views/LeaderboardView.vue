@@ -1,5 +1,7 @@
 <template>
   <div class="leaderboard-view dashboard-page">
+    <HustlHeader :isDashboard="true" />
+
     <!-- Filter Section -->
     <div class="dashboard-section filter-section">
       <div class="section-header">
@@ -152,11 +154,15 @@
 <script>
 import { ref, computed } from 'vue'
 import BottomNavigation from '../components/BottomNavigation.vue'
+import HustlHeader from '../components/HustlHeader.vue'
+
 
 export default {
   name: 'LeaderboardView',
   components: {
-    BottomNavigation
+    BottomNavigation,
+    HustlHeader
+
   },
   setup() {
     const activeFilter = ref('weekly')
@@ -176,27 +182,7 @@ export default {
       { id: 2, username: 'MariaGonzalez', coins: 14890, trend: 'up', period: 'weekly' },
       { id: 3, username: 'JohnDavidson', coins: 14320, trend: 'down', period: 'weekly' },
       { id: 4, username: 'SarahWilliams', coins: 13750, trend: 'up', period: 'weekly' },
-      { id: 5, username: 'MichaelBrown', coins: 13210, trend: 'same', period: 'weekly' },
-      { id: 6, username: 'EmilyJohnson', coins: 12890, trend: 'up', period: 'weekly' },
-      { id: 7, username: 'DanielMiller', coins: 12650, trend: 'down', period: 'weekly' },
-      { id: 8, username: 'JessicaDavis', coins: 12340, trend: 'up', period: 'weekly' },
-      { id: 9, username: 'ChristopherWilson', coins: 11980, trend: 'same', period: 'weekly' },
-      { id: 10, username: 'AmandaLee', coins: 11720, trend: 'up', period: 'weekly' },
-      { id: 11, username: 'RobertJones', coins: 11450, trend: 'down', period: 'weekly' },
-      { id: 12, username: 'LisaAnderson', coins: 11200, trend: 'up', period: 'weekly' },
-      { id: 13, username: 'DavidThomas', coins: 10980, trend: 'same', period: 'weekly' },
-      { id: 14, username: 'JenniferWhite', coins: 10750, trend: 'down', period: 'weekly' },
-      { id: 15, username: 'MatthewHarris', coins: 10520, trend: 'up', period: 'weekly' },
-      { id: 16, username: 'KimberlyClark', coins: 10290, trend: 'up', period: 'weekly' },
-      { id: 17, username: 'JamesRodriguez', coins: 10080, trend: 'down', period: 'weekly' },
-      { id: 18, username: 'BrittanyLewis', coins: 9850, trend: 'same', period: 'weekly' },
-      { id: 19, username: 'AnthonyWalker', coins: 9630, trend: 'up', period: 'weekly' },
-      { id: 20, username: 'StephanieHall', coins: 9420, trend: 'down', period: 'weekly' },
-      { id: 21, username: 'JoshuaAllen', coins: 9210, trend: 'up', period: 'weekly' },
-      { id: 22, username: 'RachelYoung', coins: 9050, trend: 'same', period: 'weekly' },
-      { id: 23, username: 'KevinKing', coins: 8890, trend: 'down', period: 'weekly' },
-      { id: 24, username: 'MeganWright', coins: 8720, trend: 'up', period: 'weekly' },
-      { id: 25, username: 'BrandonLopez', coins: 8560, trend: 'up', period: 'weekly' }
+      { id: 5, username: 'MichaelBrown', coins: 13210, trend: 'same', period: 'weekly' }
     ])
 
     // Computed properties
@@ -256,7 +242,6 @@ export default {
     const setActiveFilter = (filterId) => {
       activeFilter.value = filterId
       currentPage.value = 1
-      console.log(`Filter changed to: ${filterId}`)
     }
 
     const getCurrentPeriodLabel = () => {
@@ -271,7 +256,6 @@ export default {
     const goToPage = (page) => {
       if (page >= 1 && page <= totalPages.value) {
         currentPage.value = page
-        document.querySelector('.users-section')?.scrollIntoView({ behavior: 'smooth' })
       }
     }
 
@@ -296,7 +280,7 @@ export default {
 </script>
 
 <style scoped>
-/* Override main.css container restrictions for LeaderboardView */
+/* Override main.css container restrictions for LeaderboardView - Fixed for all screen sizes */
 .leaderboard-view {
   min-height: 100vh;
   background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%);
@@ -306,6 +290,7 @@ export default {
   overflow-y: auto;
 }
 
+/* Force full width and transparent background on ALL screen sizes */
 .leaderboard-view .page-container {
   max-width: none !important;
   width: 100% !important;
@@ -751,61 +736,13 @@ export default {
   font-size: 0.875rem;
 }
 
-.nav-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0.5rem 0.25rem;
-  transition: all 0.2s;
-  border-radius: 8px;
-  min-width: 0;
-  flex: 1;
-}
-
-.nav-item:hover {
-  background: rgba(79, 195, 247, 0.1);
-  transform: translateY(-1px);
-}
-
-.nav-item.active {
-  background: rgba(79, 195, 247, 0.15);
-}
-
-.nav-item.active .nav-icon,
-.nav-item.active .nav-label {
-  color: #4FC3F7;
-}
-
-.nav-icon {
-  font-size: 1.5rem;
-  margin-bottom: 0.25rem;
-  color: #6B7280;
-  transition: all 0.2s;
-}
-
-.nav-item.active .nav-icon {
-  transform: scale(1.1);
-}
-
-.nav-label {
-  font-size: 0.75rem;
-  color: #6B7280;
-  font-family: 'Baloo 2', sans-serif;
-  font-weight: 500;
-  text-align: center;
-  transition: color 0.2s;
-  white-space: nowrap;
-}
-
-/* Tablet Responsive */
+/* Responsive Design - FIXED for 770px - 1023px range */
 @media (min-width: 768px) {
   .leaderboard-view {
     background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%) !important;
   }
   
+  /* Force overrides for tablet range */
   .leaderboard-view .page-container {
     max-width: none !important;
     width: 100% !important;
@@ -818,6 +755,7 @@ export default {
     margin: 0 !important;
     justify-content: flex-start !important;
     align-items: stretch !important;
+    min-height: 100vh !important;
   }
 
   .leaderboard-view .app-main {

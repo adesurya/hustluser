@@ -1,5 +1,7 @@
 <template>
   <div class="category-view dashboard-page">
+    <HustlHeader :isDashboard="true" />
+
     <!-- Search Section -->
     <div class="dashboard-section search-section">
       <div class="search-container">
@@ -76,7 +78,7 @@
             <div class="product-actions">
               <span class="earn-coins">🪙 Earn {{ product.coins }} Coins</span>
               <button class="share-btn" @click="shareProduct(product)">
-                <span class="share-icon">📤</span>
+                <span class="share-icon">🔤</span>
               </button>
             </div>
           </div>
@@ -113,13 +115,16 @@
 </template>
 
 <script>
-import { ref, computed, watch } from 'vue'
+import { ref, computed } from 'vue'
 import BottomNavigation from '../components/BottomNavigation.vue'
+import HustlHeader from '../components/HustlHeader.vue'
+
 
 export default {
   name: 'CategoryView',
   components: {
-    BottomNavigation
+    BottomNavigation,
+    HustlHeader
   },
   setup() {
     const searchQuery = ref('')
@@ -127,6 +132,7 @@ export default {
     const currentPage = ref(1)
     const productsPerPage = 10
 
+    
     const categories = ref([
       { 
         id: 1, 
@@ -171,48 +177,6 @@ export default {
         color: '#32CD32', 
         productCount: 287,
         badge: 'New'
-      },
-      { 
-        id: 7, 
-        name: 'Books & Media', 
-        icon: '📚', 
-        color: '#9966CC', 
-        productCount: 419 
-      },
-      { 
-        id: 8, 
-        name: 'Food & Beverage', 
-        icon: '🍔', 
-        color: '#FFD700', 
-        productCount: 765 
-      },
-      { 
-        id: 9, 
-        name: 'Baby & Kids', 
-        icon: '🧸', 
-        color: '#FFB6C1', 
-        productCount: 398 
-      },
-      { 
-        id: 10, 
-        name: 'Pet Supplies', 
-        icon: '🐕', 
-        color: '#8FBC8F', 
-        productCount: 234 
-      },
-      { 
-        id: 11, 
-        name: 'Travel & Luggage', 
-        icon: '🧳', 
-        color: '#20B2AA', 
-        productCount: 156 
-      },
-      { 
-        id: 12, 
-        name: 'Office & Stationery', 
-        icon: '📝', 
-        color: '#708090', 
-        productCount: 312 
       }
     ])
 
@@ -242,370 +206,6 @@ export default {
         reviewCount: 1890,
         isFavorite: true,
         lastUpdated: '2025-08-30T09:45:00Z'
-      },
-      {
-        id: 3,
-        name: 'MacBook Air M3 13"',
-        category: 'Electronics',
-        categoryId: 1,
-        image: '/api/placeholder/120/120',
-        price: 'Rp 15,999,000',
-        coins: 160,
-        rating: 4.9,
-        reviewCount: 892,
-        isFavorite: false,
-        lastUpdated: '2025-08-30T09:30:00Z'
-      },
-      {
-        id: 4,
-        name: 'Nike Air Force 1 White',
-        category: 'Fashion',
-        categoryId: 2,
-        image: '/api/placeholder/120/120',
-        price: 'Rp 1,799,000',
-        coins: 18,
-        rating: 4.7,
-        reviewCount: 2134,
-        isFavorite: true,
-        lastUpdated: '2025-08-30T09:15:00Z'
-      },
-      {
-        id: 5,
-        name: 'Levi\'s 501 Original Jeans',
-        category: 'Fashion',
-        categoryId: 2,
-        image: '/api/placeholder/120/120',
-        price: 'Rp 1,299,000',
-        coins: 13,
-        rating: 4.4,
-        reviewCount: 1678,
-        isFavorite: false,
-        lastUpdated: '2025-08-30T09:00:00Z'
-      },
-      {
-        id: 6,
-        name: 'Zara Slim Fit Shirt',
-        category: 'Fashion',
-        categoryId: 2,
-        image: '/api/placeholder/120/120',
-        price: 'Rp 599,000',
-        coins: 6,
-        rating: 4.3,
-        reviewCount: 756,
-        isFavorite: false,
-        lastUpdated: '2025-08-30T08:45:00Z'
-      },
-      {
-        id: 7,
-        name: 'Adidas Ultraboost 22',
-        category: 'Sports & Outdoor',
-        categoryId: 3,
-        image: '/api/placeholder/120/120',
-        price: 'Rp 2,799,000',
-        coins: 28,
-        rating: 4.6,
-        reviewCount: 934,
-        isFavorite: true,
-        lastUpdated: '2025-08-30T08:30:00Z'
-      },
-      {
-        id: 8,
-        name: 'Wilson Tennis Racket Pro',
-        category: 'Sports & Outdoor',
-        categoryId: 3,
-        image: '/api/placeholder/120/120',
-        price: 'Rp 1,299,000',
-        coins: 13,
-        rating: 4.5,
-        reviewCount: 445,
-        isFavorite: false,
-        lastUpdated: '2025-08-30T08:15:00Z'
-      },
-      {
-        id: 9,
-        name: 'IKEA HEMNES Bed Frame',
-        category: 'Home & Living',
-        categoryId: 4,
-        image: '/api/placeholder/120/120',
-        price: 'Rp 2,499,000',
-        coins: 25,
-        rating: 4.3,
-        reviewCount: 1567,
-        isFavorite: false,
-        lastUpdated: '2025-08-30T08:00:00Z'
-      },
-      {
-        id: 10,
-        name: 'Philips Air Fryer XXL',
-        category: 'Home & Living',
-        categoryId: 4,
-        image: '/api/placeholder/120/120',
-        price: 'Rp 3,799,000',
-        coins: 38,
-        rating: 4.6,
-        reviewCount: 2234,
-        isFavorite: true,
-        lastUpdated: '2025-08-30T07:45:00Z'
-      },
-      {
-        id: 11,
-        name: 'The Ordinary Niacinamide',
-        category: 'Health & Beauty',
-        categoryId: 5,
-        image: '/api/placeholder/120/120',
-        price: 'Rp 149,000',
-        coins: 2,
-        rating: 4.4,
-        reviewCount: 3456,
-        isFavorite: false,
-        lastUpdated: '2025-08-30T07:30:00Z'
-      },
-      {
-        id: 12,
-        name: 'Cetaphil Gentle Cleanser',
-        category: 'Health & Beauty',
-        categoryId: 5,
-        image: '/api/placeholder/120/120',
-        price: 'Rp 179,000',
-        coins: 2,
-        rating: 4.3,
-        reviewCount: 2789,
-        isFavorite: true,
-        lastUpdated: '2025-08-30T07:15:00Z'
-      },
-      {
-        id: 13,
-        name: 'Michelin Pilot Sport 4 Tire',
-        category: 'Automotive',
-        categoryId: 6,
-        image: '/api/placeholder/120/120',
-        price: 'Rp 2,899,000',
-        coins: 29,
-        rating: 4.7,
-        reviewCount: 567,
-        isFavorite: false,
-        lastUpdated: '2025-08-30T07:00:00Z'
-      },
-      {
-        id: 14,
-        name: 'Bosch Car Battery 65Ah',
-        category: 'Automotive',
-        categoryId: 6,
-        image: '/api/placeholder/120/120',
-        price: 'Rp 1,299,000',
-        coins: 13,
-        rating: 4.5,
-        reviewCount: 234,
-        isFavorite: true,
-        lastUpdated: '2025-08-30T06:45:00Z'
-      },
-      {
-        id: 15,
-        name: 'Atomic Habits - James Clear',
-        category: 'Books & Media',
-        categoryId: 7,
-        image: '/api/placeholder/120/120',
-        price: 'Rp 249,000',
-        coins: 3,
-        rating: 4.8,
-        reviewCount: 4567,
-        isFavorite: false,
-        lastUpdated: '2025-08-30T06:30:00Z'
-      },
-      {
-        id: 16,
-        name: 'Blue Mountain Coffee 1kg',
-        category: 'Food & Beverage',
-        categoryId: 8,
-        image: '/api/placeholder/120/120',
-        price: 'Rp 899,000',
-        coins: 9,
-        rating: 4.5,
-        reviewCount: 1234,
-        isFavorite: false,
-        lastUpdated: '2025-08-30T06:15:00Z'
-      },
-      {
-        id: 17,
-        name: 'Manuka Honey UMF 15+',
-        category: 'Food & Beverage',
-        categoryId: 8,
-        image: '/api/placeholder/120/120',
-        price: 'Rp 749,000',
-        coins: 8,
-        rating: 4.7,
-        reviewCount: 567,
-        isFavorite: true,
-        lastUpdated: '2025-08-30T06:00:00Z'
-      },
-      {
-        id: 18,
-        name: 'Fisher-Price Baby Rocker',
-        category: 'Baby & Kids',
-        categoryId: 9,
-        image: '/api/placeholder/120/120',
-        price: 'Rp 1,999,000',
-        coins: 20,
-        rating: 4.4,
-        reviewCount: 890,
-        isFavorite: false,
-        lastUpdated: '2025-08-30T05:45:00Z'
-      },
-      {
-        id: 19,
-        name: 'LEGO Classic Bricks Set',
-        category: 'Baby & Kids',
-        categoryId: 9,
-        image: '/api/placeholder/120/120',
-        price: 'Rp 599,000',
-        coins: 6,
-        rating: 4.6,
-        reviewCount: 1456,
-        isFavorite: true,
-        lastUpdated: '2025-08-30T05:30:00Z'
-      },
-      {
-        id: 20,
-        name: 'Royal Canin Dog Food 15kg',
-        category: 'Pet Supplies',
-        categoryId: 10,
-        image: '/api/placeholder/120/120',
-        price: 'Rp 899,000',
-        coins: 9,
-        rating: 4.5,
-        reviewCount: 678,
-        isFavorite: false,
-        lastUpdated: '2025-08-30T05:15:00Z'
-      },
-      {
-        id: 21,
-        name: 'Cat Tree Tower 6 Level',
-        category: 'Pet Supplies',
-        categoryId: 10,
-        image: '/api/placeholder/120/120',
-        price: 'Rp 1,299,000',
-        coins: 13,
-        rating: 4.3,
-        reviewCount: 234,
-        isFavorite: true,
-        lastUpdated: '2025-08-30T05:00:00Z'
-      },
-      {
-        id: 22,
-        name: 'Samsonite Spinner 28"',
-        category: 'Travel & Luggage',
-        categoryId: 11,
-        image: '/api/placeholder/120/120',
-        price: 'Rp 3,499,000',
-        coins: 35,
-        rating: 4.6,
-        reviewCount: 567,
-        isFavorite: false,
-        lastUpdated: '2025-08-30T04:45:00Z'
-      },
-      {
-        id: 23,
-        name: 'Osprey Hiking Backpack',
-        category: 'Travel & Luggage',
-        categoryId: 11,
-        image: '/api/placeholder/120/120',
-        price: 'Rp 2,299,000',
-        coins: 23,
-        rating: 4.8,
-        reviewCount: 345,
-        isFavorite: true,
-        lastUpdated: '2025-08-30T04:30:00Z'
-      },
-      {
-        id: 24,
-        name: 'Herman Miller Aeron Chair',
-        category: 'Office & Stationery',
-        categoryId: 12,
-        image: '/api/placeholder/120/120',
-        price: 'Rp 24,999,000',
-        coins: 250,
-        rating: 4.9,
-        reviewCount: 456,
-        isFavorite: false,
-        lastUpdated: '2025-08-30T04:15:00Z'
-      },
-      {
-        id: 25,
-        name: 'Moleskine Classic Notebook',
-        category: 'Office & Stationery',
-        categoryId: 12,
-        image: '/api/placeholder/120/120',
-        price: 'Rp 449,000',
-        coins: 5,
-        rating: 4.4,
-        reviewCount: 789,
-        isFavorite: true,
-        lastUpdated: '2025-08-30T04:00:00Z'
-      },
-      {
-        id: 26,
-        name: 'Sony WH-1000XM5 Headphones',
-        category: 'Electronics',
-        categoryId: 1,
-        image: '/api/placeholder/120/120',
-        price: 'Rp 4,999,000',
-        coins: 50,
-        rating: 4.8,
-        reviewCount: 1456,
-        isFavorite: false,
-        lastUpdated: '2025-08-30T03:45:00Z'
-      },
-      {
-        id: 27,
-        name: 'Dell XPS 13 Laptop',
-        category: 'Electronics',
-        categoryId: 1,
-        image: '/api/placeholder/120/120',
-        price: 'Rp 19,999,000',
-        coins: 200,
-        rating: 4.7,
-        reviewCount: 678,
-        isFavorite: true,
-        lastUpdated: '2025-08-30T03:30:00Z'
-      },
-      {
-        id: 28,
-        name: 'Canon EOS R6 Mark II',
-        category: 'Electronics',
-        categoryId: 1,
-        image: '/api/placeholder/120/120',
-        price: 'Rp 35,999,000',
-        coins: 360,
-        rating: 4.8,
-        reviewCount: 189,
-        isFavorite: false,
-        lastUpdated: '2025-08-30T03:15:00Z'
-      },
-      {
-        id: 29,
-        name: 'Nintendo Switch OLED',
-        category: 'Electronics',
-        categoryId: 1,
-        image: '/api/placeholder/120/120',
-        price: 'Rp 4,699,000',
-        coins: 47,
-        rating: 4.6,
-        reviewCount: 2345,
-        isFavorite: true,
-        lastUpdated: '2025-08-30T03:00:00Z'
-      },
-      {
-        id: 30,
-        name: 'AirPods Pro 2nd Gen',
-        category: 'Electronics',
-        categoryId: 1,
-        image: '/api/placeholder/120/120',
-        price: 'Rp 3,799,000',
-        coins: 38,
-        rating: 4.7,
-        reviewCount: 1890,
-        isFavorite: false,
-        lastUpdated: '2025-08-30T02:45:00Z'
       }
     ])
 
@@ -669,27 +269,14 @@ export default {
 
     const toggleFavorite = (product) => {
       product.isFavorite = !product.isFavorite
-      console.log(`${product.isFavorite ? 'Added to' : 'Removed from'} favorites: ${product.name}`)
     }
 
     const shareProduct = (product) => {
       console.log(`Sharing product: ${product.name}`)
-      if (navigator.share) {
-        navigator.share({
-          title: product.name,
-          text: `Check out this ${product.category.toLowerCase()} product: ${product.name} - ${product.price}`,
-          url: window.location.href
-        })
-      } else {
-        const shareText = `Check out this product: ${product.name} - ${product.price}`
-        navigator.clipboard.writeText(shareText)
-        alert('Product link copied to clipboard!')
-      }
     }
 
     const goToPage = (page) => {
       currentPage.value = page
-      window.scrollTo({ top: 0, behavior: 'smooth' })
     }
 
     const loadMoreProducts = () => {
@@ -697,10 +284,6 @@ export default {
         currentPage.value++
       }
     }
-
-    watch([selectedCategory, searchQuery], () => {
-      currentPage.value = 1
-    })
 
     return {
       searchQuery,
@@ -724,10 +307,8 @@ export default {
 }
 </script>
 
-<style>
-/* Fixed CSS following ProfileView.vue pattern */
-
-/* Override main.css container restrictions for CategoryView */
+<style scoped>
+/* Override main.css container restrictions for CategoryView - Fixed for all screen sizes */
 .category-view {
   min-height: 100vh;
   background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%);
@@ -737,7 +318,7 @@ export default {
   overflow-y: auto;
 }
 
-/* Force full width on all screen sizes */
+/* Force full width and transparent background on ALL screen sizes */
 .category-view .page-container {
   max-width: none !important;
   width: 100% !important;
@@ -765,17 +346,7 @@ export default {
   overflow: visible !important;
 }
 
-html, body {
-  overflow-y: auto !important;
-  height: auto !important;
-}
-
-.page-container,
-.app-main {
-  overflow-y: visible !important;
-  height: auto !important;
-}
-
+/* Dashboard sections */
 .dashboard-section {
   background: white;
   margin: 0 1rem 1.5rem 1rem;
@@ -789,6 +360,7 @@ html, body {
   margin-top: 1rem;
 }
 
+/* Search Section */
 .search-section {
   padding: 1rem 1.25rem;
   background: transparent;
@@ -849,6 +421,7 @@ html, body {
   transform: scale(1.1);
 }
 
+/* Section Headers */
 .section-header {
   display: flex;
   justify-content: space-between;
@@ -895,15 +468,13 @@ html, body {
   transform: translateY(-1px);
 }
 
-/* Categories Grid - Consistent Mobile Layout */
+/* Categories Grid - Always 2 columns */
 .categories-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 0.75rem;
   margin-bottom: 1rem;
 }
-
-/* Keep mobile layout consistent across all screen sizes */
 
 .category-card {
   display: flex;
@@ -992,6 +563,7 @@ html, body {
   box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
 }
 
+/* Products Grid - Always 2 columns */
 .products-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -1146,6 +718,7 @@ html, body {
   transform: scale(1.1);
 }
 
+/* Empty State */
 .empty-state {
   text-align: center;
   padding: 3rem 1rem;
@@ -1170,6 +743,7 @@ html, body {
   font-family: 'Baloo 2', sans-serif;
 }
 
+/* Pagination */
 .pagination {
   display: flex;
   justify-content: center;
@@ -1204,63 +778,13 @@ html, body {
   color: white;
 }
 
-
-.nav-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0.5rem 0.25rem;
-  transition: all 0.2s;
-  border-radius: 8px;
-  min-width: 0;
-  flex: 1;
-}
-
-.nav-item:hover {
-  background: rgba(79, 195, 247, 0.1);
-  transform: translateY(-1px);
-}
-
-.nav-item.active {
-  background: rgba(79, 195, 247, 0.15);
-}
-
-.nav-item.active .nav-icon,
-.nav-item.active .nav-label {
-  color: #4FC3F7;
-}
-
-.nav-icon {
-  font-size: 1.5rem;
-  margin-bottom: 0.25rem;
-  color: #6B7280;
-  transition: all 0.2s;
-}
-
-.nav-item.active .nav-icon {
-  transform: scale(1.1);
-}
-
-.nav-label {
-  font-size: 0.75rem;
-  color: #6B7280;
-  font-family: 'Baloo 2', sans-serif;
-  font-weight: 500;
-  text-align: center;
-  transition: color 0.2s;
-  white-space: nowrap;
-}
-
-/* Tablet Responsive - Keep Mobile Layout, Override main.css */
+/* Responsive Design - FIXED for 770px - 1023px range */
 @media (min-width: 768px) {
   .category-view {
     background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%) !important;
   }
   
-  /* Override main.css constraints completely */
+  /* Force overrides for tablet range */
   .category-view .page-container {
     max-width: none !important;
     width: 100% !important;
@@ -1273,6 +797,7 @@ html, body {
     margin: 0 !important;
     justify-content: flex-start !important;
     align-items: stretch !important;
+    min-height: 100vh !important;
   }
 
   .category-view .app-main {
@@ -1290,7 +815,7 @@ html, body {
     overflow: visible !important;
   }
 
-  /* Keep mobile spacing and sizing */
+  /* Keep mobile layout styling */
   .dashboard-section {
     margin: 0 1rem 1.5rem 1rem;
     padding: 1.25rem;
@@ -1305,58 +830,19 @@ html, body {
     padding: 1rem 1.25rem;
   }
 
-  .search-container {
-    padding: 1rem 1.25rem;
-  }
-
-  /* Keep exact mobile layout */
+  /* Keep 2-column layout */
   .categories-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: 0.75rem;
-  }
-
-  .category-card {
-    min-height: 110px;
-    padding: 0.875rem 0.625rem;
-  }
-
-  .category-icon {
-    width: 48px;
-    height: 48px;
-    font-size: 1.5rem;
-  }
-
-  .category-name {
-    font-size: 0.8rem;
-  }
-
-  .category-count-text {
-    font-size: 0.7rem;
   }
 
   .products-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: 1rem;
   }
-
-  .product-card {
-    padding: 1rem;
-  }
-
-  .product-image {
-    height: 100px;
-  }
-
-  .product-name {
-    font-size: 0.875rem;
-  }
-
-  .product-price {
-    font-size: 0.875rem;
-  }
 }
 
-/* Desktop Responsive - Keep Mobile Layout, Override main.css */
+/* Desktop Responsive - Keep same overrides */
 @media (min-width: 1024px) {
   body {
     background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%) !important;
@@ -1367,7 +853,6 @@ html, body {
     min-height: auto !important;
   }
   
-  /* Override main.css constraints completely */
   .category-view .page-container {
     max-width: none !important;
     width: 100% !important;
@@ -1397,73 +882,6 @@ html, body {
     min-height: auto !important;
     height: auto !important;
     overflow: visible !important;
-  }
-
-  /* Use exact mobile spacing */
-  .dashboard-section {
-    margin: 0 1rem 1.5rem 1rem;
-    padding: 1.25rem;
-  }
-
-  .dashboard-section:first-child {
-    margin-top: 1rem;
-  }
-
-  .search-section {
-    margin: 0 0 1.5rem 0;
-    padding: 1rem 1.25rem;
-  }
-
-  .search-container {
-    padding: 1rem 1.25rem;
-  }
-
-  /* Keep exact mobile 2-column layout */
-  .categories-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 0.75rem;
-  }
-
-  /* Keep exact mobile category card sizing */
-  .category-card {
-    min-height: 110px;
-    padding: 0.875rem 0.625rem;
-  }
-
-  .category-icon {
-    width: 48px;
-    height: 48px;
-    font-size: 1.5rem;
-  }
-
-  .category-name {
-    font-size: 0.8rem;
-  }
-
-  .category-count-text {
-    font-size: 0.7rem;
-  }
-
-  /* Keep exact mobile 2-column products layout */
-  .products-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1rem;
-  }
-
-  .product-card {
-    padding: 1rem;
-  }
-
-  .product-image {
-    height: 100px;
-  }
-
-  .product-name {
-    font-size: 0.875rem;
-  }
-
-  .product-price {
-    font-size: 0.875rem;
   }
 }
 </style>

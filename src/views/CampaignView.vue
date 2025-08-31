@@ -1,66 +1,51 @@
 <template>
   <div class="campaign-view dashboard-page">
-    <!-- Main Campaign Banner Section -->
-    <div class="dashboard-section banner-section">
-      <div class="campaign-banner">
-        <div class="banner-content">
-          <div class="banner-header">
-            <h2 class="banner-title">{{ mainCampaign.title }}</h2>
-            <div class="campaign-status active">
-              <span class="status-dot"></span>
-              <span class="status-text">Active</span>
-            </div>
-          </div>
-          <p class="banner-description">{{ mainCampaign.description }}</p>
-          <div class="banner-details">
-            <div class="detail-item">
-              <span class="detail-icon">🎁</span>
-              <span class="detail-text">{{ mainCampaign.reward }}</span>
-            </div>
-            <div class="detail-item">
-              <span class="detail-icon">⏰</span>
-              <span class="detail-text">{{ mainCampaign.timeLeft }}</span>
-            </div>
-            <div class="detail-item">
-              <span class="detail-icon">👥</span>
-              <span class="detail-text">{{ mainCampaign.participants }} participants</span>
-            </div>
-          </div>
-          <div class="progress-section">
-            <div class="progress-info">
-              <span class="progress-label">Campaign Progress</span>
-              <span class="progress-percentage">{{ mainCampaign.progress }}%</span>
-            </div>
-            <div class="progress-bar">
-              <div class="progress-fill" :style="{ width: mainCampaign.progress + '%' }"></div>
-            </div>
-          </div>
-          <button class="join-campaign-btn" @click="joinMainCampaign">
-            <span class="btn-icon">🚀</span>
-            <span class="btn-text">Join Campaign</span>
-          </button>
+    <!-- Coin Points Section -->
+    <div class="dashboard-section points-section">
+      <div class="points-card">
+        <div class="coin-icon">🪙</div>
+        <div class="points-info">
+          <span class="points-value">{{ userPoints }}</span>
+          <span class="points-label">Coin Points</span>
         </div>
       </div>
     </div>
 
-    <!-- Available Campaigns Section -->
+    <!-- Search Section -->
+    <div class="dashboard-section search-section">
+      <div class="search-container">
+        <span class="search-icon">🔍</span>
+        <input 
+          type="text" 
+          class="search-input"
+          placeholder="Search campaigns..."
+          v-model="searchQuery"
+          @input="handleSearch"
+        />
+        <button v-if="searchQuery" @click="clearSearch" class="clear-search-btn">
+          <span class="clear-icon">✕</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Active Campaigns Section -->
     <div class="dashboard-section">
       <div class="section-header">
-        <h3 class="section-title">Available Campaigns</h3>
-        <span class="campaigns-count">{{ availableCampaigns.length }} campaigns</span>
+        <h3 class="section-title">Active Campaigns</h3>
+        <span class="campaigns-count">{{ filteredCampaigns.length }} campaigns</span>
       </div>
       <div class="campaigns-list">
         <div 
-          v-for="campaign in availableCampaigns" 
+          v-for="campaign in filteredCampaigns" 
           :key="campaign.id" 
           class="campaign-card"
           @click="viewCampaignDetails(campaign)"
         >
           <div class="campaign-image">
             <img :src="campaign.image" :alt="campaign.title" />
-            <div class="campaign-status" :class="campaign.status.toLowerCase().replace(' ', '-')">
+            <div class="campaign-status active">
               <span class="status-dot"></span>
-              <span class="status-text">{{ campaign.status }}</span>
+              <span class="status-text">Active</span>
             </div>
           </div>
           <div class="campaign-info">
@@ -68,66 +53,32 @@
             <p class="campaign-desc">{{ campaign.shortDescription }}</p>
             <div class="campaign-details">
               <div class="detail-row">
+                <span class="detail-label">Duration:</span>
+                <span class="detail-value">{{ formatDateRange(campaign.startDate, campaign.endDate) }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">Products:</span>
+                <span class="detail-value">{{ campaign.productCount }} items</span>
+              </div>
+              <div class="detail-row">
                 <span class="detail-label">Reward:</span>
                 <span class="detail-value reward">{{ campaign.reward }}</span>
               </div>
-              <div class="detail-row">
-                <span class="detail-label">Duration:</span>
-                <span class="detail-value">{{ campaign.duration }}</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">Participants:</span>
-                <span class="detail-value">{{ campaign.participants }}</span>
-              </div>
-            </div>
-            <button 
-              class="campaign-action-btn" 
-              :class="campaign.status.toLowerCase().replace(' ', '-')"
-              @click.stop="handleCampaignAction(campaign)"
-              :disabled="campaign.status === 'Ended'"
-            >
-              {{ getCampaignButtonText(campaign.status) }}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Campaign History Section -->
-    <div class="dashboard-section">
-      <div class="section-header">
-        <h3 class="section-title">My Campaign History</h3>
-        <button class="see-more-btn" @click="viewAllHistory">See All</button>
-      </div>
-      <div class="history-list">
-        <div 
-          v-for="history in campaignHistory" 
-          :key="history.id" 
-          class="history-item"
-        >
-          <div class="history-icon" :class="history.status.toLowerCase().replace(' ', '-')">
-            <span>{{ getHistoryIcon(history.status) }}</span>
-          </div>
-          <div class="history-info">
-            <h4 class="history-title">{{ history.campaignTitle }}</h4>
-            <p class="history-date">{{ formatDate(history.completedDate) }}</p>
-            <div class="history-reward">
-              <span class="reward-icon">🪙</span>
-              <span class="reward-text">{{ history.reward }}</span>
             </div>
           </div>
-          <div class="history-status" :class="history.status.toLowerCase().replace(' ', '-')">
-            <span class="status-dot"></span>
-            <span class="status-text">{{ history.status }}</span>
+          <div class="campaign-arrow">
+            <span>→</span>
           </div>
         </div>
       </div>
 
-      <!-- Empty State for History -->
-      <div v-if="campaignHistory.length === 0" class="empty-state">
+      <!-- Empty State -->
+      <div v-if="filteredCampaigns.length === 0" class="empty-state">
         <div class="empty-icon">📋</div>
-        <h4 class="empty-title">No Campaign History</h4>
-        <p class="empty-message">Join your first campaign to see your history here!</p>
+        <h4 class="empty-title">No campaigns found</h4>
+        <p class="empty-message">
+          {{ searchQuery ? 'Try different keywords' : 'No active campaigns available' }}
+        </p>
       </div>
     </div>
 
@@ -137,7 +88,9 @@
 </template>
 
 <script>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+import { useRouter } from 'vue-router'
+import { useAuthStore } from '../stores/auth'
 import BottomNavigation from '../components/BottomNavigation.vue'
 
 export default {
@@ -146,220 +99,203 @@ export default {
     BottomNavigation
   },
   setup() {
+    const router = useRouter()
+    const authStore = useAuthStore()
+    const searchQuery = ref('')
 
-    // Main campaign banner data
-    const mainCampaign = ref({
-      id: 1,
-      title: 'Summer Mega Sale 2024',
-      description: 'Join our biggest campaign of the year! Earn double coins on all electronics purchases and get exclusive discounts up to 70% off.',
-      reward: 'Up to 500 Coins + 70% Discount',
-      timeLeft: '5 days left',
-      participants: '12,847',
-      progress: 73,
-      image: '/api/placeholder/400/200'
-    })
+    // User points from auth store
+    const userPoints = computed(() => authStore.userPoints || 1250)
 
-    // Available campaigns data
-    const availableCampaigns = ref([
-      {
-        id: 2,
-        title: 'Fashion Week Special',
-        shortDescription: 'Get exclusive fashion deals and earn bonus coins',
-        reward: '200 Coins + 40% Off',
-        duration: '7 days',
-        participants: '8,234',
-        status: 'Active',
-        image: '/api/placeholder/120/80',
-        startDate: '2025-08-25',
-        endDate: '2025-09-01'
-      },
-      {
-        id: 3,
-        title: 'Gaming Gear Bonanza',
-        shortDescription: 'Special rewards for gaming equipment purchases',
-        reward: '300 Coins + Free Shipping',
-        duration: '10 days',
-        participants: '5,678',
-        status: 'Active',
-        image: '/api/placeholder/120/80',
-        startDate: '2025-08-20',
-        endDate: '2025-08-30'
-      },
-      {
-        id: 4,
-        title: 'Back to School',
-        shortDescription: 'Educational supplies with amazing rewards',
-        reward: '150 Coins + 30% Off',
-        duration: '14 days',
-        participants: '3,456',
-        status: 'Coming Soon',
-        image: '/api/placeholder/120/80',
-        startDate: '2025-09-05',
-        endDate: '2025-09-19'
-      },
-      {
-        id: 5,
-        title: 'Sports Equipment Sale',
-        shortDescription: 'Fitness and sports gear with bonus rewards',
-        reward: '250 Coins + 35% Off',
-        duration: '5 days',
-        participants: '2,890',
-        status: 'Coming Soon',
-        image: '/api/placeholder/120/80',
-        startDate: '2025-09-10',
-        endDate: '2025-09-15'
-      },
-      {
-        id: 6,
-        title: 'Home Appliances Fest',
-        shortDescription: 'Smart home devices with exclusive offers',
-        reward: '400 Coins + 50% Off',
-        duration: '7 days',
-        participants: '9,123',
-        status: 'Ended',
-        image: '/api/placeholder/120/80',
-        startDate: '2025-08-01',
-        endDate: '2025-08-08'
-      },
-      {
-        id: 7,
-        title: 'Beauty & Wellness',
-        shortDescription: 'Health and beauty products campaign',
-        reward: '180 Coins + 25% Off',
-        duration: '6 days',
-        participants: '4,567',
-        status: 'Ended',
-        image: '/api/placeholder/120/80',
-        startDate: '2025-07-15',
-        endDate: '2025-07-21'
-      }
-    ])
-
-    // User's campaign history
-    const campaignHistory = ref([
+    // Dummy active campaigns data
+    const activeCampaigns = ref([
       {
         id: 1,
-        campaignTitle: 'Electronics Summer Sale',
-        status: 'Completed',
-        reward: '320 Coins + 45% Discount',
-        completedDate: '2025-08-28T15:30:00Z',
-        earnedCoins: 320
+        title: 'Hari Kemerdekaan - 80 Tahun',
+        shortDescription: 'Celebrate Indonesia\'s independence with special discounts and rewards',
+        description: 'Join our special Independence Day campaign celebrating 80 years of Indonesia\'s freedom. Get exclusive discounts on electronics, fashion, and home appliances while earning bonus coins.',
+        image: '/api/placeholder/400/200',
+        startDate: '2025-08-01',
+        endDate: '2025-08-31',
+        reward: 'Up to 50% Off + Double Coins',
+        productCount: 150,
+        products: [
+          {
+            id: 101,
+            name: 'Samsung Smart TV G6080',
+            category: 'Electronic',
+            image: '/api/placeholder/120/120',
+            price: 'Rp 1.999.000',
+            originalPrice: 'Rp 3.999.000',
+            discount: '50%',
+            coins: 200,
+            rating: 4.8,
+            reviewCount: 3247,
+            description: 'Experience stunning 4K resolution with Samsung\'s latest Smart TV technology. Features HDR support, built-in streaming apps, and voice control.',
+            specifications: [
+              'Screen Size: 55 inches',
+              'Resolution: 4K UHD (3840x2160)',
+              'HDR: HDR10, HDR10+',
+              'Smart Platform: Tizen OS',
+              'Connectivity: 3 HDMI, 2 USB, WiFi',
+              'Audio: Dolby Digital Plus'
+            ]
+          },
+          {
+            id: 102,
+            name: 'iPhone 15 Pro Max 256GB',
+            category: 'Electronic',
+            image: '/api/placeholder/120/120',
+            price: 'Rp 18.999.000',
+            originalPrice: 'Rp 21.999.000',
+            discount: '13%',
+            coins: 190,
+            rating: 4.9,
+            reviewCount: 1890,
+            description: 'The most advanced iPhone ever with titanium design, A17 Pro chip, and revolutionary camera system.',
+            specifications: [
+              'Display: 6.7-inch Super Retina XDR',
+              'Chip: A17 Pro',
+              'Camera: 48MP Main, 12MP Ultra Wide',
+              'Storage: 256GB',
+              'Battery: All-day battery life',
+              'Material: Titanium'
+            ]
+          },
+          {
+            id: 103,
+            name: 'MacBook Air M3 13"',
+            category: 'Electronic',
+            image: '/api/placeholder/120/120',
+            price: 'Rp 14.999.000',
+            originalPrice: 'Rp 17.999.000',
+            discount: '16%',
+            coins: 150,
+            rating: 4.7,
+            reviewCount: 567,
+            description: 'Supercharged by M3 chip, the new MacBook Air is incredibly fast and powerful laptop that gets things done.',
+            specifications: [
+              'Chip: Apple M3 8-core CPU',
+              'Memory: 8GB unified memory',
+              'Storage: 256GB SSD',
+              'Display: 13.6-inch Liquid Retina',
+              'Battery: Up to 18 hours',
+              'Weight: 1.24 kg'
+            ]
+          }
+        ]
       },
       {
         id: 2,
-        campaignTitle: 'Fashion Week Special',
-        status: 'In Progress',
-        reward: '200 Coins + 40% Off',
-        completedDate: '2025-08-25T10:00:00Z',
-        earnedCoins: 0
+        title: 'Back to School Sale',
+        shortDescription: 'Get ready for the new semester with amazing deals on electronics and books',
+        description: 'Prepare for the academic year with our comprehensive back-to-school campaign. Special prices on laptops, tablets, books, and study accessories.',
+        image: '/api/placeholder/400/200',
+        startDate: '2025-07-15',
+        endDate: '2025-09-15',
+        reward: 'Up to 40% Off + Study Bonus',
+        productCount: 89,
+        products: [
+          {
+            id: 201,
+            name: 'iPad Pro 12.9" M2',
+            category: 'Electronic',
+            image: '/api/placeholder/120/120',
+            price: 'Rp 12.999.000',
+            originalPrice: 'Rp 15.999.000',
+            discount: '18%',
+            coins: 130,
+            rating: 4.8,
+            reviewCount: 890,
+            description: 'The ultimate iPad experience with M2 chip, Liquid Retina XDR display, and all-day battery life.',
+            specifications: [
+              'Display: 12.9-inch Liquid Retina XDR',
+              'Chip: Apple M2',
+              'Storage: 128GB',
+              'Camera: 12MP Wide, 10MP Ultra Wide',
+              'Battery: All-day battery life',
+              'Apple Pencil: 2nd generation compatible'
+            ]
+          }
+        ]
       },
       {
         id: 3,
-        campaignTitle: 'Gaming Gear Bonanza',
-        status: 'In Progress',
-        reward: '300 Coins + Free Shipping',
-        completedDate: '2025-08-20T14:20:00Z',
-        earnedCoins: 150
-      },
-      {
-        id: 4,
-        campaignTitle: 'Home & Garden Sale',
-        status: 'Completed',
-        reward: '150 Coins + 30% Off',
-        completedDate: '2025-08-15T16:45:00Z',
-        earnedCoins: 150
-      },
-      {
-        id: 5,
-        campaignTitle: 'Tech Gadgets Promo',
-        status: 'Failed',
-        reward: '250 Coins + 35% Off',
-        completedDate: '2025-08-10T12:15:00Z',
-        earnedCoins: 0
+        title: 'Fashion Week Special',
+        shortDescription: 'Discover the latest fashion trends with exclusive designer collections',
+        description: 'Step into style with our Fashion Week campaign featuring the latest collections from top designers and brands.',
+        image: '/api/placeholder/400/200',
+        startDate: '2025-08-10',
+        endDate: '2025-09-10',
+        reward: 'Up to 60% Off + Style Points',
+        productCount: 234,
+        products: [
+          {
+            id: 301,
+            name: 'Nike Air Force 1 White',
+            category: 'Fashion',
+            image: '/api/placeholder/120/120',
+            price: 'Rp 1.299.000',
+            originalPrice: 'Rp 1.799.000',
+            discount: '27%',
+            coins: 13,
+            rating: 4.7,
+            reviewCount: 2134,
+            description: 'The iconic basketball shoe that changed the game. Classic white leather upper with signature Air cushioning.',
+            specifications: [
+              'Material: Premium leather upper',
+              'Sole: Rubber outsole',
+              'Cushioning: Nike Air technology',
+              'Style: Low-top basketball shoe',
+              'Color: White/White',
+              'Gender: Unisex'
+            ]
+          }
+        ]
       }
     ])
 
-    // Methods
-    const formatDate = (dateString) => {
-      const date = new Date(dateString)
-      const now = new Date()
-      const diffTime = Math.abs(now - date)
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+    const filteredCampaigns = computed(() => {
+      if (!searchQuery.value) return activeCampaigns.value
       
-      if (diffDays === 1) return 'Today'
-      if (diffDays === 2) return 'Yesterday'
-      if (diffDays <= 7) return `${diffDays} days ago`
+      const query = searchQuery.value.toLowerCase()
+      return activeCampaigns.value.filter(campaign =>
+        campaign.title.toLowerCase().includes(query) ||
+        campaign.shortDescription.toLowerCase().includes(query)
+      )
+    })
+
+    const handleSearch = () => {
+      // Search is reactive through computed property
+      console.log('Searching for:', searchQuery.value)
+    }
+
+    const clearSearch = () => {
+      searchQuery.value = ''
+    }
+
+    const formatDateRange = (startDate, endDate) => {
+      const start = new Date(startDate)
+      const end = new Date(endDate)
+      const options = { day: 'numeric', month: 'short' }
       
-      return date.toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric'
-      })
-    }
-
-    const getCampaignButtonText = (status) => {
-      switch (status) {
-        case 'Active': return 'Join Now'
-        case 'Coming Soon': return 'Notify Me'
-        case 'Ended': return 'View Results'
-        default: return 'View Details'
-      }
-    }
-
-    const getHistoryIcon = (status) => {
-      switch (status) {
-        case 'Completed': return '✅'
-        case 'In Progress': return '⏳'
-        case 'Failed': return '❌'
-        default: return '📋'
-      }
-    }
-
-    const joinMainCampaign = () => {
-      console.log('Joining main campaign:', mainCampaign.value.title)
-      // Implement join campaign logic
-    }
-
-    const handleCampaignAction = (campaign) => {
-      console.log(`Campaign action for: ${campaign.title}, Status: ${campaign.status}`)
-      
-      switch (campaign.status) {
-        case 'Active':
-          // Join campaign logic
-          console.log('Joining campaign...')
-          break
-        case 'Coming Soon':
-          // Set notification logic
-          console.log('Setting notification...')
-          break
-        case 'Ended':
-          // View results logic
-          console.log('Viewing results...')
-          break
-      }
+      return `${start.toLocaleDateString('en-US', options)} - ${end.toLocaleDateString('en-US', options)}`
     }
 
     const viewCampaignDetails = (campaign) => {
-      console.log('Viewing campaign details:', campaign.title)
-      // Navigate to campaign details page
-    }
-
-    const viewAllHistory = () => {
-      console.log('Navigate to full campaign history')
-      // router.push('/campaign-history')
+      // Store campaign details in sessionStorage for next view
+      sessionStorage.setItem('selectedCampaign', JSON.stringify(campaign))
+      router.push(`/campaign/${campaign.id}`)
     }
 
     return {
-      mainCampaign,
-      availableCampaigns,
-      campaignHistory,
-      formatDate,
-      getCampaignButtonText,
-      getHistoryIcon,
-      joinMainCampaign,
-      handleCampaignAction,
-      viewCampaignDetails,
-      viewAllHistory
+      userPoints,
+      searchQuery,
+      activeCampaigns,
+      filteredCampaigns,
+      handleSearch,
+      clearSearch,
+      formatDateRange,
+      viewCampaignDetails
     }
   }
 }
@@ -417,151 +353,131 @@ export default {
   margin-top: 1rem;
 }
 
+/* Points Section */
+.points-section {
+  padding: 1rem 1.25rem;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+}
+
+.points-card {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 16px;
+  padding: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  box-shadow: 0 6px 16px rgba(102, 126, 234, 0.25);
+  color: white;
+}
+
+.coin-icon {
+  font-size: 2rem;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+.points-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.points-value {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: white;
+  font-family: 'Baloo 2', sans-serif;
+  line-height: 1;
+}
+
+.points-label {
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.8);
+  font-family: 'Baloo 2', sans-serif;
+  font-weight: 500;
+}
+
+/* Search Section */
+.search-section {
+  padding: 1rem 1.25rem;
+  background: transparent;
+  margin: 0 0 1.5rem 0;
+  box-shadow: none;
+  border: none;
+}
+
+.search-container {
+  background: white;
+  border-radius: 24px;
+  padding: 1rem 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  position: relative;
+}
+
+.search-icon {
+  font-size: 1.125rem;
+  color: #6B7280;
+}
+
+.search-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 1rem;
+  color: #1F2937;
+  font-family: 'Baloo 2', sans-serif;
+  font-weight: 500;
+}
+
+.search-input::placeholder {
+  color: #9CA3AF;
+  font-weight: 400;
+}
+
+.clear-search-btn {
+  background: #EF4444;
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: white;
+  font-size: 0.75rem;
+  transition: all 0.2s;
+}
+
+.clear-search-btn:hover {
+  background: #DC2626;
+  transform: scale(1.1);
+}
+
 /* Section Headers */
 .section-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem;
-}
-
-.banner-title {
-  font-size: 1.375rem;
-  font-weight: 800;
-  margin: 0;
-  font-family: 'Baloo 2', sans-serif;
-  line-height: 1.2;
-}
-
-.campaign-status {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.375rem 0.75rem;
-  border-radius: 12px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  font-family: 'Baloo 2', sans-serif;
-}
-
-.campaign-status.active {
-  background: rgba(16, 185, 129, 0.2);
-  color: #10B981;
-}
-
-.status-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.campaign-status.active .status-dot {
-  background: #10B981;
-  animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
-}
-
-.banner-description {
-  font-size: 0.9rem;
-  line-height: 1.5;
-  margin-bottom: 1.25rem;
-  opacity: 0.95;
-  font-family: 'Baloo 2', sans-serif;
-}
-
-.banner-details {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
   margin-bottom: 1.25rem;
 }
 
-.detail-item {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.8rem;
-  font-family: 'Baloo 2', sans-serif;
-  font-weight: 500;
-}
-
-.detail-icon {
-  font-size: 0.875rem;
-}
-
-.progress-section {
-  margin-bottom: 1.5rem;
-}
-
-.progress-info {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0.5rem;
-}
-
-.progress-label {
-  font-size: 0.8rem;
-  font-family: 'Baloo 2', sans-serif;
-  font-weight: 500;
-  opacity: 0.9;
-}
-
-.progress-percentage {
-  font-size: 0.8rem;
-  font-family: 'Baloo 2', sans-serif;
-  font-weight: 700;
-}
-
-.progress-bar {
-  width: 100%;
-  height: 8px;
-  background: rgba(255, 255, 255, 0.3);
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-.progress-fill {
-  height: 100%;
-  background: rgba(255, 255, 255, 0.9);
-  border-radius: 4px;
-  transition: width 0.3s ease;
-  box-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
-}
-
-.join-campaign-btn {
-  background: rgba(255, 255, 255, 0.2);
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  color: white;
-  border-radius: 16px;
-  padding: 0.875rem 1.5rem;
-  font-family: 'Baloo 2', sans-serif;
-  font-weight: 700;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
-  backdrop-filter: blur(10px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.join-campaign-btn:hover {
-  background: rgba(255, 255, 255, 0.3);
-  border-color: rgba(255, 255, 255, 0.5);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
-}
-
-.btn-icon {
+.section-title {
   font-size: 1.125rem;
+  font-weight: 700;
+  color: #1F2937;
+  font-family: 'Baloo 2', sans-serif;
+}
+
+.campaigns-count {
+  font-size: 0.875rem;
+  color: #6B7280;
+  font-family: 'Baloo 2', sans-serif;
+  font-weight: 500;
 }
 
 /* Campaigns List */
@@ -576,16 +492,18 @@ export default {
   background: #F8FAFC;
   border-radius: 16px;
   padding: 1rem;
-  border: 1px solid #E2E8F0;
+  border: 2px solid #E2E8F0;
   transition: all 0.2s;
   cursor: pointer;
+  align-items: center;
+  gap: 1rem;
 }
 
 .campaign-card:hover {
   background: #F1F5F9;
-  border-color: #CBD5E1;
+  border-color: #4FC3F7;
   transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 6px 16px rgba(79, 195, 247, 0.15);
 }
 
 .campaign-image {
@@ -596,13 +514,44 @@ export default {
   overflow: hidden;
   background: #E5E7EB;
   flex-shrink: 0;
-  margin-right: 1rem;
 }
 
 .campaign-image img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+.campaign-status {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.125rem 0.5rem;
+  border-radius: 8px;
+  font-size: 0.625rem;
+  font-weight: 600;
+  font-family: 'Baloo 2', sans-serif;
+}
+
+.campaign-status.active {
+  background: rgba(16, 185, 129, 0.9);
+  color: white;
+}
+
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
 }
 
 .campaign-info {
@@ -632,7 +581,6 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
-  margin-bottom: 0.75rem;
 }
 
 .detail-row {
@@ -660,200 +608,22 @@ export default {
   font-weight: 700;
 }
 
-/* Campaign Status Badges */
-.campaign-status.coming-soon {
-  background: rgba(245, 158, 11, 0.2);
-  color: #F59E0B;
-}
-
-.campaign-status.coming-soon .status-dot {
-  background: #F59E0B;
-}
-
-.campaign-status.ended {
-  background: rgba(156, 163, 175, 0.2);
+.campaign-arrow {
   color: #6B7280;
-}
-
-.campaign-status.ended .status-dot {
-  background: #6B7280;
-}
-
-/* Campaign Action Buttons */
-.campaign-action-btn {
-  padding: 0.5rem 1rem;
-  border-radius: 8px;
-  border: none;
-  font-size: 0.75rem;
-  font-weight: 600;
-  font-family: 'Baloo 2', sans-serif;
-  cursor: pointer;
-  transition: all 0.2s;
-  align-self: flex-start;
-}
-
-.campaign-action-btn.active {
-  background: #4FC3F7;
-  color: white;
-  box-shadow: 0 2px 6px rgba(79, 195, 247, 0.3);
-}
-
-.campaign-action-btn.active:hover {
-  background: #29B6F6;
-  transform: translateY(-1px);
-}
-
-.campaign-action-btn.coming-soon {
-  background: #FEF3C7;
-  color: #92400E;
-  border: 1px solid #FCD34D;
-}
-
-.campaign-action-btn.coming-soon:hover {
-  background: #FDE68A;
-}
-
-.campaign-action-btn.ended {
-  background: #F3F4F6;
-  color: #6B7280;
-  cursor: not-allowed;
-}
-
-.campaign-action-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-/* Campaign History */
-.history-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.history-item {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 1rem;
-  background: #F8FAFC;
-  border-radius: 12px;
-  border: 1px solid #E2E8F0;
+  font-size: 1.25rem;
+  flex-shrink: 0;
   transition: all 0.2s;
 }
 
-.history-item:hover {
-  background: #F1F5F9;
-  border-color: #CBD5E1;
-  transform: translateY(-1px);
-}
-
-.history-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.125rem;
-  flex-shrink: 0;
-}
-
-.history-icon.completed {
-  background: #D1FAE5;
-  color: #065F46;
-}
-
-.history-icon.in-progress {
-  background: #FEF3C7;
-  color: #92400E;
-}
-
-.history-icon.failed {
-  background: #FEE2E2;
-  color: #991B1B;
-}
-
-.history-info {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.history-title {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: #1F2937;
-  font-family: 'Baloo 2', sans-serif;
-  line-height: 1.3;
-}
-
-.history-date {
-  font-size: 0.75rem;
-  color: #6B7280;
-  font-family: 'Baloo 2', sans-serif;
-  font-weight: 500;
-}
-
-.history-reward {
-  display: flex;
-  align-items: center;
-  gap: 0.375rem;
-  font-size: 0.8rem;
-  color: #059669;
-  font-family: 'Baloo 2', sans-serif;
-  font-weight: 600;
-}
-
-.reward-icon {
-  font-size: 0.75rem;
-}
-
-.history-status {
-  display: flex;
-  align-items: center;
-  gap: 0.375rem;
-  padding: 0.25rem 0.75rem;
-  border-radius: 12px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  font-family: 'Baloo 2', sans-serif;
-  flex-shrink: 0;
-}
-
-.history-status.completed {
-  background: #D1FAE5;
-  color: #065F46;
-}
-
-.history-status.completed .status-dot {
-  background: #10B981;
-}
-
-.history-status.in-progress {
-  background: #FEF3C7;
-  color: #92400E;
-}
-
-.history-status.in-progress .status-dot {
-  background: #F59E0B;
-  animation: pulse 2s infinite;
-}
-
-.history-status.failed {
-  background: #FEE2E2;
-  color: #991B1B;
-}
-
-.history-status.failed .status-dot {
-  background: #EF4444;
+.campaign-card:hover .campaign-arrow {
+  color: #4FC3F7;
+  transform: translateX(4px);
 }
 
 /* Empty State */
 .empty-state {
   text-align: center;
-  padding: 2rem 1rem;
+  padding: 3rem 1rem;
   color: #6B7280;
 }
 
@@ -912,14 +682,6 @@ export default {
     overflow: visible !important;
   }
 
-  .banner-title {
-    font-size: 1.5rem;
-  }
-
-  .banner-description {
-    font-size: 1rem;
-  }
-
   .campaign-image {
     width: 100px;
     height: 75px;
@@ -973,14 +735,6 @@ export default {
     min-height: auto !important;
     height: auto !important;
     overflow: visible !important;
-  }
-
-  .banner-title {
-    font-size: 1.75rem;
-  }
-
-  .banner-description {
-    font-size: 1.125rem;
   }
 }
 </style>

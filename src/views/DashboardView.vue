@@ -1,5 +1,7 @@
 <template>
   <div class="dashboard-view">
+  <HustlHeader :isDashboard="true" />
+
     <!-- Points Section -->
     <div class="dashboard-section points-section">
       <div class="points-card">
@@ -100,11 +102,14 @@
 import { ref, computed, onMounted } from 'vue'
 import { useAuthStore } from '../stores/auth'
 import BottomNavigation from '../components/BottomNavigation.vue'
+import HustlHeader from '../components/HustlHeader.vue'
+
 
 export default {
   name: 'DashboardView',
   components: {
-    BottomNavigation
+    BottomNavigation,
+    HustlHeader
   },
   setup() {
     const authStore = useAuthStore()

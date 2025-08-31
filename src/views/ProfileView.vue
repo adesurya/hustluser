@@ -1,5 +1,6 @@
 <template>
   <div class="profile-view profile-page">
+    <HustlHeader :isDashboard="true" />
     <!-- User Info Section -->
     <div class="dashboard-section profile-header">
       <div class="user-avatar">
@@ -85,7 +86,6 @@
 
     <!-- Bottom Navigation -->
     <BottomNavigation />
-
   </div>
 </template>
 
@@ -94,11 +94,13 @@ import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import BottomNavigation from '../components/BottomNavigation.vue'
+import HustlHeader from '../components/HustlHeader.vue'
 
 export default {
   name: 'ProfileView',
   components: {
-    BottomNavigation
+    BottomNavigation,
+    HustlHeader
   },
   setup() {
     const router = useRouter()
@@ -190,7 +192,6 @@ export default {
       }
     ])
 
-
     // Methods
     const formatDate = (dateString) => {
       const date = new Date(dateString)
@@ -211,17 +212,14 @@ export default {
 
     const handleRedeem = () => {
       console.log('Navigate to redeem page')
-      // router.push('/redeem')
     }
 
     const viewAllCoins = () => {
       console.log('Navigate to all coins history')
-      // router.push('/coins-history')
     }
 
     const viewAllRedeems = () => {
       console.log('Navigate to all redeems history')
-      // router.push('/redeems-history')
     }
 
     const handleLogout = () => {
@@ -248,7 +246,24 @@ export default {
 </script>
 
 <style scoped>
-/* Profile View - Consistent with Dashboard styling */
+/* Add to existing styles */
+.header-settings-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  padding: 0.5rem;
+  cursor: pointer;
+  color: #1F2937;
+  font-size: 1rem;
+  transition: all 0.2s;
+  backdrop-filter: blur(10px);
+}
+
+.header-settings-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.05);
+}
+/* Override main.css container restrictions for ProfileView - Fixed for all screen sizes */
 .profile-view {
   min-height: 100vh;
   background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%);
@@ -258,10 +273,32 @@ export default {
   overflow-y: auto;
 }
 
-/* Force scrolling on all screen sizes */
-html, body {
-  overflow-y: auto !important;
+/* Force full width and transparent background on ALL screen sizes */
+.profile-view .page-container {
+  max-width: none !important;
+  width: 100% !important;
+  background: transparent !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  border: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.profile-view .app-main {
+  max-width: none !important;
+  width: 100% !important;
+  background: transparent !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  border: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  min-height: auto !important;
   height: auto !important;
+  overflow: visible !important;
 }
 
 /* Dashboard Section - Clean containers */
@@ -562,65 +599,41 @@ html, body {
   box-shadow: 0 6px 16px rgba(239, 68, 68, 0.3);
 }
 
-/* Bottom Navigation - Same as Dashboard */
-.nav-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0.5rem 0.25rem;
-  transition: all 0.2s;
-  border-radius: 8px;
-  min-width: 0;
-  flex: 1;
-}
-
-.nav-item:hover {
-  background: rgba(79, 195, 247, 0.1);
-  transform: translateY(-1px);
-}
-
-.nav-item.active {
-  background: rgba(79, 195, 247, 0.15);
-}
-
-.nav-item.active .nav-icon,
-.nav-item.active .nav-label {
-  color: #4FC3F7;
-}
-
-.nav-icon {
-  font-size: 1.5rem;
-  margin-bottom: 0.25rem;
-  color: #6B7280;
-  transition: all 0.2s;
-}
-
-.nav-item.active .nav-icon {
-  transform: scale(1.1);
-}
-
-.nav-label {
-  font-size: 0.75rem;
-  color: #6B7280;
-  font-family: 'Baloo 2', sans-serif;
-  font-weight: 500;
-  text-align: center;
-  transition: color 0.2s;
-  white-space: nowrap;
-}
-
-/* Responsive Styling for Tablet and Desktop */
+/* Responsive Design - FIXED for 770px - 1023px range */
 @media (min-width: 768px) {
   .profile-view {
     background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%) !important;
   }
   
-  .page-container,
-  .app-main {
+  /* Force overrides for tablet range */
+  .profile-view .page-container {
+    max-width: none !important;
+    width: 100% !important;
     background: transparent !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    justify-content: flex-start !important;
+    align-items: stretch !important;
+    min-height: 100vh !important;
+  }
+
+  .profile-view .app-main {
+    max-width: none !important;
+    width: 100% !important;
+    background: transparent !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    min-height: auto !important;
+    height: auto !important;
+    overflow: visible !important;
   }
 
   .profile-header {
@@ -672,17 +685,33 @@ html, body {
     min-height: auto !important;
   }
   
-  .page-container {
-    background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%) !important;
+  .profile-view .page-container {
+    max-width: none !important;
+    width: 100% !important;
+    background: transparent !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    justify-content: flex-start !important;
+    align-items: stretch !important;
     min-height: 100vh !important;
     height: auto !important;
   }
   
-  .app-main {
+  .profile-view .app-main {
+    max-width: none !important;
+    width: 100% !important;
     background: transparent !important;
+    border-radius: 0 !important;
     box-shadow: none !important;
+    backdrop-filter: none !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
     min-height: auto !important;
-    max-height: none !important;
     height: auto !important;
     overflow: visible !important;
   }
