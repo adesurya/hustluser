@@ -85,7 +85,7 @@
     <!-- Other Users Section -->
     <div class="dashboard-section users-section">
       <div class="section-header">
-        <h3 class="section-title">Other Users</h3>
+        <h3 class="section-title">Juara Lainnya</h3>
         <span class="users-count">{{ otherUsers.length }} users</span>
       </div>
       

@@ -60,11 +60,16 @@
       </div>
       
       <div v-if="displayedProducts.length > 0" class="products-grid">
-        <div v-for="product in displayedProducts" :key="product.id" class="product-card">
+        <div 
+          v-for="product in displayedProducts" 
+          :key="product.id" 
+          class="product-card"
+          @click="viewProductDetails(product)"
+        >
           <div class="product-image">
             <img :src="product.image" :alt="product.name" />
             <div class="product-badge">{{ product.category }}</div>
-            <button class="favorite-btn" @click="toggleFavorite(product)">
+            <button class="favorite-btn" @click.stop="toggleFavorite(product)">
               <span class="heart-icon">{{ product.isFavorite ? '❤️' : '🤍' }}</span>
             </button>
           </div>
@@ -77,8 +82,8 @@
             </div>
             <div class="product-actions">
               <span class="earn-coins">🪙 Earn {{ product.coins }} Coins</span>
-              <button class="share-btn" @click="shareProduct(product)">
-                <span class="share-icon">🔤</span>
+              <button class="share-btn" @click.stop="shareProduct(product)">
+                <span class="share-icon">📤</span>
               </button>
             </div>
           </div>
@@ -116,6 +121,7 @@
 
 <script>
 import { ref, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import BottomNavigation from '../components/BottomNavigation.vue'
 import HustlHeader from '../components/HustlHeader.vue'
 
@@ -127,6 +133,7 @@ export default {
     HustlHeader
   },
   setup() {
+    const router = useRouter()
     const searchQuery = ref('')
     const selectedCategory = ref(null)
     const currentPage = ref(1)
@@ -188,11 +195,22 @@ export default {
         categoryId: 1,
         image: '/api/placeholder/120/120',
         price: 'Rp 21,999,000',
+        originalPrice: 'Rp 25,999,000',
+        discount: '15%',
         coins: 220,
         rating: 4.8,
         reviewCount: 3247,
         isFavorite: false,
-        lastUpdated: '2025-08-30T10:00:00Z'
+        lastUpdated: '2025-08-30T10:00:00Z',
+        description: 'The most advanced iPhone ever with titanium design, A17 Pro chip, and revolutionary camera system. Professional-grade photography and videography capabilities.',
+        specifications: [
+          'Display: 6.7-inch Super Retina XDR',
+          'Chip: A17 Pro',
+          'Camera: 48MP Main, 12MP Ultra Wide', 
+          'Storage: 256GB',
+          'Battery: All-day battery life',
+          'Material: Titanium'
+        ]
       },
       {
         id: 2,
@@ -201,11 +219,118 @@ export default {
         categoryId: 1,
         image: '/api/placeholder/120/120',
         price: 'Rp 7,500,000',
+        originalPrice: 'Rp 9,999,000',
+        discount: '25%',
         coins: 75,
         rating: 4.6,
         reviewCount: 1890,
         isFavorite: true,
-        lastUpdated: '2025-08-30T09:45:00Z'
+        lastUpdated: '2025-08-30T09:45:00Z',
+        description: 'Experience stunning 4K resolution with Samsung\'s latest Smart TV technology. Features HDR support, built-in streaming apps, and voice control.',
+        specifications: [
+          'Screen Size: 55 inches',
+          'Resolution: 4K UHD (3840x2160)', 
+          'HDR: HDR10, HDR10+',
+          'Smart Platform: Tizen OS',
+          'Connectivity: 3 HDMI, 2 USB, WiFi',
+          'Audio: Dolby Digital Plus'
+        ]
+      },
+      {
+        id: 3,
+        name: 'Nike Air Force 1 White',
+        category: 'Fashion',
+        categoryId: 2,
+        image: '/api/placeholder/120/120',
+        price: 'Rp 1,299,000',
+        originalPrice: 'Rp 1,799,000',
+        discount: '27%',
+        coins: 13,
+        rating: 4.7,
+        reviewCount: 2134,
+        isFavorite: false,
+        lastUpdated: '2025-08-30T09:30:00Z',
+        description: 'The iconic basketball shoe that changed the game. Classic white leather upper with signature Air cushioning.',
+        specifications: [
+          'Material: Premium leather upper',
+          'Sole: Rubber outsole',
+          'Cushioning: Nike Air technology',
+          'Style: Low-top basketball shoe',
+          'Color: White/White',
+          'Gender: Unisex'
+        ]
+      },
+      {
+        id: 4,
+        name: 'Adidas Ultraboost 22',
+        category: 'Sports',
+        categoryId: 3,
+        image: '/api/placeholder/120/120',
+        price: 'Rp 2,200,000',
+        originalPrice: 'Rp 3,000,000',
+        discount: '26%',
+        coins: 22,
+        rating: 4.6,
+        reviewCount: 743,
+        isFavorite: false,
+        lastUpdated: '2025-08-30T09:15:00Z',
+        description: 'Premium running shoes with responsive BOOST midsole and supportive Primeknit upper for ultimate performance.',
+        specifications: [
+          'Upper: Primeknit textile',
+          'Midsole: BOOST technology',
+          'Outsole: Continental rubber',
+          'Support: Torsion system',
+          'Fit: Snug, supportive',
+          'Use: Running, training'
+        ]
+      },
+      {
+        id: 5,
+        name: 'MacBook Air M3 13"',
+        category: 'Electronics',
+        categoryId: 1,
+        image: '/api/placeholder/120/120',
+        price: 'Rp 14,999,000',
+        originalPrice: 'Rp 17,999,000',
+        discount: '16%',
+        coins: 150,
+        rating: 4.7,
+        reviewCount: 567,
+        isFavorite: true,
+        lastUpdated: '2025-08-30T09:00:00Z',
+        description: 'Supercharged by M3 chip, the new MacBook Air is incredibly fast and powerful laptop that gets things done.',
+        specifications: [
+          'Chip: Apple M3 8-core CPU',
+          'Memory: 8GB unified memory',
+          'Storage: 256GB SSD',
+          'Display: 13.6-inch Liquid Retina', 
+          'Battery: Up to 18 hours',
+          'Weight: 1.24 kg'
+        ]
+      },
+      {
+        id: 6,
+        name: 'IKEA Sofa Modern',
+        category: 'Home & Living',
+        categoryId: 4,
+        image: '/api/placeholder/120/120',
+        price: 'Rp 3,499,000',
+        originalPrice: 'Rp 4,999,000',
+        discount: '30%',
+        coins: 35,
+        rating: 4.4,
+        reviewCount: 892,
+        isFavorite: false,
+        lastUpdated: '2025-08-30T08:45:00Z',
+        description: 'Comfortable and stylish modern sofa perfect for any living room. High-quality materials and contemporary design.',
+        specifications: [
+          'Material: Premium fabric upholstery',
+          'Frame: Solid wood construction',
+          'Seating: 3-seater capacity',
+          'Color: Multiple options available',
+          'Warranty: 10 year limited',
+          'Assembly: Required'
+        ]
       }
     ])
 
@@ -275,6 +400,12 @@ export default {
       console.log(`Sharing product: ${product.name}`)
     }
 
+    const viewProductDetails = (product) => {
+      // Store product details for ProductDetailView
+      sessionStorage.setItem('selectedProduct', JSON.stringify(product))
+      router.push(`/product/${product.id}`)
+    }
+
     const goToPage = (page) => {
       currentPage.value = page
     }
@@ -300,6 +431,7 @@ export default {
       getStarRating,
       toggleFavorite,
       shareProduct,
+      viewProductDetails,
       goToPage,
       loadMoreProducts
     }

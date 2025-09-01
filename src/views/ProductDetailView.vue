@@ -1,5 +1,7 @@
 <template>
   <div class="product-detail-view dashboard-page">
+    <HustlHeader :isDashboard="true" />
+
     <!-- Header with Back Button -->
     <div class="dashboard-section header-section">
       <div class="header-container">
@@ -13,37 +15,37 @@
       </div>
     </div>
 
-    <!-- Product Information Section -->
+    <!-- Product Information Section - Mobile-First Layout -->
     <div class="dashboard-section product-info-section" v-if="product">
-      <div class="product-header">
-        <div class="product-image-container">
-          <div class="product-image">
-            <img :src="product.image" :alt="product.name" />
-            <div class="product-badge">{{ product.category }}</div>
-            <div v-if="product.discount" class="discount-badge">{{ product.discount }} OFF</div>
-          </div>
+      <!-- Product Image -->
+      <div class="product-image-container">
+        <div class="product-image">
+          <img :src="product.image" :alt="product.name" />
+          <div class="product-badge">{{ product.category }}</div>
+          <div v-if="product.discount" class="discount-badge">{{ product.discount }} OFF</div>
+        </div>
+      </div>
+      
+      <!-- Product Details -->
+      <div class="product-details">
+        <h1 class="product-title">{{ product.name }}</h1>
+        
+        <div class="product-pricing">
+          <div class="current-price">{{ product.price }}</div>
+          <div v-if="product.originalPrice" class="original-price">{{ product.originalPrice }}</div>
         </div>
         
-        <div class="product-meta">
-          <h1 class="product-title">{{ product.name }}</h1>
-          
-          <div class="product-pricing">
-            <div class="current-price">{{ product.price }}</div>
-            <div v-if="product.originalPrice" class="original-price">{{ product.originalPrice }}</div>
+        <div class="product-rating">
+          <div class="rating-display">
+            <span class="rating-stars">{{ getStarRating(product.rating) }}</span>
+            <span class="rating-value">{{ product.rating }}</span>
           </div>
-          
-          <div class="product-rating">
-            <div class="rating-display">
-              <span class="rating-stars">{{ getStarRating(product.rating) }}</span>
-              <span class="rating-value">{{ product.rating }}</span>
-            </div>
-            <span class="rating-count">({{ product.reviewCount }} reviews)</span>
-          </div>
+          <span class="rating-count">({{ product.reviewCount }} reviews)</span>
+        </div>
 
-          <div class="coins-earned">
-            <span class="coins-icon">🪙</span>
-            <span class="coins-text">Earn {{ product.coins }} Coins from this purchase</span>
-          </div>
+        <div class="coins-earned">
+          <span class="coins-icon">🪙</span>
+          <span class="coins-text">Earn {{ product.coins }} Coins from this purchase</span>
         </div>
       </div>
     </div>
@@ -126,11 +128,13 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import BottomNavigation from '../components/BottomNavigation.vue'
+import HustlHeader from '../components/HustlHeader.vue'
 
 export default {
   name: 'ProductDetailView',
   components: {
-    BottomNavigation
+    BottomNavigation,
+    HustlHeader
   },
   setup() {
     const router = useRouter()
@@ -295,17 +299,17 @@ export default {
 </script>
 
 <style scoped>
-/* Product Detail View */
+/* Mobile-First Product Detail View */
 .product-detail-view {
   min-height: 100vh;
   background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%);
-  padding-bottom: 100px;
+  padding-bottom: 120px;
   display: flex;
   flex-direction: column;
   overflow-y: auto;
 }
 
-/* Force full width on all screen sizes */
+/* Force full width on all screen sizes - maintain mobile layout */
 .product-detail-view .page-container {
   max-width: none !important;
   width: 100% !important;
@@ -340,6 +344,9 @@ export default {
   border-radius: 16px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.9);
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
 }
 
 .dashboard-section:first-child {
@@ -408,26 +415,22 @@ export default {
   transform: scale(1.1);
 }
 
-/* Product Info Section */
+/* Product Info Section - Mobile-First Layout */
 .product-info-section {
   padding: 1.5rem 1.25rem;
-}
-
-.product-header {
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
 }
 
 .product-image-container {
   display: flex;
   justify-content: center;
+  margin-bottom: 1.5rem;
 }
 
 .product-image {
   position: relative;
-  width: 250px;
-  height: 250px;
+  width: 100%;
+  max-width: 300px;
+  height: 300px;
   border-radius: 16px;
   overflow: hidden;
   background: #E5E7EB;
@@ -468,7 +471,8 @@ export default {
   backdrop-filter: blur(10px);
 }
 
-.product-meta {
+/* Product Details - Mobile-First Layout */
+.product-details {
   display: flex;
   flex-direction: column;
   gap: 1rem;
@@ -479,14 +483,18 @@ export default {
   font-weight: 800;
   color: #1F2937;
   font-family: 'Baloo 2', sans-serif;
-  line-height: 1.2;
+  line-height: 1.3;
   margin: 0;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
 }
 
 .product-pricing {
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  flex-wrap: wrap;
 }
 
 .current-price {
@@ -787,36 +795,20 @@ export default {
   font-weight: 600;
 }
 
-/* Responsive Design */
+/* Responsive Design - MAINTAIN MOBILE LAYOUT */
 @media (min-width: 768px) {
   .product-detail-view {
     background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%) !important;
   }
 
-  .product-header {
-    flex-direction: row;
-    align-items: flex-start;
-  }
-
-  .product-image-container {
-    flex-shrink: 0;
-  }
-
+  /* Keep mobile layout structure - DO NOT change to row layout */
   .product-image {
-    width: 300px;
-    height: 300px;
-  }
-
-  .product-meta {
-    flex: 1;
+    max-width: 350px;
+    height: 350px;
   }
 
   .product-title {
     font-size: 1.5rem;
-  }
-
-  .action-buttons {
-    grid-template-columns: 1fr 1fr;
   }
 
   .related-products-grid {
@@ -863,6 +855,12 @@ export default {
     min-height: auto !important;
     height: auto !important;
     overflow: visible !important;
+  }
+
+  /* MAINTAIN mobile-first layout even on desktop */
+  .product-image {
+    max-width: 400px;
+    height: 400px;
   }
 
   .product-title {

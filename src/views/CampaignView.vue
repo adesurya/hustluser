@@ -1,5 +1,7 @@
 <template>
   <div class="campaign-view dashboard-page">
+    <HustlHeader :isDashboard="true" />
+
     <!-- Coin Points Section -->
     <div class="dashboard-section points-section">
       <div class="points-card">
@@ -92,11 +94,13 @@ import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import BottomNavigation from '../components/BottomNavigation.vue'
+import HustlHeader from '../components/HustlHeader.vue'
 
 export default {
   name: 'CampaignView',
   components: {
-    BottomNavigation
+    BottomNavigation,
+    HustlHeader
   },
   setup() {
     const router = useRouter()

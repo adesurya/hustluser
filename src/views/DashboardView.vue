@@ -1,6 +1,6 @@
 <template>
   <div class="dashboard-view">
-  <HustlHeader :isDashboard="true" />
+    <HustlHeader :isDashboard="true" />
 
     <!-- Points Section -->
     <div class="dashboard-section points-section">
@@ -53,7 +53,12 @@
         <button class="see-more-btn">See More</button>
       </div>
       <div class="products-grid">
-        <div v-for="product in featuredProducts" :key="product.id" class="product-card">
+        <div 
+          v-for="product in featuredProducts" 
+          :key="product.id" 
+          class="product-card"
+          @click="viewProductDetails(product)"
+        >
           <div class="product-image">
             <img :src="product.image" :alt="product.name" />
             <div class="product-badge">{{ product.category }}</div>
@@ -63,7 +68,7 @@
             <div class="product-price">{{ product.price }}</div>
             <div class="product-actions">
               <span class="earn-coins">🪙 Earn {{ product.coins }} Coins</span>
-              <button class="share-btn">
+              <button class="share-btn" @click.stop="shareProduct(product)">
                 <span class="share-icon">📤</span>
               </button>
             </div>
@@ -100,10 +105,10 @@
 
 <script>
 import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import BottomNavigation from '../components/BottomNavigation.vue'
 import HustlHeader from '../components/HustlHeader.vue'
-
 
 export default {
   name: 'DashboardView',
@@ -112,6 +117,7 @@ export default {
     HustlHeader
   },
   setup() {
+    const router = useRouter()
     const authStore = useAuthStore()
     const searchQuery = ref('')
 
@@ -127,7 +133,7 @@ export default {
       { id: 5, name: 'Fashion', icon: '👗', color: '#FFB6C1' }
     ])
 
-    // 10 Featured products sorted by last update, displayed 2 per row
+    // 10 Featured products sorted by last update, displayed 2 per row with full details
     const featuredProducts = ref([
       {
         id: 1,
@@ -135,8 +141,21 @@ export default {
         category: 'Electronic',
         image: '/api/placeholder/80/80',
         price: 'Rp 7,500,000',
+        originalPrice: 'Rp 9,999,000',
+        discount: '25%',
         coins: 75,
-        lastUpdated: '2025-08-30T10:00:00Z'
+        rating: 4.6,
+        reviewCount: 1890,
+        lastUpdated: '2025-08-30T10:00:00Z',
+        description: 'Experience stunning 4K resolution with Samsung\'s latest Smart TV technology. Features HDR support, built-in streaming apps, and voice control for the ultimate entertainment experience.',
+        specifications: [
+          'Screen Size: 55 inches',
+          'Resolution: 4K UHD (3840x2160)', 
+          'HDR: HDR10, HDR10+',
+          'Smart Platform: Tizen OS',
+          'Connectivity: 3 HDMI, 2 USB, WiFi',
+          'Audio: Dolby Digital Plus'
+        ]
       },
       {
         id: 2,
@@ -144,8 +163,21 @@ export default {
         category: 'Electronic',
         image: '/api/placeholder/80/80',
         price: 'Rp 18,000,000',
+        originalPrice: 'Rp 21,999,000',
+        discount: '18%',
         coins: 180,
-        lastUpdated: '2025-08-30T09:45:00Z'
+        rating: 4.9,
+        reviewCount: 3247,
+        lastUpdated: '2025-08-30T09:45:00Z',
+        description: 'The most advanced iPhone ever with titanium design, A17 Pro chip, and revolutionary camera system. Professional-grade photography and videography capabilities.',
+        specifications: [
+          'Display: 6.7-inch Super Retina XDR',
+          'Chip: A17 Pro',
+          'Camera: 48MP Main, 12MP Ultra Wide', 
+          'Storage: 256GB',
+          'Battery: All-day battery life',
+          'Material: Titanium'
+        ]
       },
       {
         id: 3,
@@ -153,8 +185,21 @@ export default {
         category: 'Electronic',
         image: '/api/placeholder/80/80',
         price: 'Rp 15,000,000',
+        originalPrice: 'Rp 17,999,000',
+        discount: '16%',
         coins: 150,
-        lastUpdated: '2025-08-30T09:30:00Z'
+        rating: 4.7,
+        reviewCount: 567,
+        lastUpdated: '2025-08-30T09:30:00Z',
+        description: 'Supercharged by M3 chip, the new MacBook Air is incredibly fast and powerful laptop that gets things done anywhere you go.',
+        specifications: [
+          'Chip: Apple M3 8-core CPU',
+          'Memory: 8GB unified memory',
+          'Storage: 256GB SSD',
+          'Display: 13.6-inch Liquid Retina', 
+          'Battery: Up to 18 hours',
+          'Weight: 1.24 kg'
+        ]
       },
       {
         id: 4,
@@ -162,8 +207,21 @@ export default {
         category: 'Fashion',
         image: '/api/placeholder/80/80',
         price: 'Rp 1,800,000',
+        originalPrice: 'Rp 2,499,000',
+        discount: '28%',
         coins: 18,
-        lastUpdated: '2025-08-30T09:15:00Z'
+        rating: 4.5,
+        reviewCount: 892,
+        lastUpdated: '2025-08-30T09:15:00Z',
+        description: 'Nike\'s biggest heel Air unit yet delivers exceptional all-day comfort. Inspired by the Air Max legacy with modern style.',
+        specifications: [
+          'Upper: Mesh and synthetic materials',
+          'Midsole: Air Max heel unit',
+          'Outsole: Rubber with traction pattern',
+          'Style: Lifestyle sneaker',
+          'Fit: True to size',
+          'Gender: Unisex'
+        ]
       },
       {
         id: 5,
@@ -171,8 +229,21 @@ export default {
         category: 'Electronic',
         image: '/api/placeholder/80/80',
         price: 'Rp 4,500,000',
+        originalPrice: 'Rp 5,999,000',
+        discount: '25%',
         coins: 45,
-        lastUpdated: '2025-08-30T09:00:00Z'
+        rating: 4.8,
+        reviewCount: 1234,
+        lastUpdated: '2025-08-30T09:00:00Z',
+        description: 'Industry-leading noise canceling with premium sound quality. Perfect for music lovers and frequent travelers.',
+        specifications: [
+          'Driver: 30mm dynamic',
+          'Noise Canceling: Industry-leading',
+          'Battery: Up to 30 hours',
+          'Connectivity: Bluetooth 5.2, NFC',
+          'Features: Touch controls, voice assistant',
+          'Weight: 250g'
+        ]
       },
       {
         id: 6,
@@ -180,8 +251,21 @@ export default {
         category: 'Sport',
         image: '/api/placeholder/80/80',
         price: 'Rp 2,200,000',
+        originalPrice: 'Rp 3,000,000',
+        discount: '26%',
         coins: 22,
-        lastUpdated: '2025-08-30T08:45:00Z'
+        rating: 4.6,
+        reviewCount: 743,
+        lastUpdated: '2025-08-30T08:45:00Z',
+        description: 'Premium running shoes with responsive BOOST midsole and supportive Primeknit upper for ultimate performance.',
+        specifications: [
+          'Upper: Primeknit textile',
+          'Midsole: BOOST technology',
+          'Outsole: Continental rubber',
+          'Support: Torsion system',
+          'Fit: Snug, supportive',
+          'Use: Running, training'
+        ]
       },
       {
         id: 7,
@@ -189,8 +273,21 @@ export default {
         category: 'Gaming',
         image: '/api/placeholder/80/80',
         price: 'Rp 8,000,000',
+        originalPrice: 'Rp 8,999,000',
+        discount: '11%',
         coins: 80,
-        lastUpdated: '2025-08-30T08:30:00Z'
+        rating: 4.7,
+        reviewCount: 2156,
+        lastUpdated: '2025-08-30T08:30:00Z',
+        description: 'Next-generation gaming console with lightning-fast loading, stunning graphics, and immersive 3D audio technology.',
+        specifications: [
+          'CPU: AMD Zen 2 8-core',
+          'GPU: AMD RDNA 2',
+          'Storage: 825GB SSD',
+          'Memory: 16GB GDDR6',
+          'Resolution: Up to 4K 120Hz',
+          'Features: Ray tracing, 3D audio'
+        ]
       },
       {
         id: 8,
@@ -198,8 +295,21 @@ export default {
         category: 'Electronic',
         image: '/api/placeholder/80/80',
         price: 'Rp 12,000,000',
+        originalPrice: 'Rp 15,999,000',
+        discount: '25%',
         coins: 120,
-        lastUpdated: '2025-08-30T08:15:00Z'
+        rating: 4.8,
+        reviewCount: 890,
+        lastUpdated: '2025-08-30T08:15:00Z',
+        description: 'The ultimate iPad experience with M2 chip, Liquid Retina XDR display, and all-day battery life for creative professionals.',
+        specifications: [
+          'Display: 12.9-inch Liquid Retina XDR',
+          'Chip: Apple M2',
+          'Storage: 128GB',
+          'Camera: 12MP Wide, 10MP Ultra Wide',
+          'Battery: All-day battery life', 
+          'Apple Pencil: 2nd generation compatible'
+        ]
       },
       {
         id: 9,
@@ -207,8 +317,21 @@ export default {
         category: 'Electronic',
         image: '/api/placeholder/80/80',
         price: 'Rp 13,500,000',
+        originalPrice: 'Rp 16,999,000',
+        discount: '20%',
         coins: 135,
-        lastUpdated: '2025-08-30T08:00:00Z'
+        rating: 4.5,
+        reviewCount: 456,
+        lastUpdated: '2025-08-30T08:00:00Z',
+        description: 'Versatile 2-in-1 laptop with Intel Core processor, perfect for productivity and creativity on the go.',
+        specifications: [
+          'Processor: Intel Core i5',
+          'Memory: 8GB RAM',
+          'Storage: 256GB SSD',
+          'Display: 13-inch PixelSense',
+          'Battery: Up to 15.5 hours',
+          'Features: Detachable keyboard'
+        ]
       },
       {
         id: 10,
@@ -216,8 +339,21 @@ export default {
         category: 'Electronic',
         image: '/api/placeholder/80/80',
         price: 'Rp 25,000,000',
+        originalPrice: 'Rp 28,999,000',
+        discount: '13%',
         coins: 250,
-        lastUpdated: '2025-08-30T07:45:00Z'
+        rating: 4.9,
+        reviewCount: 234,
+        lastUpdated: '2025-08-30T07:45:00Z',
+        description: 'Professional mirrorless camera with exceptional low-light performance and advanced autofocus system.',
+        specifications: [
+          'Sensor: 20.1MP full-frame CMOS',
+          'Processor: DIGIC X',
+          'Autofocus: Dual Pixel CMOS AF II',
+          'Video: 4K 60p recording',
+          'Stabilization: In-body IS',
+          'Viewfinder: 3.69M-dot OLED'
+        ]
       }
     ].sort((a, b) => new Date(b.lastUpdated) - new Date(a.lastUpdated)))
 
@@ -267,6 +403,17 @@ export default {
       console.log('Search query:', searchQuery.value)
     }
 
+    const viewProductDetails = (product) => {
+      // Store product details for next view
+      sessionStorage.setItem('selectedProduct', JSON.stringify(product))
+      router.push(`/product/${product.id}`)
+    }
+
+    const shareProduct = (product) => {
+      console.log('Share product:', product.name)
+      // Implement share functionality
+    }
+
     // Initialize scrolling after component mounts
     onMounted(() => {
       initializeCategoryScrolling()
@@ -278,7 +425,9 @@ export default {
       categories,
       featuredProducts,
       activeCampaign,
-      handleSearch
+      handleSearch,
+      viewProductDetails,
+      shareProduct
     }
   }
 }
@@ -289,13 +438,13 @@ export default {
 .dashboard-view {
   min-height: 100vh;
   background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%);
-  padding-bottom: 100px;
+  padding-bottom: 120px; /* Increased to prevent bottom navigation cutoff */
   display: flex;
   flex-direction: column;
   overflow-y: auto;
 }
 
-/* Dashboard Section - Clean containers */
+/* Dashboard Section - Clean containers with proper text handling */
 .dashboard-section {
   background: white;
   margin: 0 1rem 1.5rem 1rem;
@@ -303,6 +452,10 @@ export default {
   border-radius: 16px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.9);
+  /* Ensure proper text wrapping */
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
 }
 
 .dashboard-section:first-child {
@@ -497,6 +650,10 @@ export default {
   font-family: 'Baloo 2', sans-serif;
   font-weight: 600;
   line-height: 1.2;
+  /* Fixed text overflow for category names */
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
 }
 
 .category-badge {
@@ -581,6 +738,10 @@ export default {
   font-family: 'Baloo 2', sans-serif;
   line-height: 1.3;
   margin-bottom: 0.25rem;
+  /* Fixed text overflow for product names */
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
 }
 
 .product-price {
@@ -671,6 +832,10 @@ export default {
   font-weight: 800;
   margin-bottom: 0.5rem;
   font-family: 'Baloo 2', sans-serif;
+  /* Fixed text overflow for campaign titles */
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
 }
 
 .campaign-description {
@@ -679,6 +844,10 @@ export default {
   opacity: 0.95;
   font-family: 'Baloo 2', sans-serif;
   line-height: 1.4;
+  /* Fixed text overflow for campaign descriptions */
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
 }
 
 .campaign-details {
@@ -706,7 +875,7 @@ export default {
 
 /* Responsive Styling for Tablet and Desktop */
 @media (min-width: 768px) {
-  .leaderboard-view {
+  .dashboard-view {
     background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%) !important;
   }
   

@@ -10,9 +10,10 @@
       </div>
     </div>
 
-    <!-- Campaign Information Section -->
+    <!-- Campaign Information Section - Mobile-First Layout -->
     <div class="dashboard-section campaign-info-section" v-if="campaign">
-      <div class="campaign-header">
+      <!-- Campaign Image -->
+      <div class="campaign-image-container">
         <div class="campaign-image">
           <img :src="campaign.image" :alt="campaign.title" />
           <div class="campaign-status active">
@@ -20,32 +21,37 @@
             <span class="status-text">Active</span>
           </div>
         </div>
-        <div class="campaign-meta">
-          <h1 class="campaign-title">{{ campaign.title }}</h1>
-          <div class="campaign-dates">
-            <div class="date-item">
-              <span class="date-label">Start Date:</span>
-              <span class="date-value">{{ formatDate(campaign.startDate) }}</span>
-            </div>
-            <div class="date-item">
-              <span class="date-label">End Date:</span>
-              <span class="date-value">{{ formatDate(campaign.endDate) }}</span>
-            </div>
+      </div>
+      
+      <!-- Campaign Details -->
+      <div class="campaign-details">
+        <h1 class="campaign-title">{{ campaign.title }}</h1>
+        
+        <div class="campaign-dates">
+          <div class="date-item">
+            <span class="date-label">Start Date:</span>
+            <span class="date-value">{{ formatDate(campaign.startDate) }}</span>
           </div>
-          <div class="campaign-reward">
-            <span class="reward-icon">🎁</span>
-            <span class="reward-text">{{ campaign.reward }}</span>
+          <div class="date-item">
+            <span class="date-label">End Date:</span>
+            <span class="date-value">{{ formatDate(campaign.endDate) }}</span>
           </div>
+        </div>
+        
+        <div class="campaign-reward">
+          <span class="reward-icon">🎁</span>
+          <span class="reward-text">{{ campaign.reward }}</span>
         </div>
       </div>
       
+      <!-- Campaign Description -->
       <div class="campaign-description">
         <h3 class="description-title">Campaign Description</h3>
         <p class="description-text">{{ campaign.description }}</p>
       </div>
     </div>
 
-    <!-- Product List Section -->
+    <!-- Product List Section - Mobile-First Grid -->
     <div class="dashboard-section product-list-section" v-if="campaign">
       <div class="section-header">
         <h3 class="section-title">Product List</h3>
@@ -173,17 +179,17 @@ export default {
 </script>
 
 <style scoped>
-/* Campaign Detail View */
+/* Mobile-First Campaign Detail View */
 .campaign-detail-view {
   min-height: 100vh;
   background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%);
-  padding-bottom: 100px;
+  padding-bottom: 120px;
   display: flex;
   flex-direction: column;
   overflow-y: auto;
 }
 
-/* Force full width on all screen sizes */
+/* Force full width on all screen sizes - maintain mobile layout */
 .campaign-detail-view .page-container {
   max-width: none !important;
   width: 100% !important;
@@ -218,11 +224,9 @@ export default {
   border-radius: 16px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.9);
-  width: calc(100% - 2rem);
-  max-width: calc(100% - 2rem);
-  box-sizing: border-box;
-  overflow: hidden;
   word-wrap: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
 }
 
 .dashboard-section:first-child {
@@ -269,26 +273,21 @@ export default {
   font-size: 1rem;
 }
 
-/* Campaign Info Section */
+/* Campaign Info Section - Mobile-First Layout */
 .campaign-info-section {
   padding: 1.5rem 1.25rem;
-  width: 100%;
-  box-sizing: border-box;
-  overflow: hidden;
 }
 
-.campaign-header {
+.campaign-image-container {
   display: flex;
-  flex-direction: column;
-  gap: 1rem;
+  justify-content: center;
   margin-bottom: 1.5rem;
-  width: 100%;
-  overflow: hidden;
 }
 
 .campaign-image {
   position: relative;
   width: 100%;
+  max-width: 350px;
   height: 200px;
   border-radius: 16px;
   overflow: hidden;
@@ -329,31 +328,30 @@ export default {
   animation: pulse 2s infinite;
 }
 
-.campaign-meta {
+/* Campaign Details - Mobile-First Layout */
+.campaign-details {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  width: 100%;
-  overflow: hidden;
+  margin-bottom: 1.5rem;
 }
 
 .campaign-title {
-  font-size: 1.5rem;
+  font-size: 1.375rem;
   font-weight: 800;
   color: #1F2937;
   font-family: 'Baloo 2', sans-serif;
-  line-height: 1.2;
+  line-height: 1.3;
   margin: 0;
   word-wrap: break-word;
   overflow-wrap: break-word;
   hyphens: auto;
-  max-width: 100%;
 }
 
 .campaign-dates {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.75rem;
 }
 
 .date-item {
@@ -395,13 +393,14 @@ export default {
   color: #4FC3F7;
   font-family: 'Baloo 2', sans-serif;
   font-weight: 700;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
+/* Campaign Description */
 .campaign-description {
   border-top: 1px solid #E5E7EB;
   padding-top: 1.5rem;
-  width: 100%;
-  overflow: hidden;
 }
 
 .description-title {
@@ -410,8 +409,6 @@ export default {
   color: #1F2937;
   font-family: 'Baloo 2', sans-serif;
   margin-bottom: 0.75rem;
-  word-wrap: break-word;
-  overflow-wrap: break-word;
 }
 
 .description-text {
@@ -423,11 +420,9 @@ export default {
   word-wrap: break-word;
   overflow-wrap: break-word;
   hyphens: auto;
-  white-space: normal;
-  max-width: 100%;
 }
 
-/* Product List Section */
+/* Product List Section - Mobile-First Grid */
 .product-list-section {
   padding: 1.25rem;
 }
@@ -453,22 +448,24 @@ export default {
   font-weight: 500;
 }
 
+/* Products Grid - Mobile-First 2-Column Layout */
 .products-grid {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: 1fr 1fr;
   gap: 1rem;
 }
 
 .product-card {
   display: flex;
+  flex-direction: column;
   background: #F8FAFC;
   border-radius: 16px;
   padding: 1rem;
   border: 2px solid #E2E8F0;
   cursor: pointer;
   transition: all 0.2s;
-  align-items: center;
-  gap: 1rem;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 .product-card:hover {
@@ -480,12 +477,12 @@ export default {
 
 .product-image {
   position: relative;
-  width: 80px;
-  height: 80px;
+  width: 100%;
+  height: 100px;
   border-radius: 12px;
   overflow: hidden;
   background: #E5E7EB;
-  flex-shrink: 0;
+  margin-bottom: 0.75rem;
 }
 
 .product-image img {
@@ -524,7 +521,7 @@ export default {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 0.375rem;
+  gap: 0.5rem;
 }
 
 .product-name {
@@ -534,12 +531,15 @@ export default {
   font-family: 'Baloo 2', sans-serif;
   line-height: 1.3;
   margin: 0;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
 }
 
 .product-pricing {
   display: flex;
-  align-items: center;
-  gap: 0.5rem;
+  flex-direction: column;
+  gap: 0.25rem;
 }
 
 .current-price {
@@ -559,8 +559,8 @@ export default {
 
 .product-rating {
   display: flex;
-  align-items: center;
-  gap: 0.375rem;
+  flex-direction: column;
+  gap: 0.25rem;
 }
 
 .rating-stars {
@@ -577,8 +577,7 @@ export default {
 }
 
 .product-actions {
-  display: flex;
-  justify-content: flex-start;
+  margin-top: auto;
 }
 
 .earn-coins {
@@ -621,41 +620,25 @@ export default {
   font-size: 1.25rem;
 }
 
-/* Responsive Design */
+/* Responsive Design - MAINTAIN MOBILE LAYOUT */
 @media (min-width: 768px) {
   .campaign-detail-view {
     background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%) !important;
   }
 
-  .campaign-header {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 1.25rem;
-  }
-
+  /* Keep mobile layout structure - DO NOT change to row layout */
   .campaign-image {
-    width: 100%;
-    max-width: 100%;
+    max-width: 400px;
     height: 250px;
-    flex-shrink: 0;
-  }
-
-  .campaign-meta {
-    flex: 1;
-    width: 100%;
-    max-width: 100%;
   }
 
   .campaign-title {
     font-size: 1.5rem;
   }
 
-  .reward-text {
-    font-size: 1rem;
-  }
-
+  /* Keep mobile grid layout */
   .products-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
     gap: 1rem;
   }
 
@@ -664,8 +647,7 @@ export default {
   }
 
   .product-image {
-    width: 100px;
-    height: 100px;
+    height: 120px;
   }
 }
 
@@ -710,30 +692,20 @@ export default {
     overflow: visible !important;
   }
 
-  .campaign-header {
-    flex-direction: row;
-    align-items: flex-start;
-    gap: 1.5rem;
-  }
-
+  /* MAINTAIN mobile-first layout even on desktop */
   .campaign-image {
-    width: 300px;
-    max-width: 300px;
-    height: 200px;
-    flex-shrink: 0;
-  }
-
-  .campaign-meta {
-    flex: 1;
-    min-width: 0; /* Important for flex text wrapping */
+    max-width: 450px;
+    height: 280px;
   }
 
   .campaign-title {
     font-size: 1.75rem;
   }
 
-  .reward-text {
-    font-size: 1rem;
+  /* Keep mobile grid for consistency */
+  .products-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.25rem;
   }
 }
 
