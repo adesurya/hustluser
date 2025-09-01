@@ -15,63 +15,72 @@
       </div>
     </div>
 
+    <!-- Loading State -->
+    <div v-if="isLoading" class="dashboard-section loading-section">
+      <div class="loading-spinner"></div>
+      <p class="loading-text">Loading product details...</p>
+    </div>
+
     <!-- Product Information Section - Mobile-First Layout -->
-    <div class="dashboard-section product-info-section" v-if="product">
+    <div v-else-if="product" class="dashboard-section product-info-section">
       <!-- Product Image -->
       <div class="product-image-container">
         <div class="product-image">
-          <img :src="product.image" :alt="product.name" />
-          <div class="product-badge">{{ product.category }}</div>
-          <div v-if="product.discount" class="discount-badge">{{ product.discount }} OFF</div>
+          <img :src="getProductImageUrl(product.image)" :alt="product.title" />
+          <div class="product-badge">{{ product.category?.name || 'Product' }}</div>
         </div>
       </div>
       
       <!-- Product Details -->
       <div class="product-details">
-        <h1 class="product-title">{{ product.name }}</h1>
+        <h1 class="product-title">{{ product.title }}</h1>
         
         <div class="product-pricing">
-          <div class="current-price">{{ product.price }}</div>
-          <div v-if="product.originalPrice" class="original-price">{{ product.originalPrice }}</div>
+          <div class="current-price">{{ product.formattedPrice || formatPrice(product.price) }}</div>
         </div>
         
-        <div class="product-rating">
-          <div class="rating-display">
-            <span class="rating-stars">{{ getStarRating(product.rating) }}</span>
-            <span class="rating-value">{{ product.rating }}</span>
+        <div class="product-info-row">
+          <div class="info-item">
+            <span class="info-label">Views:</span>
+            <span class="info-value">{{ product.viewCount || 0 }}</span>
           </div>
-          <span class="rating-count">({{ product.reviewCount }} reviews)</span>
+          <div class="info-item">
+            <span class="info-label">Stock:</span>
+            <span class="info-value">{{ product.stockQuantity || 0 }}</span>
+          </div>
         </div>
 
         <div class="coins-earned">
           <span class="coins-icon">🪙</span>
-          <span class="coins-text">Earn {{ product.coins }} Coins from this purchase</span>
+          <span class="coins-text">Earn {{ product.points }} Coins from this purchase</span>
         </div>
       </div>
     </div>
 
     <!-- Product Description Section -->
-    <div class="dashboard-section description-section" v-if="product">
+    <div v-if="product" class="dashboard-section description-section">
       <h3 class="section-title">Product Description</h3>
       <p class="description-text">{{ product.description }}</p>
-    </div>
-
-    <!-- Product Specifications Section -->
-    <div class="dashboard-section specs-section" v-if="product && product.specifications">
-      <h3 class="section-title">Specifications</h3>
-      <div class="specs-list">
-        <div 
-          v-for="(spec, index) in product.specifications" 
-          :key="index" 
-          class="spec-item"
-        >
-          <span class="spec-text">{{ spec }}</span>
+      
+      <!-- Additional Product Info -->
+      <div class="product-meta">
+        <div class="meta-item">
+          <span class="meta-label">Product ID:</span>
+          <span class="meta-value">{{ product.id }}</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">SKU:</span>
+          <span class="meta-value">{{ product.slug }}</span>
+        </div>
+        <div v-if="product.metaTitle" class="meta-item">
+          <span class="meta-label">Meta Title:</span>
+          <span class="meta-value">{{ product.metaTitle }}</span>
         </div>
       </div>
     </div>
 
     <!-- Action Buttons Section -->
-    <div class="dashboard-section actions-section">
+    <div v-if="product" class="dashboard-section actions-section">
       <div class="action-buttons">
         <button class="favorite-btn" @click="toggleFavorite" :class="{ active: isFavorite }">
           <span class="heart-icon">{{ isFavorite ? '❤️' : '🤍' }}</span>
@@ -86,10 +95,10 @@
     </div>
 
     <!-- Purchase/Buy Button -->
-    <div class="dashboard-section purchase-section" v-if="product">
+    <div v-if="product && product.stockQuantity > 0" class="dashboard-section purchase-section">
       <button class="buy-btn" @click="handlePurchase">
         <span class="buy-icon">🛒</span>
-        <span class="buy-text">Buy Now - {{ product.price }}</span>
+        <span class="buy-text">Buy Now - {{ product.formattedPrice || formatPrice(product.price) }}</span>
       </button>
       <div class="purchase-info">
         <p class="info-text">🚚 Free shipping for orders above Rp 500.000</p>
@@ -97,8 +106,16 @@
       </div>
     </div>
 
+    <!-- Out of Stock Message -->
+    <div v-else-if="product && product.stockQuantity === 0" class="dashboard-section out-of-stock-section">
+      <div class="out-of-stock-message">
+        <span class="stock-icon">📭</span>
+        <span class="stock-text">This product is currently out of stock</span>
+      </div>
+    </div>
+
     <!-- Related Products Section -->
-    <div class="dashboard-section related-section" v-if="relatedProducts.length > 0">
+    <div v-if="relatedProducts.length > 0" class="dashboard-section related-section">
       <h3 class="section-title">Related Products</h3>
       <div class="related-products-grid">
         <div 
@@ -108,14 +125,23 @@
           @click="viewRelatedProduct(relatedProduct)"
         >
           <div class="related-image">
-            <img :src="relatedProduct.image" :alt="relatedProduct.name" />
+            <img :src="getProductImageUrl(relatedProduct.image)" :alt="relatedProduct.title" />
           </div>
           <div class="related-info">
-            <h4 class="related-name">{{ relatedProduct.name }}</h4>
-            <div class="related-price">{{ relatedProduct.price }}</div>
-            <div class="related-coins">🪙 {{ relatedProduct.coins }} coins</div>
+            <h4 class="related-name">{{ relatedProduct.title }}</h4>
+            <div class="related-price">{{ relatedProduct.formattedPrice || formatPrice(relatedProduct.price) }}</div>
+            <div class="related-coins">🪙 {{ relatedProduct.points }} coins</div>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- Error Section -->
+    <div v-if="error" class="dashboard-section error-section">
+      <div class="error-message">
+        <span class="error-icon">⚠️</span>
+        <span class="error-text">{{ error }}</span>
+        <button class="retry-btn" @click="loadProductData">Retry</button>
       </div>
     </div>
 
@@ -126,9 +152,10 @@
 
 <script>
 import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import BottomNavigation from '../components/BottomNavigation.vue'
 import HustlHeader from '../components/HustlHeader.vue'
+import apiService from '../services/api'
 
 export default {
   name: 'ProductDetailView',
@@ -138,65 +165,90 @@ export default {
   },
   setup() {
     const router = useRouter()
+    const route = useRoute()
     const product = ref(null)
+    const relatedProducts = ref([])
     const isFavorite = ref(false)
-    
-    // Dummy related products data
-    const relatedProducts = ref([
-      {
-        id: 104,
-        name: 'LG Smart TV 50"',
-        image: '/api/placeholder/80/80',
-        price: 'Rp 6.999.000',
-        coins: 70
-      },
-      {
-        id: 105,
-        name: 'Sony Smart TV 65"',
-        image: '/api/placeholder/80/80',
-        price: 'Rp 12.999.000',
-        coins: 130
-      },
-      {
-        id: 106,
-        name: 'TCL Smart TV 43"',
-        image: '/api/placeholder/80/80',
-        price: 'Rp 4.299.000',
-        coins: 43
-      }
-    ])
+    const isLoading = ref(true)
+    const error = ref('')
 
-    onMounted(() => {
-      // Get product data from sessionStorage
-      const storedProduct = sessionStorage.getItem('selectedProduct')
-      if (storedProduct) {
-        try {
-          product.value = JSON.parse(storedProduct)
-          // Check if product is in favorites
-          const favorites = JSON.parse(localStorage.getItem('favoriteProducts') || '[]')
-          isFavorite.value = favorites.some(fav => fav.id === product.value.id)
-        } catch (err) {
-          console.error('Error parsing product data:', err)
-          router.push('/campaign')
+    // Methods
+    const getProductImageUrl = (imagePath) => {
+      return apiService.constructor.getImageUrl(imagePath, 'products')
+    }
+
+    const formatPrice = (price) => {
+      return apiService.constructor.formatPrice(price)
+    }
+
+    // Load product data
+    const loadProductData = async () => {
+      isLoading.value = true
+      error.value = ''
+
+      try {
+        // First check if we have product data in sessionStorage
+        const storedProduct = sessionStorage.getItem('selectedProduct')
+        if (storedProduct) {
+          try {
+            const parsedProduct = JSON.parse(storedProduct)
+            product.value = parsedProduct
+            
+            // Check if product is in favorites
+            const favorites = JSON.parse(localStorage.getItem('favoriteProducts') || '[]')
+            isFavorite.value = favorites.some(fav => fav.id === parsedProduct.id)
+            
+            // Load related products based on category
+            if (parsedProduct.categoryId) {
+              await loadRelatedProducts(parsedProduct.categoryId, parsedProduct.id)
+            }
+            
+            isLoading.value = false
+            return
+          } catch (parseError) {
+            console.warn('Error parsing stored product data:', parseError)
+          }
         }
-      } else {
-        // If no product data, redirect back
-        router.go(-1)
+
+        // If no stored data, try to load from API using route parameter
+        const productId = route.params.id
+        if (productId) {
+          // Note: You may need to implement getProductById in your API service
+          // For now, we'll redirect back if no stored data
+          error.value = 'Product data not found. Please select a product from the categories.'
+        } else {
+          error.value = 'Product ID not provided'
+        }
+
+      } catch (err) {
+        console.error('Error loading product:', err)
+        error.value = 'Failed to load product details. Please try again.'
+      } finally {
+        isLoading.value = false
       }
-    })
+    }
+
+    // Load related products from same category
+    const loadRelatedProducts = async (categoryId, excludeProductId) => {
+      try {
+        const response = await apiService.getProducts({ 
+          categoryId: categoryId,
+          limit: 6 
+        })
+        
+        if (response.success) {
+          // Filter out current product and limit to 3-4 related products
+          relatedProducts.value = response.data
+            .filter(p => p.id !== excludeProductId)
+            .slice(0, 4)
+        }
+      } catch (err) {
+        console.warn('Failed to load related products:', err)
+      }
+    }
 
     const goBack = () => {
       router.go(-1)
-    }
-
-    const getStarRating = (rating) => {
-      const fullStars = Math.floor(rating)
-      const hasHalfStar = rating % 1 >= 0.5
-      let stars = '★'.repeat(fullStars)
-      if (hasHalfStar) stars += '☆'
-      const emptyStars = 5 - Math.ceil(rating)
-      stars += '☆'.repeat(emptyStars)
-      return stars
     }
 
     const toggleFavorite = () => {
@@ -209,18 +261,18 @@ export default {
         // Remove from favorites
         favorites.splice(productIndex, 1)
         isFavorite.value = false
-        console.log('Removed from favorites:', product.value.name)
+        console.log('Removed from favorites:', product.value.title)
       } else {
         // Add to favorites
         favorites.push({
           id: product.value.id,
-          name: product.value.name,
-          price: product.value.price,
+          title: product.value.title,
+          price: product.value.formattedPrice || formatPrice(product.value.price),
           image: product.value.image,
-          coins: product.value.coins
+          points: product.value.points
         })
         isFavorite.value = true
-        console.log('Added to favorites:', product.value.name)
+        console.log('Added to favorites:', product.value.title)
       }
       
       localStorage.setItem('favoriteProducts', JSON.stringify(favorites))
@@ -230,8 +282,8 @@ export default {
       if (!product.value) return
       
       const shareData = {
-        title: product.value.name,
-        text: `Check out this ${product.value.category.toLowerCase()}: ${product.value.name} - ${product.value.price}. Earn ${product.value.coins} coins!`,
+        title: product.value.title,
+        text: `Check out this product: ${product.value.title} - ${product.value.formattedPrice || formatPrice(product.value.price)}. Earn ${product.value.points} coins!`,
         url: window.location.href
       }
       
@@ -247,8 +299,7 @@ export default {
             alert('Product link copied to clipboard!')
           })
           .catch(() => {
-            // Manual fallback
-            prompt('Copy this link to share:', `${product.value.name} - ${product.value.price} - Earn ${product.value.coins} coins! ${window.location.href}`)
+            prompt('Copy this link to share:', shareText)
           })
       }
     }
@@ -256,43 +307,44 @@ export default {
     const handlePurchase = () => {
       if (!product.value) return
       
-      // Simulate purchase process
-      alert(`Redirecting to payment for ${product.value.name}`)
-      console.log('Purchase initiated for:', product.value.name)
+      // Check if product URL is available for external purchase
+      if (product.value.url) {
+        window.open(product.value.url, '_blank')
+      } else {
+        // Simulate purchase process
+        alert(`Redirecting to payment for ${product.value.title}`)
+        console.log('Purchase initiated for:', product.value.title)
+      }
     }
 
     const viewRelatedProduct = (relatedProduct) => {
-      // Create full product object for related product (with mock data)
-      const fullProduct = {
-        ...relatedProduct,
-        category: 'Electronic',
-        rating: 4.5,
-        reviewCount: 892,
-        description: `High-quality ${relatedProduct.name} with advanced features and reliable performance.`,
-        specifications: [
-          'Premium build quality',
-          'Energy efficient',
-          '2 year warranty',
-          'Free installation'
-        ]
-      }
-      
       // Store in sessionStorage and navigate
-      sessionStorage.setItem('selectedProduct', JSON.stringify(fullProduct))
+      sessionStorage.setItem('selectedProduct', JSON.stringify(relatedProduct))
       // Force page reload to show new product
+      router.push(`/product/${relatedProduct.id}`)
+      // Reload the page to show new product data
       window.location.reload()
     }
 
+    // Initialize on mount
+    onMounted(() => {
+      loadProductData()
+    })
+
     return {
       product,
-      isFavorite,
       relatedProducts,
+      isFavorite,
+      isLoading,
+      error,
       goBack,
-      getStarRating,
       toggleFavorite,
       shareProduct,
       handlePurchase,
-      viewRelatedProduct
+      viewRelatedProduct,
+      loadProductData,
+      getProductImageUrl,
+      formatPrice
     }
   }
 }
@@ -351,6 +403,79 @@ export default {
 
 .dashboard-section:first-child {
   margin-top: 1rem;
+}
+
+/* Loading Section */
+.loading-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1rem;
+  text-align: center;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(79, 195, 247, 0.3);
+  border-top: 4px solid #4FC3F7;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+.loading-text {
+  color: #1F2937;
+  font-family: 'Baloo 2', sans-serif;
+  font-weight: 500;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Error Section */
+.error-section {
+  background: #FEF2F2;
+  border: 2px solid #FECACA;
+}
+
+.error-message {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: #DC2626;
+  font-family: 'Baloo 2', sans-serif;
+}
+
+.error-icon {
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.error-text {
+  flex: 1;
+  font-weight: 500;
+}
+
+.retry-btn {
+  background: #DC2626;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'Baloo 2', sans-serif;
+}
+
+.retry-btn:hover {
+  background: #B91C1C;
+  transform: translateY(-1px);
 }
 
 /* Header Section */
@@ -457,20 +582,6 @@ export default {
   backdrop-filter: blur(10px);
 }
 
-.discount-badge {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  background: #EF4444;
-  color: white;
-  font-size: 0.75rem;
-  padding: 0.375rem 0.75rem;
-  border-radius: 8px;
-  font-family: 'Baloo 2', sans-serif;
-  font-weight: 700;
-  backdrop-filter: blur(10px);
-}
-
 /* Product Details - Mobile-First Layout */
 .product-details {
   display: flex;
@@ -504,44 +615,36 @@ export default {
   font-weight: 800;
 }
 
-.original-price {
-  font-size: 1.125rem;
-  color: #9CA3AF;
-  font-family: 'Baloo 2', sans-serif;
-  font-weight: 500;
-  text-decoration: line-through;
+.product-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  background: #F8FAFC;
+  border-radius: 8px;
+  border: 1px solid #E2E8F0;
 }
 
-.product-rating {
+.info-item {
   display: flex;
   flex-direction: column;
-  gap: 0.375rem;
-}
-
-.rating-display {
-  display: flex;
   align-items: center;
-  gap: 0.5rem;
+  text-align: center;
 }
 
-.rating-stars {
-  color: #FFA500;
-  font-size: 1.125rem;
-  line-height: 1;
-}
-
-.rating-value {
-  font-size: 1rem;
-  color: #374151;
-  font-family: 'Baloo 2', sans-serif;
-  font-weight: 700;
-}
-
-.rating-count {
-  font-size: 0.875rem;
+.info-label {
+  font-size: 0.75rem;
   color: #6B7280;
   font-family: 'Baloo 2', sans-serif;
   font-weight: 500;
+  margin-bottom: 0.25rem;
+}
+
+.info-value {
+  font-size: 0.875rem;
+  color: #374151;
+  font-family: 'Baloo 2', sans-serif;
+  font-weight: 700;
 }
 
 .coins-earned {
@@ -566,8 +669,7 @@ export default {
 }
 
 /* Description Section */
-.description-section,
-.specs-section {
+.description-section {
   padding: 1.25rem;
 }
 
@@ -584,39 +686,40 @@ export default {
   color: #374151;
   font-family: 'Baloo 2', sans-serif;
   line-height: 1.6;
-  margin: 0;
+  margin: 0 0 1.5rem 0;
 }
 
-/* Specifications Section */
-.specs-list {
+/* Product Meta Information */
+.product-meta {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid #E5E7EB;
 }
 
-.spec-item {
+.meta-item {
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.75rem;
-  background: #F8FAFC;
-  border-radius: 8px;
-  border: 1px solid #E2E8F0;
+  padding: 0.5rem 0;
 }
 
-.spec-item::before {
-  content: '•';
-  color: #4FC3F7;
-  font-size: 1.25rem;
-  font-weight: bold;
-  flex-shrink: 0;
-}
-
-.spec-text {
-  font-size: 0.875rem;
-  color: #374151;
+.meta-label {
+  font-size: 0.75rem;
+  color: #6B7280;
   font-family: 'Baloo 2', sans-serif;
   font-weight: 500;
+}
+
+.meta-value {
+  font-size: 0.75rem;
+  color: #374151;
+  font-family: 'Baloo 2', sans-serif;
+  font-weight: 600;
+  text-align: right;
+  max-width: 60%;
+  word-wrap: break-word;
 }
 
 /* Actions Section */
@@ -706,6 +809,28 @@ export default {
 
 .buy-icon {
   font-size: 1.25rem;
+}
+
+/* Out of Stock Section */
+.out-of-stock-section {
+  padding: 1.25rem;
+  background: #FEF2F2;
+  border: 2px solid #FECACA;
+}
+
+.out-of-stock-message {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  color: #DC2626;
+  font-family: 'Baloo 2', sans-serif;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.stock-icon {
+  font-size: 1.5rem;
 }
 
 .purchase-info {

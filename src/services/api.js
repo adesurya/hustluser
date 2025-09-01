@@ -1,3 +1,4 @@
+// src/services/api.js - Updated version with dashboard APIs
 import axios from 'axios'
 
 class ApiService {
@@ -18,6 +19,7 @@ class ApiService {
         if (token) {
           config.headers.Authorization = `Bearer ${token}`
         }
+        console.log('API Request:', config.method.toUpperCase(), config.url, 'Token:', token ? 'Present' : 'Missing')
         return config
       },
       (error) => {
@@ -74,6 +76,7 @@ class ApiService {
     )
   }
 
+  // Auth APIs
   async login(credentials) {
     const response = await this.client.post('/auth/login', {
       identifier: credentials.identifier,
@@ -106,6 +109,102 @@ class ApiService {
   async updateProfile(userData) {
     const response = await this.client.put('/user/profile', userData)
     return response
+  }
+
+  // Dashboard APIs
+  async getMyPoints() {
+    const response = await this.client.get('/points/my-points')
+    return response
+  }
+
+  async getCategories() {
+    const response = await this.client.get('/categories/')
+    return response
+  }
+
+  async getCategoryById(categoryId) {
+    const response = await this.client.get(`/categories/${categoryId}`)
+    return response
+  }
+
+  async getProducts(params = {}) {
+    const response = await this.client.get('/products', { params })
+    return response
+  }
+
+  async getFeaturedProducts() {
+    const response = await this.client.get('/products/featured')
+    return response
+  }
+
+  async getProductById(productId) {
+    const response = await this.client.get(`/products/${productId}`)
+    return response
+  }
+
+  async getActiveCampaigns() {
+    const response = await this.client.get('/campaigns/active')
+    return response
+  }
+
+  async getCampaignById(campaignId) {
+    const response = await this.client.get(`/campaigns/${campaignId}`)
+    return response
+  }
+
+  // Debug method to check authentication status
+  checkAuthStatus() {
+    const token = localStorage.getItem('accessToken')
+    const user = localStorage.getItem('user')
+    
+    console.log('=== AUTH DEBUG INFO ===')
+    console.log('Token exists:', !!token)
+    console.log('User exists:', !!user)
+    
+    if (token) {
+      console.log('Token preview:', token.substring(0, 30) + '...')
+      console.log('Token length:', token.length)
+    }
+    
+    if (user) {
+      try {
+        const parsedUser = JSON.parse(user)
+        console.log('User data:', parsedUser)
+      } catch (err) {
+        console.log('Error parsing user data:', err)
+      }
+    }
+    
+    console.log('Current headers:', this.client.defaults.headers)
+    console.log('======================')
+    
+    return {
+      hasToken: !!token,
+      hasUser: !!user,
+      token: token,
+      tokenPreview: token ? token.substring(0, 30) + '...' : null
+    }
+  }
+
+  // Utility method to format price from API
+  static formatPrice(price) {
+    if (typeof price === 'string') {
+      const numPrice = parseFloat(price)
+      return new Intl.NumberFormat('id-ID', {
+        style: 'currency',
+        currency: 'IDR',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+      }).format(numPrice)
+    }
+    return price
+  }
+
+  // Utility method to get image URL
+  static getImageUrl(imagePath, type = 'products') {
+    if (!imagePath) return '/api/placeholder/120/120'
+    if (imagePath.startsWith('http')) return imagePath
+    return `https://apihustl.sijago.ai/uploads/${type}/${imagePath}`
   }
 }
 

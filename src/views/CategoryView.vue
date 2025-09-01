@@ -19,99 +19,115 @@
       </div>
     </div>
 
-    <!-- Categories Section -->
-    <div class="dashboard-section">
-      <div class="section-header">
-        <h3 class="section-title">Product Categories</h3>
-        <span class="category-count">{{ categories.length }} Categories</span>
-      </div>
-      <div class="categories-grid">
-        <div 
-          v-for="category in categories" 
-          :key="category.id" 
-          class="category-card"
-          @click="selectCategory(category)"
-          :class="{ active: selectedCategory?.id === category.id }"
-        >
-          <div class="category-icon" :style="{ background: category.color }">
-            <span>{{ category.icon }}</span>
-          </div>
-          <div class="category-info">
-            <span class="category-name">{{ category.name }}</span>
-            <span class="category-count-text">{{ category.productCount }} products</span>
-          </div>
-          <div v-if="category.badge" class="category-badge">{{ category.badge }}</div>
-        </div>
-      </div>
+    <!-- Loading State -->
+    <div v-if="isLoading" class="dashboard-section loading-section">
+      <div class="loading-spinner"></div>
+      <p class="loading-text">Loading categories and products...</p>
     </div>
 
-    <!-- Featured Products Section -->
-    <div class="dashboard-section">
-      <div class="section-header">
-        <h3 class="section-title">
-          {{ selectedCategory ? `${selectedCategory.name} Products` : 'Featured Products' }}
-        </h3>
-        <div class="products-info">
-          <span class="products-count">{{ filteredProducts.length }} products</span>
-          <button v-if="filteredProducts.length > productsPerPage" class="see-more-btn" @click="loadMoreProducts">
-            Load More
+    <template v-else>
+      <!-- Categories Section -->
+      <div class="dashboard-section">
+        <div class="section-header">
+          <h3 class="section-title">Product Categories</h3>
+          <span class="category-count">{{ categories.length }} Categories</span>
+        </div>
+        <div class="categories-grid">
+          <div 
+            v-for="category in categories" 
+            :key="category.id" 
+            class="category-card"
+            @click="selectCategory(category)"
+            :class="{ active: selectedCategory?.id === category.id }"
+          >
+            <div class="category-icon" :style="{ background: getCategoryColor(category.id) }">
+              <span>{{ getCategoryIcon(category.name) }}</span>
+            </div>
+            <div class="category-info">
+              <span class="category-name">{{ category.name }}</span>
+              <span class="category-count-text">{{ category.productCount || 0 }} products</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Featured Products Section -->
+      <div class="dashboard-section">
+        <div class="section-header">
+          <h3 class="section-title">
+            {{ selectedCategory ? `${selectedCategory.name} Products` : 'All Products' }}
+          </h3>
+          <div class="products-info">
+            <span class="products-count">{{ products.length }} products</span>
+            <button v-if="hasMoreProducts" class="see-more-btn" @click="loadMoreProducts">
+              Load More
+            </button>
+          </div>
+        </div>
+        
+        <div v-if="products.length > 0" class="products-grid">
+          <div 
+            v-for="product in products" 
+            :key="product.id" 
+            class="product-card"
+            @click="viewProductDetails(product)"
+          >
+            <div class="product-image">
+              <img :src="getProductImageUrl(product.image)" :alt="product.title" />
+              <div class="product-badge">{{ product.category?.name || 'Product' }}</div>
+              <button class="favorite-btn" @click.stop="toggleFavorite(product)">
+                <span class="heart-icon">{{ getFavoriteIcon(product.id) }}</span>
+              </button>
+            </div>
+            <div class="product-info">
+              <h4 class="product-name">{{ product.title }}</h4>
+              <div class="product-price">{{ product.formattedPrice || formatPrice(product.price) }}</div>
+              <div class="product-rating">
+                <span class="rating-stars">{{ getStarRating(4.5) }}</span>
+                <span class="rating-count">({{ product.viewCount || 0 }})</span>
+              </div>
+              <div class="product-actions">
+                <span class="earn-coins">🪙 Earn {{ product.points }} Coins</span>
+                <button class="share-btn" @click.stop="shareProduct(product)">
+                  <span class="share-icon">📤</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Empty State -->
+        <div v-else class="empty-state">
+          <div class="empty-icon">📦</div>
+          <h4 class="empty-title">No products found</h4>
+          <p class="empty-message">
+            {{ searchQuery ? 'Try different keywords' : (selectedCategory ? 'No products in this category' : 'No products available') }}
+          </p>
+        </div>
+
+        <!-- Pagination -->
+        <div v-if="totalPages > 1" class="pagination">
+          <button 
+            v-for="page in totalPages" 
+            :key="page"
+            class="page-btn"
+            :class="{ active: currentPage === page }"
+            @click="goToPage(page)"
+          >
+            {{ page }}
           </button>
         </div>
       </div>
-      
-      <div v-if="displayedProducts.length > 0" class="products-grid">
-        <div 
-          v-for="product in displayedProducts" 
-          :key="product.id" 
-          class="product-card"
-          @click="viewProductDetails(product)"
-        >
-          <div class="product-image">
-            <img :src="product.image" :alt="product.name" />
-            <div class="product-badge">{{ product.category }}</div>
-            <button class="favorite-btn" @click.stop="toggleFavorite(product)">
-              <span class="heart-icon">{{ product.isFavorite ? '❤️' : '🤍' }}</span>
-            </button>
-          </div>
-          <div class="product-info">
-            <h4 class="product-name">{{ product.name }}</h4>
-            <div class="product-price">{{ product.price }}</div>
-            <div class="product-rating">
-              <span class="rating-stars">{{ getStarRating(product.rating) }}</span>
-              <span class="rating-count">({{ product.reviewCount }})</span>
-            </div>
-            <div class="product-actions">
-              <span class="earn-coins">🪙 Earn {{ product.coins }} Coins</span>
-              <button class="share-btn" @click.stop="shareProduct(product)">
-                <span class="share-icon">📤</span>
-              </button>
-            </div>
-          </div>
+
+      <!-- Error Messages -->
+      <div v-if="error" class="dashboard-section error-section">
+        <div class="error-message">
+          <span class="error-icon">⚠️</span>
+          <span class="error-text">{{ error }}</span>
+          <button class="retry-btn" @click="loadData">Retry</button>
         </div>
       </div>
-
-      <!-- Empty State -->
-      <div v-else class="empty-state">
-        <div class="empty-icon">📦</div>
-        <h4 class="empty-title">No products found</h4>
-        <p class="empty-message">
-          {{ searchQuery ? 'Try different keywords' : 'Select a category to view products' }}
-        </p>
-      </div>
-
-      <!-- Pagination -->
-      <div v-if="totalPages > 1" class="pagination">
-        <button 
-          v-for="page in totalPages" 
-          :key="page"
-          class="page-btn"
-          :class="{ active: currentPage === page }"
-          @click="goToPage(page)"
-        >
-          {{ page }}
-        </button>
-      </div>
-    </div>
+    </template>
 
     <!-- Bottom Navigation -->
     <BottomNavigation />
@@ -120,11 +136,11 @@
 </template>
 
 <script>
-import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, onMounted, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import BottomNavigation from '../components/BottomNavigation.vue'
 import HustlHeader from '../components/HustlHeader.vue'
-
+import apiService from '../services/api'
 
 export default {
   name: 'CategoryView',
@@ -134,252 +150,60 @@ export default {
   },
   setup() {
     const router = useRouter()
+    const route = useRoute()
     const searchQuery = ref('')
     const selectedCategory = ref(null)
     const currentPage = ref(1)
-    const productsPerPage = 10
-
+    const itemsPerPage = 10
     
-    const categories = ref([
-      { 
-        id: 1, 
-        name: 'Electronics', 
-        icon: '📱', 
-        color: '#4FC3F7', 
-        productCount: 1247,
-        badge: 'Hot' 
-      },
-      { 
-        id: 2, 
-        name: 'Fashion', 
-        icon: '👗', 
-        color: '#FF69B4', 
-        productCount: 856 
-      },
-      { 
-        id: 3, 
-        name: 'Sports & Outdoor', 
-        icon: '⚽', 
-        color: '#FF6B35', 
-        productCount: 634 
-      },
-      { 
-        id: 4, 
-        name: 'Home & Living', 
-        icon: '🏠', 
-        color: '#4ECDC4', 
-        productCount: 892 
-      },
-      { 
-        id: 5, 
-        name: 'Health & Beauty', 
-        icon: '💄', 
-        color: '#FF1493', 
-        productCount: 543
-      },
-      { 
-        id: 6, 
-        name: 'Automotive', 
-        icon: '🚗', 
-        color: '#32CD32', 
-        productCount: 287,
-        badge: 'New'
-      }
-    ])
+    // State management
+    const isLoading = ref(true)
+    const error = ref('')
+    const categories = ref([])
+    const products = ref([])
+    const favorites = ref(new Set())
+    const totalPages = ref(1)
+    const hasMoreProducts = ref(false)
 
-    const allProducts = ref([
-      {
-        id: 1,
-        name: 'iPhone 15 Pro Max 256GB',
-        category: 'Electronics',
-        categoryId: 1,
-        image: '/api/placeholder/120/120',
-        price: 'Rp 21,999,000',
-        originalPrice: 'Rp 25,999,000',
-        discount: '15%',
-        coins: 220,
-        rating: 4.8,
-        reviewCount: 3247,
-        isFavorite: false,
-        lastUpdated: '2025-08-30T10:00:00Z',
-        description: 'The most advanced iPhone ever with titanium design, A17 Pro chip, and revolutionary camera system. Professional-grade photography and videography capabilities.',
-        specifications: [
-          'Display: 6.7-inch Super Retina XDR',
-          'Chip: A17 Pro',
-          'Camera: 48MP Main, 12MP Ultra Wide', 
-          'Storage: 256GB',
-          'Battery: All-day battery life',
-          'Material: Titanium'
-        ]
-      },
-      {
-        id: 2,
-        name: 'Samsung Smart TV 55"',
-        category: 'Electronics',
-        categoryId: 1,
-        image: '/api/placeholder/120/120',
-        price: 'Rp 7,500,000',
-        originalPrice: 'Rp 9,999,000',
-        discount: '25%',
-        coins: 75,
-        rating: 4.6,
-        reviewCount: 1890,
-        isFavorite: true,
-        lastUpdated: '2025-08-30T09:45:00Z',
-        description: 'Experience stunning 4K resolution with Samsung\'s latest Smart TV technology. Features HDR support, built-in streaming apps, and voice control.',
-        specifications: [
-          'Screen Size: 55 inches',
-          'Resolution: 4K UHD (3840x2160)', 
-          'HDR: HDR10, HDR10+',
-          'Smart Platform: Tizen OS',
-          'Connectivity: 3 HDMI, 2 USB, WiFi',
-          'Audio: Dolby Digital Plus'
-        ]
-      },
-      {
-        id: 3,
-        name: 'Nike Air Force 1 White',
-        category: 'Fashion',
-        categoryId: 2,
-        image: '/api/placeholder/120/120',
-        price: 'Rp 1,299,000',
-        originalPrice: 'Rp 1,799,000',
-        discount: '27%',
-        coins: 13,
-        rating: 4.7,
-        reviewCount: 2134,
-        isFavorite: false,
-        lastUpdated: '2025-08-30T09:30:00Z',
-        description: 'The iconic basketball shoe that changed the game. Classic white leather upper with signature Air cushioning.',
-        specifications: [
-          'Material: Premium leather upper',
-          'Sole: Rubber outsole',
-          'Cushioning: Nike Air technology',
-          'Style: Low-top basketball shoe',
-          'Color: White/White',
-          'Gender: Unisex'
-        ]
-      },
-      {
-        id: 4,
-        name: 'Adidas Ultraboost 22',
-        category: 'Sports',
-        categoryId: 3,
-        image: '/api/placeholder/120/120',
-        price: 'Rp 2,200,000',
-        originalPrice: 'Rp 3,000,000',
-        discount: '26%',
-        coins: 22,
-        rating: 4.6,
-        reviewCount: 743,
-        isFavorite: false,
-        lastUpdated: '2025-08-30T09:15:00Z',
-        description: 'Premium running shoes with responsive BOOST midsole and supportive Primeknit upper for ultimate performance.',
-        specifications: [
-          'Upper: Primeknit textile',
-          'Midsole: BOOST technology',
-          'Outsole: Continental rubber',
-          'Support: Torsion system',
-          'Fit: Snug, supportive',
-          'Use: Running, training'
-        ]
-      },
-      {
-        id: 5,
-        name: 'MacBook Air M3 13"',
-        category: 'Electronics',
-        categoryId: 1,
-        image: '/api/placeholder/120/120',
-        price: 'Rp 14,999,000',
-        originalPrice: 'Rp 17,999,000',
-        discount: '16%',
-        coins: 150,
-        rating: 4.7,
-        reviewCount: 567,
-        isFavorite: true,
-        lastUpdated: '2025-08-30T09:00:00Z',
-        description: 'Supercharged by M3 chip, the new MacBook Air is incredibly fast and powerful laptop that gets things done.',
-        specifications: [
-          'Chip: Apple M3 8-core CPU',
-          'Memory: 8GB unified memory',
-          'Storage: 256GB SSD',
-          'Display: 13.6-inch Liquid Retina', 
-          'Battery: Up to 18 hours',
-          'Weight: 1.24 kg'
-        ]
-      },
-      {
-        id: 6,
-        name: 'IKEA Sofa Modern',
-        category: 'Home & Living',
-        categoryId: 4,
-        image: '/api/placeholder/120/120',
-        price: 'Rp 3,499,000',
-        originalPrice: 'Rp 4,999,000',
-        discount: '30%',
-        coins: 35,
-        rating: 4.4,
-        reviewCount: 892,
-        isFavorite: false,
-        lastUpdated: '2025-08-30T08:45:00Z',
-        description: 'Comfortable and stylish modern sofa perfect for any living room. High-quality materials and contemporary design.',
-        specifications: [
-          'Material: Premium fabric upholstery',
-          'Frame: Solid wood construction',
-          'Seating: 3-seater capacity',
-          'Color: Multiple options available',
-          'Warranty: 10 year limited',
-          'Assembly: Required'
-        ]
-      }
-    ])
+    // Category colors array for dynamic assignment
+    const categoryColors = [
+      '#4FC3F7', '#FF69B4', '#FF6B35', '#4ECDC4', 
+      '#FF1493', '#32CD32', '#9932CC', '#FFA500'
+    ]
 
-    const filteredProducts = computed(() => {
-      let products = allProducts.value
-
-      if (searchQuery.value) {
-        const query = searchQuery.value.toLowerCase()
-        products = products.filter(product =>
-          product.name.toLowerCase().includes(query) ||
-          product.category.toLowerCase().includes(query)
-        )
-      }
-
-      if (selectedCategory.value) {
-        products = products.filter(product => 
-          product.categoryId === selectedCategory.value.id
-        )
-      }
-
-      return products.sort((a, b) => new Date(b.lastUpdated) - new Date(a.lastUpdated))
-    })
-
-    const totalPages = computed(() => Math.ceil(filteredProducts.value.length / productsPerPage))
-
-    const displayedProducts = computed(() => {
-      const start = (currentPage.value - 1) * productsPerPage
-      const end = start + productsPerPage
-      return filteredProducts.value.slice(start, end)
-    })
-
-    const handleSearch = () => {
-      currentPage.value = 1
-      selectedCategory.value = null
+    // Utility methods
+    const getCategoryColor = (categoryId) => {
+      const index = categories.value.findIndex(cat => cat.id === categoryId)
+      return categoryColors[index % categoryColors.length] || '#6B7280'
     }
 
-    const clearSearch = () => {
-      searchQuery.value = ''
-      currentPage.value = 1
+    const getCategoryIcon = (categoryName) => {
+      const icons = {
+        'Electronics': '📱',
+        'Fashion': '👗', 
+        'Sports': '⚽',
+        'Sport': '⚽',
+        'Home & Living': '🏠',
+        'Home & Garden': '🏡',
+        'Health & Beauty': '💄',
+        'Automotive': '🚗',
+        'Books': '📚',
+        'Test Category': '🧪',
+        'Test Category4': '🧪'
+      }
+      return icons[categoryName] || '📦'
     }
 
-    const selectCategory = (category) => {
-      if (selectedCategory.value?.id === category.id) {
-        selectedCategory.value = null
-      } else {
-        selectedCategory.value = category
-        searchQuery.value = ''
-        currentPage.value = 1
-      }
+    const getProductImageUrl = (imagePath) => {
+      return apiService.constructor.getImageUrl(imagePath, 'products')
+    }
+
+    const formatPrice = (price) => {
+      return apiService.constructor.formatPrice(price)
+    }
+
+    const getFavoriteIcon = (productId) => {
+      return favorites.value.has(productId) ? '❤️' : '🤍'
     }
 
     const getStarRating = (rating) => {
@@ -392,39 +216,274 @@ export default {
       return stars
     }
 
+    // API loading methods
+    const loadCategories = async () => {
+      try {
+        const response = await apiService.getCategories()
+        if (response.success) {
+          categories.value = response.data
+          await loadCategoriesWithCounts()
+        } else {
+          console.warn('Failed to load categories:', response.message)
+        }
+      } catch (err) {
+        console.error('Error loading categories:', err)
+        error.value = 'Failed to load categories'
+      }
+    }
+
+    const loadCategoriesWithCounts = async () => {
+      try {
+        const countPromises = categories.value.map(async (category) => {
+          try {
+            const response = await apiService.getProducts({ 
+              categoryId: category.id,
+              limit: 1
+            })
+            
+            return {
+              ...category,
+              productCount: response.meta?.pagination?.totalItems || 0
+            }
+          } catch (err) {
+            console.warn(`Failed to load count for category ${category.id}:`, err)
+            return {
+              ...category,
+              productCount: 0
+            }
+          }
+        })
+
+        const categoriesWithCountsResult = await Promise.all(countPromises)
+        categories.value = categoriesWithCountsResult
+        
+      } catch (err) {
+        console.error('Error loading category counts:', err)
+      }
+    }
+
+    const loadProducts = async (params = {}) => {
+      try {
+        const queryParams = {
+          page: currentPage.value,
+          limit: itemsPerPage,
+          ...params
+        }
+
+        if (selectedCategory.value) {
+          queryParams.categoryId = selectedCategory.value.id
+        }
+
+        if (searchQuery.value.trim()) {
+          queryParams.search = searchQuery.value.trim()
+        }
+
+        const response = await apiService.getProducts(queryParams)
+        
+        if (response.success) {
+          products.value = response.data
+          
+          if (response.meta?.pagination) {
+            totalPages.value = response.meta.pagination.totalPages
+            hasMoreProducts.value = response.meta.pagination.hasNextPage
+          }
+        } else {
+          console.warn('Failed to load products:', response.message)
+          products.value = []
+        }
+      } catch (err) {
+        console.error('Error loading products:', err)
+        error.value = 'Failed to load products'
+        products.value = []
+      }
+    }
+
+    const loadFavorites = () => {
+      try {
+        const storedFavorites = JSON.parse(localStorage.getItem('favoriteProducts') || '[]')
+        favorites.value = new Set(storedFavorites.map(fav => fav.id))
+      } catch (err) {
+        console.error('Error loading favorites:', err)
+        favorites.value = new Set()
+      }
+    }
+
+    const loadData = async () => {
+      isLoading.value = true
+      error.value = ''
+
+      try {
+        await Promise.all([
+          loadCategories(),
+          loadProducts()
+        ])
+        
+        loadFavorites()
+
+        if (route.query.categoryId) {
+          const categoryId = parseInt(route.query.categoryId)
+          const category = categories.value.find(cat => cat.id === categoryId)
+          if (category) {
+            selectedCategory.value = category
+            await loadProducts({ categoryId })
+          }
+        }
+
+        if (route.query.search) {
+          searchQuery.value = route.query.search
+          await loadProducts({ search: route.query.search })
+        }
+
+      } catch (err) {
+        console.error('Error loading data:', err)
+        error.value = 'Failed to load data. Please try again.'
+      } finally {
+        isLoading.value = false
+      }
+    }
+
+    // Event handlers
+    const handleSearch = async () => {
+      currentPage.value = 1
+      selectedCategory.value = null
+      
+      router.replace({
+        name: 'Category',
+        query: searchQuery.value ? { search: searchQuery.value } : {}
+      })
+      
+      await loadProducts()
+    }
+
+    const clearSearch = async () => {
+      searchQuery.value = ''
+      currentPage.value = 1
+      
+      router.replace({ name: 'Category' })
+      
+      await loadProducts()
+    }
+
+    const selectCategory = async (category) => {
+      if (selectedCategory.value?.id === category.id) {
+        selectedCategory.value = null
+        router.replace({ name: 'Category' })
+      } else {
+        selectedCategory.value = category
+        searchQuery.value = ''
+        currentPage.value = 1
+        
+        router.replace({
+          name: 'Category',
+          query: { categoryId: category.id }
+        })
+      }
+      
+      await loadProducts()
+    }
+
     const toggleFavorite = (product) => {
-      product.isFavorite = !product.isFavorite
+      const productId = product.id
+      const storedFavorites = JSON.parse(localStorage.getItem('favoriteProducts') || '[]')
+      
+      if (favorites.value.has(productId)) {
+        favorites.value.delete(productId)
+        const updatedFavorites = storedFavorites.filter(fav => fav.id !== productId)
+        localStorage.setItem('favoriteProducts', JSON.stringify(updatedFavorites))
+      } else {
+        favorites.value.add(productId)
+        const favoriteProduct = {
+          id: product.id,
+          title: product.title,
+          price: product.formattedPrice || formatPrice(product.price),
+          image: product.image,
+          points: product.points
+        }
+        storedFavorites.push(favoriteProduct)
+        localStorage.setItem('favoriteProducts', JSON.stringify(storedFavorites))
+      }
     }
 
     const shareProduct = (product) => {
-      console.log(`Sharing product: ${product.name}`)
+      const shareData = {
+        title: product.title,
+        text: `Check out this product: ${product.title} - ${product.formattedPrice || formatPrice(product.price)}. Earn ${product.points} coins!`,
+        url: window.location.origin + `/product/${product.id}`
+      }
+      
+      if (navigator.share && navigator.canShare(shareData)) {
+        navigator.share(shareData)
+          .then(() => console.log('Product shared successfully'))
+          .catch((error) => console.log('Error sharing product:', error))
+      } else {
+        const shareText = `${shareData.title}\n${shareData.text}\n${shareData.url}`
+        navigator.clipboard.writeText(shareText)
+          .then(() => {
+            alert('Product link copied to clipboard!')
+          })
+          .catch(() => {
+            prompt('Copy this link to share:', shareText)
+          })
+      }
     }
 
     const viewProductDetails = (product) => {
-      // Store product details for ProductDetailView
       sessionStorage.setItem('selectedProduct', JSON.stringify(product))
       router.push(`/product/${product.id}`)
     }
 
-    const goToPage = (page) => {
+    const goToPage = async (page) => {
       currentPage.value = page
+      await loadProducts()
     }
 
-    const loadMoreProducts = () => {
-      if (currentPage.value < totalPages.value) {
+    const loadMoreProducts = async () => {
+      if (hasMoreProducts.value) {
         currentPage.value++
+        await loadProducts()
       }
     }
+
+    // Watch for route changes
+    watch(() => route.query, async (newQuery) => {
+      if (newQuery.categoryId && !isLoading.value) {
+        const categoryId = parseInt(newQuery.categoryId)
+        const category = categories.value.find(cat => cat.id === categoryId)
+        if (category && selectedCategory.value?.id !== categoryId) {
+          selectedCategory.value = category
+          currentPage.value = 1
+          await loadProducts()
+        }
+      } else if (!newQuery.categoryId && selectedCategory.value) {
+        selectedCategory.value = null
+        currentPage.value = 1
+        await loadProducts()
+      }
+
+      if (newQuery.search && newQuery.search !== searchQuery.value) {
+        searchQuery.value = newQuery.search
+        selectedCategory.value = null
+        currentPage.value = 1
+        await loadProducts()
+      }
+    })
+
+    // Initialize data on mount
+    onMounted(() => {
+      loadData()
+    })
 
     return {
       searchQuery,
       selectedCategory,
       currentPage,
-      productsPerPage,
+      itemsPerPage,
+      isLoading,
+      error,
       categories,
-      filteredProducts,
-      displayedProducts,
+      products,
       totalPages,
+      hasMoreProducts,
       handleSearch,
       clearSearch,
       selectCategory,
@@ -433,7 +492,13 @@ export default {
       shareProduct,
       viewProductDetails,
       goToPage,
-      loadMoreProducts
+      loadMoreProducts,
+      loadData,
+      getCategoryColor,
+      getCategoryIcon,
+      getProductImageUrl,
+      formatPrice,
+      getFavoriteIcon
     }
   }
 }
@@ -490,6 +555,79 @@ export default {
 
 .dashboard-section:first-child {
   margin-top: 1rem;
+}
+
+/* Loading Section */
+.loading-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1rem;
+  text-align: center;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(79, 195, 247, 0.3);
+  border-top: 4px solid #4FC3F7;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+.loading-text {
+  color: #1F2937;
+  font-family: 'Baloo 2', sans-serif;
+  font-weight: 500;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Error Section */
+.error-section {
+  background: #FEF2F2;
+  border: 2px solid #FECACA;
+}
+
+.error-message {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: #DC2626;
+  font-family: 'Baloo 2', sans-serif;
+}
+
+.error-icon {
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.error-text {
+  flex: 1;
+  font-weight: 500;
+}
+
+.retry-btn {
+  background: #DC2626;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'Baloo 2', sans-serif;
+}
+
+.retry-btn:hover {
+  background: #B91C1C;
+  transform: translateY(-1px);
 }
 
 /* Search Section */
@@ -679,20 +817,6 @@ export default {
   font-family: 'Baloo 2', sans-serif;
   font-weight: 400;
   text-align: center;
-}
-
-.category-badge {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  background: #EF4444;
-  color: white;
-  font-size: 0.625rem;
-  padding: 0.125rem 0.375rem;
-  border-radius: 6px;
-  font-family: 'Baloo 2', sans-serif;
-  font-weight: 600;
-  box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
 }
 
 /* Products Grid - Always 2 columns */
@@ -947,7 +1071,6 @@ export default {
     overflow: visible !important;
   }
 
-  /* Keep mobile layout styling */
   .dashboard-section {
     margin: 0 1rem 1.5rem 1rem;
     padding: 1.25rem;
@@ -962,7 +1085,6 @@ export default {
     padding: 1rem 1.25rem;
   }
 
-  /* Keep 2-column layout */
   .categories-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: 0.75rem;

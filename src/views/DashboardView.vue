@@ -2,101 +2,125 @@
   <div class="dashboard-view">
     <HustlHeader :isDashboard="true" />
 
-    <!-- Points Section -->
-    <div class="dashboard-section points-section">
-      <div class="points-card">
-        <div class="coin-icon">🪙</div>
-        <div class="points-info">
-          <span class="points-value">{{ userPoints }}</span>
-          <span class="points-label">Points</span>
-        </div>
-      </div>
+    <!-- Loading State -->
+    <div v-if="isLoading" class="dashboard-section loading-section">
+      <div class="loading-spinner"></div>
+      <p class="loading-text">Loading dashboard...</p>
     </div>
 
-    <!-- Search Section -->
-    <div class="dashboard-section search-section">
-      <div class="search-container">
-        <span class="search-icon">🔍</span>
-        <input 
-          type="text" 
-          class="search-input"
-          placeholder="Search products..."
-          v-model="searchQuery"
-          @input="handleSearch"
-        />
-      </div>
-    </div>
-
-    <!-- Categories Section -->
-    <div class="dashboard-section">
-      <div class="section-header">
-        <h3 class="section-title">Today's Hot Picks!</h3>
-        <button class="see-more-btn">See More</button>
-      </div>
-      <div class="categories-scroll-container">
-        <div class="categories-grid">
-          <div v-for="category in categories" :key="category.id" class="category-card">
-            <div class="category-icon" :style="{ background: category.color }">
-              <span>{{ category.icon }}</span>
-            </div>
-            <span class="category-name">{{ category.name }}</span>
-            <div v-if="category.badge" class="category-badge">{{ category.badge }}</div>
+    <template v-else>
+      <!-- Points Section -->
+      <div class="dashboard-section points-section">
+        <div class="points-card">
+          <div class="coin-icon">🪙</div>
+          <div class="points-info">
+            <span class="points-value">{{ userPoints }}</span>
+            <span class="points-label">Points</span>
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- Featured Products Section -->
-    <div class="dashboard-section">
-      <div class="section-header">
-        <h3 class="section-title">Featured Products</h3>
-        <button class="see-more-btn">See More</button>
+      <!-- Search Section -->
+      <div class="dashboard-section search-section">
+        <div class="search-container">
+          <span class="search-icon">🔍</span>
+          <input 
+            type="text" 
+            class="search-input"
+            placeholder="Search products..."
+            v-model="searchQuery"
+            @input="handleSearch"
+          />
+        </div>
       </div>
-      <div class="products-grid">
-        <div 
-          v-for="product in featuredProducts" 
-          :key="product.id" 
-          class="product-card"
-          @click="viewProductDetails(product)"
-        >
-          <div class="product-image">
-            <img :src="product.image" :alt="product.name" />
-            <div class="product-badge">{{ product.category }}</div>
-          </div>
-          <div class="product-info">
-            <h4 class="product-name">{{ product.name }}</h4>
-            <div class="product-price">{{ product.price }}</div>
-            <div class="product-actions">
-              <span class="earn-coins">🪙 Earn {{ product.coins }} Coins</span>
-              <button class="share-btn" @click.stop="shareProduct(product)">
-                <span class="share-icon">📤</span>
-              </button>
+
+      <!-- Categories Section -->
+      <div class="dashboard-section">
+        <div class="section-header">
+          <h3 class="section-title">Today's Hot Picks!</h3>
+          <button class="see-more-btn" @click="navigateToCategories">See More</button>
+        </div>
+        <div class="categories-scroll-container">
+          <div class="categories-grid">
+            <div 
+              v-for="category in categories" 
+              :key="category.id" 
+              class="category-card"
+              @click="selectCategory(category)"
+            >
+              <div class="category-icon" :style="{ background: getCategoryColor(category.id) }">
+                <span>{{ getCategoryIcon(category.name) }}</span>
+              </div>
+              <span class="category-name">{{ category.name }}</span>
             </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- Campaign Section -->
-    <div class="dashboard-section">
-      <div class="section-header">
-        <h3 class="section-title">Active Campaign</h3>
-        <button class="see-more-btn">See More</button>
+      <!-- Featured Products Section -->
+      <div class="dashboard-section">
+        <div class="section-header">
+          <h3 class="section-title">Featured Products</h3>
+          <button class="see-more-btn" @click="navigateToCategories">See More</button>
+        </div>
+        <div v-if="featuredProducts.length > 0" class="products-grid">
+          <div 
+            v-for="product in featuredProducts" 
+            :key="product.id" 
+            class="product-card"
+            @click="viewProductDetails(product)"
+          >
+            <div class="product-image">
+              <img :src="getProductImageUrl(product.image)" :alt="product.title" />
+              <div class="product-badge">{{ product.category?.name || 'Product' }}</div>
+            </div>
+            <div class="product-info">
+              <h4 class="product-name">{{ product.title }}</h4>
+              <div class="product-price">{{ product.formattedPrice || formatPrice(product.price) }}</div>
+              <div class="product-actions">
+                <span class="earn-coins">🪙 Earn {{ product.points }} Coins</span>
+                <button class="share-btn" @click.stop="shareProduct(product)">
+                  <span class="share-icon">📤</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div v-else class="empty-products">
+          <p class="empty-text">No featured products available</p>
+        </div>
       </div>
-      <div v-if="activeCampaign" class="campaign-card">
-        <div class="campaign-image">
-          <img :src="activeCampaign.image" :alt="activeCampaign.title" />
-          <div class="campaign-overlay">
-            <h4 class="campaign-title">{{ activeCampaign.title }}</h4>
-            <p class="campaign-description">{{ activeCampaign.description }}</p>
-            <div class="campaign-details">
-              <span class="campaign-discount">{{ activeCampaign.discount }}</span>
-              <span class="campaign-validity">{{ activeCampaign.validity }}</span>
+
+      <!-- Campaign Section -->
+      <div class="dashboard-section" v-if="activeCampaign">
+        <div class="section-header">
+          <h3 class="section-title">Active Campaign</h3>
+          <button class="see-more-btn" @click="navigateToCampaigns">See More</button>
+        </div>
+        <div class="campaign-card" @click="viewCampaignDetails(activeCampaign)">
+          <div class="campaign-image">
+            <img :src="getCampaignImageUrl(activeCampaign.image)" :alt="activeCampaign.name" />
+            <div class="campaign-overlay">
+              <h4 class="campaign-title">{{ activeCampaign.name }}</h4>
+              <p class="campaign-description">{{ activeCampaign.description }}</p>
+              <div class="campaign-details">
+                <span class="campaign-status" :class="activeCampaign.status">{{ activeCampaign.status }}</span>
+                <span class="campaign-validity">{{ formatCampaignDate(activeCampaign.endDate) }}</span>
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
+
+      <!-- Error Messages -->
+      <div v-if="error" class="dashboard-section error-section">
+        <div class="error-message">
+          <span class="error-icon">⚠️</span>
+          <span class="error-text">{{ error }}</span>
+          <button class="retry-btn" @click="loadDashboardData">Retry</button>
+        </div>
+      </div>
+    </template>
 
     <!-- Bottom Navigation Component -->
     <BottomNavigation />
@@ -109,6 +133,7 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import BottomNavigation from '../components/BottomNavigation.vue'
 import HustlHeader from '../components/HustlHeader.vue'
+import apiService from '../services/api'
 
 export default {
   name: 'DashboardView',
@@ -120,287 +145,150 @@ export default {
     const router = useRouter()
     const authStore = useAuthStore()
     const searchQuery = ref('')
+    
+    // State management
+    const isLoading = ref(true)
+    const error = ref('')
+    const userPointsData = ref(null)
+    const categories = ref([])
+    const featuredProducts = ref([])
+    const activeCampaign = ref(null)
 
-    // User points from auth store
-    const userPoints = computed(() => authStore.userPoints || 1250)
+    // User points from API or store
+    const userPoints = computed(() => 
+      userPointsData.value?.currentBalance || authStore.userPoints || 0
+    )
 
-    // 5 Categories with scrollable functionality
-    const categories = ref([
-      { id: 1, name: 'Popular T-Shirts', icon: '👕', color: '#FF1493', badge: '3 days left' },
-      { id: 2, name: 'Sport', icon: '⚽', color: '#FFA500' },
-      { id: 3, name: 'Gaming', icon: '🎮', color: '#9932CC' },
-      { id: 4, name: 'Electronics', icon: '📱', color: '#00CED1' },
-      { id: 5, name: 'Fashion', icon: '👗', color: '#FFB6C1' }
-    ])
+    // Category colors mapping
+    const categoryColors = {
+      1: '#4FC3F7', // Electronics
+      2: '#FF69B4', // Fashion  
+      3: '#FF6B35', // Sports
+      4: '#4ECDC4', // Home & Living
+      5: '#FF1493', // Health & Beauty
+      6: '#32CD32'  // Automotive
+    }
 
-    // 10 Featured products sorted by last update, displayed 2 per row with full details
-    const featuredProducts = ref([
-      {
-        id: 1,
-        name: 'Samsung Smart TV 55"',
-        category: 'Electronic',
-        image: '/api/placeholder/80/80',
-        price: 'Rp 7,500,000',
-        originalPrice: 'Rp 9,999,000',
-        discount: '25%',
-        coins: 75,
-        rating: 4.6,
-        reviewCount: 1890,
-        lastUpdated: '2025-08-30T10:00:00Z',
-        description: 'Experience stunning 4K resolution with Samsung\'s latest Smart TV technology. Features HDR support, built-in streaming apps, and voice control for the ultimate entertainment experience.',
-        specifications: [
-          'Screen Size: 55 inches',
-          'Resolution: 4K UHD (3840x2160)', 
-          'HDR: HDR10, HDR10+',
-          'Smart Platform: Tizen OS',
-          'Connectivity: 3 HDMI, 2 USB, WiFi',
-          'Audio: Dolby Digital Plus'
-        ]
-      },
-      {
-        id: 2,
-        name: 'iPhone 15 Pro Max',
-        category: 'Electronic',
-        image: '/api/placeholder/80/80',
-        price: 'Rp 18,000,000',
-        originalPrice: 'Rp 21,999,000',
-        discount: '18%',
-        coins: 180,
-        rating: 4.9,
-        reviewCount: 3247,
-        lastUpdated: '2025-08-30T09:45:00Z',
-        description: 'The most advanced iPhone ever with titanium design, A17 Pro chip, and revolutionary camera system. Professional-grade photography and videography capabilities.',
-        specifications: [
-          'Display: 6.7-inch Super Retina XDR',
-          'Chip: A17 Pro',
-          'Camera: 48MP Main, 12MP Ultra Wide', 
-          'Storage: 256GB',
-          'Battery: All-day battery life',
-          'Material: Titanium'
-        ]
-      },
-      {
-        id: 3,
-        name: 'MacBook Air M3',
-        category: 'Electronic',
-        image: '/api/placeholder/80/80',
-        price: 'Rp 15,000,000',
-        originalPrice: 'Rp 17,999,000',
-        discount: '16%',
-        coins: 150,
-        rating: 4.7,
-        reviewCount: 567,
-        lastUpdated: '2025-08-30T09:30:00Z',
-        description: 'Supercharged by M3 chip, the new MacBook Air is incredibly fast and powerful laptop that gets things done anywhere you go.',
-        specifications: [
-          'Chip: Apple M3 8-core CPU',
-          'Memory: 8GB unified memory',
-          'Storage: 256GB SSD',
-          'Display: 13.6-inch Liquid Retina', 
-          'Battery: Up to 18 hours',
-          'Weight: 1.24 kg'
-        ]
-      },
-      {
-        id: 4,
-        name: 'Nike Air Max 270',
-        category: 'Fashion',
-        image: '/api/placeholder/80/80',
-        price: 'Rp 1,800,000',
-        originalPrice: 'Rp 2,499,000',
-        discount: '28%',
-        coins: 18,
-        rating: 4.5,
-        reviewCount: 892,
-        lastUpdated: '2025-08-30T09:15:00Z',
-        description: 'Nike\'s biggest heel Air unit yet delivers exceptional all-day comfort. Inspired by the Air Max legacy with modern style.',
-        specifications: [
-          'Upper: Mesh and synthetic materials',
-          'Midsole: Air Max heel unit',
-          'Outsole: Rubber with traction pattern',
-          'Style: Lifestyle sneaker',
-          'Fit: True to size',
-          'Gender: Unisex'
-        ]
-      },
-      {
-        id: 5,
-        name: 'Sony WH-1000XM5',
-        category: 'Electronic',
-        image: '/api/placeholder/80/80',
-        price: 'Rp 4,500,000',
-        originalPrice: 'Rp 5,999,000',
-        discount: '25%',
-        coins: 45,
-        rating: 4.8,
-        reviewCount: 1234,
-        lastUpdated: '2025-08-30T09:00:00Z',
-        description: 'Industry-leading noise canceling with premium sound quality. Perfect for music lovers and frequent travelers.',
-        specifications: [
-          'Driver: 30mm dynamic',
-          'Noise Canceling: Industry-leading',
-          'Battery: Up to 30 hours',
-          'Connectivity: Bluetooth 5.2, NFC',
-          'Features: Touch controls, voice assistant',
-          'Weight: 250g'
-        ]
-      },
-      {
-        id: 6,
-        name: 'Adidas Ultraboost 22',
-        category: 'Sport',
-        image: '/api/placeholder/80/80',
-        price: 'Rp 2,200,000',
-        originalPrice: 'Rp 3,000,000',
-        discount: '26%',
-        coins: 22,
-        rating: 4.6,
-        reviewCount: 743,
-        lastUpdated: '2025-08-30T08:45:00Z',
-        description: 'Premium running shoes with responsive BOOST midsole and supportive Primeknit upper for ultimate performance.',
-        specifications: [
-          'Upper: Primeknit textile',
-          'Midsole: BOOST technology',
-          'Outsole: Continental rubber',
-          'Support: Torsion system',
-          'Fit: Snug, supportive',
-          'Use: Running, training'
-        ]
-      },
-      {
-        id: 7,
-        name: 'PlayStation 5',
-        category: 'Gaming',
-        image: '/api/placeholder/80/80',
-        price: 'Rp 8,000,000',
-        originalPrice: 'Rp 8,999,000',
-        discount: '11%',
-        coins: 80,
-        rating: 4.7,
-        reviewCount: 2156,
-        lastUpdated: '2025-08-30T08:30:00Z',
-        description: 'Next-generation gaming console with lightning-fast loading, stunning graphics, and immersive 3D audio technology.',
-        specifications: [
-          'CPU: AMD Zen 2 8-core',
-          'GPU: AMD RDNA 2',
-          'Storage: 825GB SSD',
-          'Memory: 16GB GDDR6',
-          'Resolution: Up to 4K 120Hz',
-          'Features: Ray tracing, 3D audio'
-        ]
-      },
-      {
-        id: 8,
-        name: 'iPad Pro 12.9"',
-        category: 'Electronic',
-        image: '/api/placeholder/80/80',
-        price: 'Rp 12,000,000',
-        originalPrice: 'Rp 15,999,000',
-        discount: '25%',
-        coins: 120,
-        rating: 4.8,
-        reviewCount: 890,
-        lastUpdated: '2025-08-30T08:15:00Z',
-        description: 'The ultimate iPad experience with M2 chip, Liquid Retina XDR display, and all-day battery life for creative professionals.',
-        specifications: [
-          'Display: 12.9-inch Liquid Retina XDR',
-          'Chip: Apple M2',
-          'Storage: 128GB',
-          'Camera: 12MP Wide, 10MP Ultra Wide',
-          'Battery: All-day battery life', 
-          'Apple Pencil: 2nd generation compatible'
-        ]
-      },
-      {
-        id: 9,
-        name: 'Microsoft Surface Pro',
-        category: 'Electronic',
-        image: '/api/placeholder/80/80',
-        price: 'Rp 13,500,000',
-        originalPrice: 'Rp 16,999,000',
-        discount: '20%',
-        coins: 135,
-        rating: 4.5,
-        reviewCount: 456,
-        lastUpdated: '2025-08-30T08:00:00Z',
-        description: 'Versatile 2-in-1 laptop with Intel Core processor, perfect for productivity and creativity on the go.',
-        specifications: [
-          'Processor: Intel Core i5',
-          'Memory: 8GB RAM',
-          'Storage: 256GB SSD',
-          'Display: 13-inch PixelSense',
-          'Battery: Up to 15.5 hours',
-          'Features: Detachable keyboard'
-        ]
-      },
-      {
-        id: 10,
-        name: 'Canon EOS R6',
-        category: 'Electronic',
-        image: '/api/placeholder/80/80',
-        price: 'Rp 25,000,000',
-        originalPrice: 'Rp 28,999,000',
-        discount: '13%',
-        coins: 250,
-        rating: 4.9,
-        reviewCount: 234,
-        lastUpdated: '2025-08-30T07:45:00Z',
-        description: 'Professional mirrorless camera with exceptional low-light performance and advanced autofocus system.',
-        specifications: [
-          'Sensor: 20.1MP full-frame CMOS',
-          'Processor: DIGIC X',
-          'Autofocus: Dual Pixel CMOS AF II',
-          'Video: 4K 60p recording',
-          'Stabilization: In-body IS',
-          'Viewfinder: 3.69M-dot OLED'
-        ]
-      }
-    ].sort((a, b) => new Date(b.lastUpdated) - new Date(a.lastUpdated)))
+    // Category icons mapping
+    const categoryIcons = {
+      'Electronics': '📱',
+      'Fashion': '👗',
+      'Sports': '⚽',
+      'Sport': '⚽',
+      'Home & Living': '🏠',
+      'Health & Beauty': '💄',
+      'Automotive': '🚗'
+    }
 
-    // Active campaign data
-    const activeCampaign = ref({
-      id: 1,
-      title: 'Summer Sale 2024',
-      description: 'Get up to 50% off on selected electronics and fashion items',
-      discount: 'Up to 50% OFF',
-      validity: 'Valid until Aug 31',
-      image: '/api/placeholder/400/200'
-    })
+    // Methods
+    const getCategoryColor = (categoryId) => {
+      return categoryColors[categoryId] || '#6B7280'
+    }
 
-    // Add touch scroll functionality for categories
-    const initializeCategoryScrolling = () => {
-      const container = document.querySelector('.categories-scroll-container')
-      if (container) {
-        let isDown = false
-        let startX
-        let scrollLeft
+    const getCategoryIcon = (categoryName) => {
+      return categoryIcons[categoryName] || '📦'
+    }
 
-        container.addEventListener('mousedown', (e) => {
-          isDown = true
-          startX = e.pageX - container.offsetLeft
-          scrollLeft = container.scrollLeft
-        })
+    const getProductImageUrl = (imagePath) => {
+      return apiService.constructor.getImageUrl(imagePath, 'products')
+    }
 
-        container.addEventListener('mouseleave', () => {
-          isDown = false
-        })
+    const getCampaignImageUrl = (imagePath) => {
+      return apiService.constructor.getImageUrl(imagePath, 'campaigns')
+    }
 
-        container.addEventListener('mouseup', () => {
-          isDown = false
-        })
+    const formatPrice = (price) => {
+      return apiService.constructor.formatPrice(price)
+    }
 
-        container.addEventListener('mousemove', (e) => {
-          if (!isDown) return
-          e.preventDefault()
-          const x = e.pageX - container.offsetLeft
-          const walk = (x - startX) * 2
-          container.scrollLeft = scrollLeft - walk
-        })
+    const formatCampaignDate = (dateString) => {
+      const date = new Date(dateString)
+      const now = new Date()
+      const diffTime = date.getTime() - now.getTime()
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+      
+      if (diffDays < 0) return 'Expired'
+      if (diffDays === 0) return 'Ends today'
+      if (diffDays === 1) return 'Ends tomorrow'
+      return `${diffDays} days left`
+    }
+
+    // Load dashboard data
+    const loadDashboardData = async () => {
+      isLoading.value = true
+      error.value = ''
+
+      try {
+        // Load all dashboard data in parallel
+        const [pointsResult, categoriesResult, featuredProductsResult, campaignsResult] = await Promise.allSettled([
+          apiService.getMyPoints(),
+          apiService.getCategories(),
+          apiService.getFeaturedProducts(),
+          apiService.getActiveCampaigns()
+        ])
+
+        // Handle points data
+        if (pointsResult.status === 'fulfilled' && pointsResult.value.success) {
+          userPointsData.value = pointsResult.value.data
+        } else {
+          console.warn('Failed to load points:', pointsResult.reason)
+        }
+
+        // Handle categories data
+        if (categoriesResult.status === 'fulfilled' && categoriesResult.value.success) {
+          categories.value = categoriesResult.value.data.slice(0, 5) // Limit to 5 categories
+        } else {
+          console.warn('Failed to load categories:', categoriesResult.reason)
+        }
+
+        // Handle featured products data
+        if (featuredProductsResult.status === 'fulfilled' && featuredProductsResult.value.success) {
+          featuredProducts.value = featuredProductsResult.value.data.slice(0, 6) // Limit to 6 products
+        } else {
+          console.warn('Failed to load featured products:', featuredProductsResult.reason)
+        }
+
+        // Handle campaigns data
+        if (campaignsResult.status === 'fulfilled' && campaignsResult.value.success) {
+          const campaigns = campaignsResult.value.data
+          activeCampaign.value = campaigns.length > 0 ? campaigns[0] : null
+        } else {
+          console.warn('Failed to load campaigns:', campaignsResult.reason)
+        }
+
+        // Check if all critical data failed to load
+        const criticalFailures = [
+          pointsResult.status === 'rejected',
+          categoriesResult.status === 'rejected',
+          featuredProductsResult.status === 'rejected'
+        ].filter(Boolean).length
+
+        if (criticalFailures >= 2) {
+          error.value = 'Unable to load dashboard data. Please check your connection.'
+        }
+
+      } catch (err) {
+        console.error('Dashboard loading error:', err)
+        error.value = 'Failed to load dashboard data. Please try again.'
+      } finally {
+        isLoading.value = false
       }
     }
 
     const handleSearch = () => {
-      console.log('Search query:', searchQuery.value)
+      if (searchQuery.value.trim()) {
+        router.push({
+          name: 'Category',
+          query: { search: searchQuery.value }
+        })
+      }
+    }
+
+    const selectCategory = (category) => {
+      router.push({
+        name: 'Category',
+        query: { categoryId: category.id }
+      })
     }
 
     const viewProductDetails = (product) => {
@@ -409,25 +297,72 @@ export default {
       router.push(`/product/${product.id}`)
     }
 
-    const shareProduct = (product) => {
-      console.log('Share product:', product.name)
-      // Implement share functionality
+    const viewCampaignDetails = (campaign) => {
+      // Store campaign details for next view
+      sessionStorage.setItem('selectedCampaign', JSON.stringify(campaign))
+      router.push(`/campaign/${campaign.id}`)
     }
 
-    // Initialize scrolling after component mounts
+    const shareProduct = (product) => {
+      const shareData = {
+        title: product.title,
+        text: `Check out this product: ${product.title} - ${product.formattedPrice || formatPrice(product.price)}. Earn ${product.points} coins!`,
+        url: window.location.origin + `/product/${product.id}`
+      }
+      
+      if (navigator.share && navigator.canShare(shareData)) {
+        navigator.share(shareData)
+          .then(() => console.log('Product shared successfully'))
+          .catch((error) => console.log('Error sharing product:', error))
+      } else {
+        // Fallback: copy to clipboard
+        const shareText = `${shareData.title}\n${shareData.text}\n${shareData.url}`
+        navigator.clipboard.writeText(shareText)
+          .then(() => {
+            alert('Product link copied to clipboard!')
+          })
+          .catch(() => {
+            // Manual fallback
+            prompt('Copy this link to share:', shareText)
+          })
+      }
+    }
+
+    const navigateToCategories = () => {
+      router.push('/category')
+    }
+
+    const navigateToCampaigns = () => {
+      router.push('/campaign')
+    }
+
+    // Initialize dashboard data on mount
     onMounted(() => {
-      initializeCategoryScrolling()
+      loadDashboardData()
     })
 
     return {
       searchQuery,
+      isLoading,
+      error,
       userPoints,
       categories,
       featuredProducts,
       activeCampaign,
       handleSearch,
+      selectCategory,
       viewProductDetails,
-      shareProduct
+      viewCampaignDetails,
+      shareProduct,
+      navigateToCategories,
+      navigateToCampaigns,
+      loadDashboardData,
+      getCategoryColor,
+      getCategoryIcon,
+      getProductImageUrl,
+      getCampaignImageUrl,
+      formatPrice,
+      formatCampaignDate
     }
   }
 }
@@ -442,6 +377,91 @@ export default {
   display: flex;
   flex-direction: column;
   overflow-y: auto;
+}
+
+/* Loading Section */
+.loading-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1rem;
+  text-align: center;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(79, 195, 247, 0.3);
+  border-top: 4px solid #4FC3F7;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+.loading-text {
+  color: #1F2937;
+  font-family: 'Baloo 2', sans-serif;
+  font-weight: 500;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Error Section */
+.error-section {
+  background: #FEF2F2;
+  border: 2px solid #FECACA;
+}
+
+.error-message {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: #DC2626;
+  font-family: 'Baloo 2', sans-serif;
+}
+
+.error-icon {
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.error-text {
+  flex: 1;
+  font-weight: 500;
+}
+
+.retry-btn {
+  background: #DC2626;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'Baloo 2', sans-serif;
+}
+
+.retry-btn:hover {
+  background: #B91C1C;
+  transform: translateY(-1px);
+}
+
+/* Empty Products */
+.empty-products {
+  text-align: center;
+  padding: 2rem 1rem;
+  color: #6B7280;
+}
+
+.empty-text {
+  font-family: 'Baloo 2', sans-serif;
+  font-weight: 500;
 }
 
 /* Dashboard Section - Clean containers with proper text handling */
@@ -656,20 +676,6 @@ export default {
   hyphens: auto;
 }
 
-.category-badge {
-  position: absolute;
-  top: 0;
-  right: 0;
-  background: #EF4444;
-  color: white;
-  font-size: 0.625rem;
-  padding: 0.125rem 0.375rem;
-  border-radius: 8px;
-  font-family: 'Baloo 2', sans-serif;
-  font-weight: 600;
-  box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
-}
-
 /* Products Grid - 2 products per row */
 .products-grid {
   display: grid;
@@ -854,16 +860,32 @@ export default {
   display: flex;
   gap: 1rem;
   align-items: center;
+  flex-wrap: wrap;
 }
 
-.campaign-discount {
-  background: #EF4444;
+.campaign-status {
   padding: 0.375rem 0.75rem;
   border-radius: 8px;
   font-size: 0.75rem;
   font-weight: 700;
   font-family: 'Baloo 2', sans-serif;
-  box-shadow: 0 2px 6px rgba(239, 68, 68, 0.3);
+  text-transform: capitalize;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.campaign-status.active {
+  background: #10B981;
+  color: white;
+}
+
+.campaign-status.upcoming {
+  background: #F59E0B;
+  color: white;
+}
+
+.campaign-status.ended {
+  background: #EF4444;
+  color: white;
 }
 
 .campaign-validity {

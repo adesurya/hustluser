@@ -1,5 +1,6 @@
 <template>
   <div class="campaign-detail-view dashboard-page">
+    <HustlHeader :isDashboard="true" />
     <!-- Header with Back Button -->
     <div class="dashboard-section header-section">
       <div class="header-container">
@@ -10,22 +11,28 @@
       </div>
     </div>
 
+    <!-- Loading State -->
+    <div v-if="isLoading" class="dashboard-section loading-section">
+      <div class="loading-spinner"></div>
+      <p class="loading-text">Loading campaign details...</p>
+    </div>
+
     <!-- Campaign Information Section - Mobile-First Layout -->
-    <div class="dashboard-section campaign-info-section" v-if="campaign">
+    <div v-else-if="campaign" class="dashboard-section campaign-info-section">
       <!-- Campaign Image -->
       <div class="campaign-image-container">
         <div class="campaign-image">
-          <img :src="campaign.image" :alt="campaign.title" />
-          <div class="campaign-status active">
+          <img :src="getCampaignImageUrl(campaign.image)" :alt="campaign.name" />
+          <div class="campaign-status" :class="campaign.status">
             <span class="status-dot"></span>
-            <span class="status-text">Active</span>
+            <span class="status-text">{{ formatStatus(campaign.status) }}</span>
           </div>
         </div>
       </div>
       
       <!-- Campaign Details -->
       <div class="campaign-details">
-        <h1 class="campaign-title">{{ campaign.title }}</h1>
+        <h1 class="campaign-title">{{ campaign.name }}</h1>
         
         <div class="campaign-dates">
           <div class="date-item">
@@ -40,7 +47,7 @@
         
         <div class="campaign-reward">
           <span class="reward-icon">🎁</span>
-          <span class="reward-text">{{ campaign.reward }}</span>
+          <span class="reward-text">{{ getStatusMessage(campaign.status) }}</span>
         </div>
       </div>
       
@@ -52,7 +59,7 @@
     </div>
 
     <!-- Product List Section - Mobile-First Grid -->
-    <div class="dashboard-section product-list-section" v-if="campaign">
+    <div v-if="campaign && campaign.products && campaign.products.length > 0" class="dashboard-section product-list-section">
       <div class="section-header">
         <h3 class="section-title">Product List</h3>
         <span class="product-count">{{ campaign.products.length }} products</span>
@@ -66,34 +73,50 @@
           @click="viewProductDetails(product)"
         >
           <div class="product-image">
-            <img :src="product.image" :alt="product.name" />
-            <div class="product-badge">{{ product.category }}</div>
-            <div v-if="product.discount" class="discount-badge">{{ product.discount }} OFF</div>
+            <img :src="getProductImageUrl(product.image)" :alt="product.title" />
+            <div class="product-badge">{{ product.category?.name || 'Product' }}</div>
           </div>
           <div class="product-info">
-            <h4 class="product-name">{{ product.name }}</h4>
+            <h4 class="product-name">{{ product.title }}</h4>
             <div class="product-pricing">
-              <div class="current-price">{{ product.price }}</div>
-              <div v-if="product.originalPrice" class="original-price">{{ product.originalPrice }}</div>
+              <div class="current-price">{{ product.formattedPrice || formatPrice(product.price) }}</div>
             </div>
             <div class="product-rating">
-              <span class="rating-stars">{{ getStarRating(product.rating) }}</span>
-              <span class="rating-count">({{ product.reviewCount }})</span>
+              <span class="rating-stars">{{ getStarRating(4.5) }}</span>
+              <span class="rating-count">({{ product.viewCount || 0 }})</span>
             </div>
             <div class="product-actions">
-              <span class="earn-coins">🪙 Earn {{ product.coins }} Coins</span>
+              <span class="earn-coins">🪙 Earn {{ product.points }} Coins</span>
             </div>
           </div>
         </div>
       </div>
     </div>
 
+    <!-- No Products Message -->
+    <div v-else-if="campaign && campaign.productCount === 0" class="dashboard-section no-products-section">
+      <div class="empty-state">
+        <div class="empty-icon">📦</div>
+        <h4 class="empty-title">No products yet</h4>
+        <p class="empty-message">This campaign doesn't have any products added yet.</p>
+      </div>
+    </div>
+
     <!-- Join Campaign Button -->
-    <div class="dashboard-section join-section" v-if="campaign">
+    <div v-if="campaign && campaign.status === 'active'" class="dashboard-section join-section">
       <button class="join-campaign-btn" @click="joinCampaign">
         <span class="join-icon">🚀</span>
         <span class="join-text">Join Campaign</span>
       </button>
+    </div>
+
+    <!-- Error Section -->
+    <div v-if="error" class="dashboard-section error-section">
+      <div class="error-message">
+        <span class="error-icon">⚠️</span>
+        <span class="error-text">{{ error }}</span>
+        <button class="retry-btn" @click="loadCampaignData">Retry</button>
+      </div>
     </div>
 
     <!-- Bottom Navigation -->
@@ -103,36 +126,45 @@
 
 <script>
 import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import BottomNavigation from '../components/BottomNavigation.vue'
+import apiService from '../services/api'
+import HustlHeader from '../components/HustlHeader.vue'
 
 export default {
   name: 'CampaignDetailView',
   components: {
-    BottomNavigation
+    BottomNavigation,
+    HustlHeader
   },
   setup() {
     const router = useRouter()
+    const route = useRoute()
     const campaign = ref(null)
+    const isLoading = ref(true)
+    const error = ref('')
 
-    onMounted(() => {
-      // Get campaign data from sessionStorage
-      const storedCampaign = sessionStorage.getItem('selectedCampaign')
-      if (storedCampaign) {
-        try {
-          campaign.value = JSON.parse(storedCampaign)
-        } catch (err) {
-          console.error('Error parsing campaign data:', err)
-          router.push('/campaign')
-        }
-      } else {
-        // If no campaign data, redirect back
-        router.push('/campaign')
+    // Methods
+    const getCampaignImageUrl = (imagePath) => {
+      return apiService.constructor.getImageUrl(imagePath, 'campaigns')
+    }
+
+    const getProductImageUrl = (imagePath) => {
+      return apiService.constructor.getImageUrl(imagePath, 'products')
+    }
+
+    const formatPrice = (price) => {
+      return apiService.constructor.formatPrice(price)
+    }
+
+    const formatStatus = (status) => {
+      const statusMap = {
+        'active': 'Active',
+        'upcoming': 'Upcoming',
+        'ended': 'Ended',
+        'draft': 'Draft'
       }
-    })
-
-    const goBack = () => {
-      router.go(-1)
+      return statusMap[status] || status
     }
 
     const formatDate = (dateString) => {
@@ -142,6 +174,16 @@ export default {
         month: 'long',
         day: 'numeric'
       })
+    }
+
+    const getStatusMessage = (status) => {
+      const messages = {
+        'active': 'Campaign is currently active - Join now!',
+        'upcoming': 'Campaign starting soon - Stay tuned!',
+        'ended': 'Campaign has ended',
+        'draft': 'Campaign in preparation'
+      }
+      return messages[status] || 'Campaign available'
     }
 
     const getStarRating = (rating) => {
@@ -154,6 +196,50 @@ export default {
       return stars
     }
 
+    // Load campaign data
+    const loadCampaignData = async () => {
+      isLoading.value = true
+      error.value = ''
+
+      try {
+        // First check if we have campaign data in sessionStorage
+        const storedCampaign = sessionStorage.getItem('selectedCampaign')
+        if (storedCampaign) {
+          try {
+            campaign.value = JSON.parse(storedCampaign)
+            isLoading.value = false
+            return
+          } catch (parseError) {
+            console.warn('Error parsing stored campaign data:', parseError)
+          }
+        }
+
+        // If no stored data, load from API using route parameter
+        const campaignId = route.params.id
+        if (campaignId) {
+          const response = await apiService.getCampaignById(campaignId)
+          
+          if (response.success) {
+            campaign.value = response.data
+          } else {
+            error.value = response.message || 'Failed to load campaign details'
+          }
+        } else {
+          error.value = 'Campaign ID not provided'
+        }
+
+      } catch (err) {
+        console.error('Error loading campaign:', err)
+        error.value = 'Failed to load campaign details. Please try again.'
+      } finally {
+        isLoading.value = false
+      }
+    }
+
+    const goBack = () => {
+      router.go(-1)
+    }
+
     const viewProductDetails = (product) => {
       // Store product details for next view
       sessionStorage.setItem('selectedProduct', JSON.stringify(product))
@@ -162,17 +248,32 @@ export default {
 
     const joinCampaign = () => {
       // Show success message or navigate to join confirmation
-      alert('Successfully joined the campaign!')
-      console.log('Joined campaign:', campaign.value.title)
+      if (campaign.value) {
+        alert(`Successfully joined "${campaign.value.name}" campaign!`)
+        console.log('Joined campaign:', campaign.value.name)
+      }
     }
+
+    // Initialize on mount
+    onMounted(() => {
+      loadCampaignData()
+    })
 
     return {
       campaign,
+      isLoading,
+      error,
       goBack,
       formatDate,
+      formatStatus,
+      getStatusMessage,
       getStarRating,
       viewProductDetails,
-      joinCampaign
+      joinCampaign,
+      loadCampaignData,
+      getCampaignImageUrl,
+      getProductImageUrl,
+      formatPrice
     }
   }
 }
@@ -231,6 +332,79 @@ export default {
 
 .dashboard-section:first-child {
   margin-top: 1rem;
+}
+
+/* Loading Section */
+.loading-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1rem;
+  text-align: center;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(79, 195, 247, 0.3);
+  border-top: 4px solid #4FC3F7;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+.loading-text {
+  color: #1F2937;
+  font-family: 'Baloo 2', sans-serif;
+  font-weight: 500;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Error Section */
+.error-section {
+  background: #FEF2F2;
+  border: 2px solid #FECACA;
+}
+
+.error-message {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: #DC2626;
+  font-family: 'Baloo 2', sans-serif;
+}
+
+.error-icon {
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.error-text {
+  flex: 1;
+  font-weight: 500;
+}
+
+.retry-btn {
+  background: #DC2626;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'Baloo 2', sans-serif;
+}
+
+.retry-btn:hover {
+  background: #B91C1C;
+  transform: translateY(-1px);
 }
 
 /* Header Section */
@@ -317,6 +491,16 @@ export default {
 
 .campaign-status.active {
   background: rgba(16, 185, 129, 0.9);
+  color: white;
+}
+
+.campaign-status.upcoming {
+  background: rgba(245, 158, 11, 0.9);
+  color: white;
+}
+
+.campaign-status.ended {
+  background: rgba(239, 68, 68, 0.9);
   color: white;
 }
 
@@ -504,19 +688,6 @@ export default {
   font-weight: 600;
 }
 
-.discount-badge {
-  position: absolute;
-  top: 4px;
-  right: 4px;
-  background: #EF4444;
-  color: white;
-  font-size: 0.625rem;
-  padding: 0.25rem 0.375rem;
-  border-radius: 6px;
-  font-family: 'Baloo 2', sans-serif;
-  font-weight: 700;
-}
-
 .product-info {
   flex: 1;
   display: flex;
@@ -549,14 +720,6 @@ export default {
   font-weight: 700;
 }
 
-.original-price {
-  font-size: 0.75rem;
-  color: #9CA3AF;
-  font-family: 'Baloo 2', sans-serif;
-  font-weight: 500;
-  text-decoration: line-through;
-}
-
 .product-rating {
   display: flex;
   flex-direction: column;
@@ -585,6 +748,37 @@ export default {
   color: #F59E0B;
   font-family: 'Baloo 2', sans-serif;
   font-weight: 600;
+}
+
+/* Empty State for No Products */
+.no-products-section {
+  padding: 2rem 1.25rem;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 2rem 1rem;
+  color: #6B7280;
+}
+
+.empty-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  opacity: 0.7;
+}
+
+.empty-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 0.5rem;
+  font-family: 'Baloo 2', sans-serif;
+}
+
+.empty-message {
+  font-size: 0.875rem;
+  font-family: 'Baloo 2', sans-serif;
+  line-height: 1.5;
 }
 
 /* Join Section */

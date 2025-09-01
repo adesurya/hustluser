@@ -30,13 +30,19 @@
       </div>
     </div>
 
+    <!-- Loading State -->
+    <div v-if="isLoading" class="dashboard-section loading-section">
+      <div class="loading-spinner"></div>
+      <p class="loading-text">Loading campaigns...</p>
+    </div>
+
     <!-- Active Campaigns Section -->
-    <div class="dashboard-section">
+    <div v-else class="dashboard-section">
       <div class="section-header">
         <h3 class="section-title">Active Campaigns</h3>
         <span class="campaigns-count">{{ filteredCampaigns.length }} campaigns</span>
       </div>
-      <div class="campaigns-list">
+      <div v-if="filteredCampaigns.length > 0" class="campaigns-list">
         <div 
           v-for="campaign in filteredCampaigns" 
           :key="campaign.id" 
@@ -44,15 +50,15 @@
           @click="viewCampaignDetails(campaign)"
         >
           <div class="campaign-image">
-            <img :src="campaign.image" :alt="campaign.title" />
-            <div class="campaign-status active">
+            <img :src="getCampaignImageUrl(campaign.image)" :alt="campaign.name" />
+            <div class="campaign-status" :class="campaign.status">
               <span class="status-dot"></span>
-              <span class="status-text">Active</span>
+              <span class="status-text">{{ formatStatus(campaign.status) }}</span>
             </div>
           </div>
           <div class="campaign-info">
-            <h4 class="campaign-title">{{ campaign.title }}</h4>
-            <p class="campaign-desc">{{ campaign.shortDescription }}</p>
+            <h4 class="campaign-title">{{ campaign.name }}</h4>
+            <p class="campaign-desc">{{ campaign.description }}</p>
             <div class="campaign-details">
               <div class="detail-row">
                 <span class="detail-label">Duration:</span>
@@ -60,11 +66,11 @@
               </div>
               <div class="detail-row">
                 <span class="detail-label">Products:</span>
-                <span class="detail-value">{{ campaign.productCount }} items</span>
+                <span class="detail-value">{{ campaign.productCount || 0 }} items</span>
               </div>
               <div class="detail-row">
-                <span class="detail-label">Reward:</span>
-                <span class="detail-value reward">{{ campaign.reward }}</span>
+                <span class="detail-label">Status:</span>
+                <span class="detail-value status" :class="campaign.status">{{ formatStatus(campaign.status) }}</span>
               </div>
             </div>
           </div>
@@ -75,12 +81,21 @@
       </div>
 
       <!-- Empty State -->
-      <div v-if="filteredCampaigns.length === 0" class="empty-state">
+      <div v-else class="empty-state">
         <div class="empty-icon">📋</div>
         <h4 class="empty-title">No campaigns found</h4>
         <p class="empty-message">
           {{ searchQuery ? 'Try different keywords' : 'No active campaigns available' }}
         </p>
+      </div>
+
+      <!-- Error Messages -->
+      <div v-if="error" class="error-section">
+        <div class="error-message">
+          <span class="error-icon">⚠️</span>
+          <span class="error-text">{{ error }}</span>
+          <button class="retry-btn" @click="loadCampaigns">Retry</button>
+        </div>
       </div>
     </div>
 
@@ -90,11 +105,12 @@
 </template>
 
 <script>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import BottomNavigation from '../components/BottomNavigation.vue'
 import HustlHeader from '../components/HustlHeader.vue'
+import apiService from '../services/api'
 
 export default {
   name: 'CampaignView',
@@ -106,175 +122,41 @@ export default {
     const router = useRouter()
     const authStore = useAuthStore()
     const searchQuery = ref('')
+    
+    // State management
+    const isLoading = ref(true)
+    const error = ref('')
+    const campaigns = ref([])
+    const userPointsData = ref(null)
 
-    // User points from auth store
-    const userPoints = computed(() => authStore.userPoints || 1250)
-
-    // Dummy active campaigns data
-    const activeCampaigns = ref([
-      {
-        id: 1,
-        title: 'Hari Kemerdekaan - 80 Tahun',
-        shortDescription: 'Celebrate Indonesia\'s independence with special discounts and rewards',
-        description: 'Join our special Independence Day campaign celebrating 80 years of Indonesia\'s freedom. Get exclusive discounts on electronics, fashion, and home appliances while earning bonus coins.',
-        image: '/api/placeholder/400/200',
-        startDate: '2025-08-01',
-        endDate: '2025-08-31',
-        reward: 'Up to 50% Off + Double Coins',
-        productCount: 150,
-        products: [
-          {
-            id: 101,
-            name: 'Samsung Smart TV G6080',
-            category: 'Electronic',
-            image: '/api/placeholder/120/120',
-            price: 'Rp 1.999.000',
-            originalPrice: 'Rp 3.999.000',
-            discount: '50%',
-            coins: 200,
-            rating: 4.8,
-            reviewCount: 3247,
-            description: 'Experience stunning 4K resolution with Samsung\'s latest Smart TV technology. Features HDR support, built-in streaming apps, and voice control.',
-            specifications: [
-              'Screen Size: 55 inches',
-              'Resolution: 4K UHD (3840x2160)',
-              'HDR: HDR10, HDR10+',
-              'Smart Platform: Tizen OS',
-              'Connectivity: 3 HDMI, 2 USB, WiFi',
-              'Audio: Dolby Digital Plus'
-            ]
-          },
-          {
-            id: 102,
-            name: 'iPhone 15 Pro Max 256GB',
-            category: 'Electronic',
-            image: '/api/placeholder/120/120',
-            price: 'Rp 18.999.000',
-            originalPrice: 'Rp 21.999.000',
-            discount: '13%',
-            coins: 190,
-            rating: 4.9,
-            reviewCount: 1890,
-            description: 'The most advanced iPhone ever with titanium design, A17 Pro chip, and revolutionary camera system.',
-            specifications: [
-              'Display: 6.7-inch Super Retina XDR',
-              'Chip: A17 Pro',
-              'Camera: 48MP Main, 12MP Ultra Wide',
-              'Storage: 256GB',
-              'Battery: All-day battery life',
-              'Material: Titanium'
-            ]
-          },
-          {
-            id: 103,
-            name: 'MacBook Air M3 13"',
-            category: 'Electronic',
-            image: '/api/placeholder/120/120',
-            price: 'Rp 14.999.000',
-            originalPrice: 'Rp 17.999.000',
-            discount: '16%',
-            coins: 150,
-            rating: 4.7,
-            reviewCount: 567,
-            description: 'Supercharged by M3 chip, the new MacBook Air is incredibly fast and powerful laptop that gets things done.',
-            specifications: [
-              'Chip: Apple M3 8-core CPU',
-              'Memory: 8GB unified memory',
-              'Storage: 256GB SSD',
-              'Display: 13.6-inch Liquid Retina',
-              'Battery: Up to 18 hours',
-              'Weight: 1.24 kg'
-            ]
-          }
-        ]
-      },
-      {
-        id: 2,
-        title: 'Back to School Sale',
-        shortDescription: 'Get ready for the new semester with amazing deals on electronics and books',
-        description: 'Prepare for the academic year with our comprehensive back-to-school campaign. Special prices on laptops, tablets, books, and study accessories.',
-        image: '/api/placeholder/400/200',
-        startDate: '2025-07-15',
-        endDate: '2025-09-15',
-        reward: 'Up to 40% Off + Study Bonus',
-        productCount: 89,
-        products: [
-          {
-            id: 201,
-            name: 'iPad Pro 12.9" M2',
-            category: 'Electronic',
-            image: '/api/placeholder/120/120',
-            price: 'Rp 12.999.000',
-            originalPrice: 'Rp 15.999.000',
-            discount: '18%',
-            coins: 130,
-            rating: 4.8,
-            reviewCount: 890,
-            description: 'The ultimate iPad experience with M2 chip, Liquid Retina XDR display, and all-day battery life.',
-            specifications: [
-              'Display: 12.9-inch Liquid Retina XDR',
-              'Chip: Apple M2',
-              'Storage: 128GB',
-              'Camera: 12MP Wide, 10MP Ultra Wide',
-              'Battery: All-day battery life',
-              'Apple Pencil: 2nd generation compatible'
-            ]
-          }
-        ]
-      },
-      {
-        id: 3,
-        title: 'Fashion Week Special',
-        shortDescription: 'Discover the latest fashion trends with exclusive designer collections',
-        description: 'Step into style with our Fashion Week campaign featuring the latest collections from top designers and brands.',
-        image: '/api/placeholder/400/200',
-        startDate: '2025-08-10',
-        endDate: '2025-09-10',
-        reward: 'Up to 60% Off + Style Points',
-        productCount: 234,
-        products: [
-          {
-            id: 301,
-            name: 'Nike Air Force 1 White',
-            category: 'Fashion',
-            image: '/api/placeholder/120/120',
-            price: 'Rp 1.299.000',
-            originalPrice: 'Rp 1.799.000',
-            discount: '27%',
-            coins: 13,
-            rating: 4.7,
-            reviewCount: 2134,
-            description: 'The iconic basketball shoe that changed the game. Classic white leather upper with signature Air cushioning.',
-            specifications: [
-              'Material: Premium leather upper',
-              'Sole: Rubber outsole',
-              'Cushioning: Nike Air technology',
-              'Style: Low-top basketball shoe',
-              'Color: White/White',
-              'Gender: Unisex'
-            ]
-          }
-        ]
-      }
-    ])
+    // User points from API or store
+    const userPoints = computed(() => 
+      userPointsData.value?.currentBalance || authStore.userPoints || 0
+    )
 
     const filteredCampaigns = computed(() => {
-      if (!searchQuery.value) return activeCampaigns.value
+      if (!searchQuery.value) return campaigns.value
       
       const query = searchQuery.value.toLowerCase()
-      return activeCampaigns.value.filter(campaign =>
-        campaign.title.toLowerCase().includes(query) ||
-        campaign.shortDescription.toLowerCase().includes(query)
+      return campaigns.value.filter(campaign =>
+        campaign.name.toLowerCase().includes(query) ||
+        campaign.description.toLowerCase().includes(query)
       )
     })
 
-    const handleSearch = () => {
-      // Search is reactive through computed property
-      console.log('Searching for:', searchQuery.value)
+    // Utility methods
+    const getCampaignImageUrl = (imagePath) => {
+      return apiService.constructor.getImageUrl(imagePath, 'campaigns')
     }
 
-    const clearSearch = () => {
-      searchQuery.value = ''
+    const formatStatus = (status) => {
+      const statusMap = {
+        'active': 'Active',
+        'upcoming': 'Upcoming',
+        'ended': 'Ended',
+        'draft': 'Draft'
+      }
+      return statusMap[status] || status
     }
 
     const formatDateRange = (startDate, endDate) => {
@@ -285,21 +167,88 @@ export default {
       return `${start.toLocaleDateString('en-US', options)} - ${end.toLocaleDateString('en-US', options)}`
     }
 
-    const viewCampaignDetails = (campaign) => {
-      // Store campaign details in sessionStorage for next view
-      sessionStorage.setItem('selectedCampaign', JSON.stringify(campaign))
-      router.push(`/campaign/${campaign.id}`)
+    // API loading methods
+    const loadCampaigns = async () => {
+      isLoading.value = true
+      error.value = ''
+
+      try {
+        // Load campaigns and user points in parallel
+        const [campaignsResult, pointsResult] = await Promise.allSettled([
+          apiService.getActiveCampaigns(),
+          apiService.getMyPoints()
+        ])
+
+        // Handle campaigns data
+        if (campaignsResult.status === 'fulfilled' && campaignsResult.value.success) {
+          campaigns.value = campaignsResult.value.data
+        } else {
+          console.warn('Failed to load campaigns:', campaignsResult.reason)
+          error.value = 'Failed to load campaigns'
+          campaigns.value = []
+        }
+
+        // Handle points data
+        if (pointsResult.status === 'fulfilled' && pointsResult.value.success) {
+          userPointsData.value = pointsResult.value.data
+        }
+
+      } catch (err) {
+        console.error('Error loading campaigns:', err)
+        error.value = 'Failed to load campaigns. Please try again.'
+        campaigns.value = []
+      } finally {
+        isLoading.value = false
+      }
     }
+
+    // Event handlers
+    const handleSearch = () => {
+      console.log('Searching for:', searchQuery.value)
+    }
+
+    const clearSearch = () => {
+      searchQuery.value = ''
+    }
+
+    const viewCampaignDetails = async (campaign) => {
+      try {
+        isLoading.value = true
+        const response = await apiService.getCampaignById(campaign.id)
+        
+        if (response.success) {
+          sessionStorage.setItem('selectedCampaign', JSON.stringify(response.data))
+          router.push(`/campaign/${campaign.id}`)
+        } else {
+          error.value = 'Failed to load campaign details'
+        }
+      } catch (err) {
+        console.error('Error loading campaign details:', err)
+        error.value = 'Failed to load campaign details'
+      } finally {
+        isLoading.value = false
+      }
+    }
+
+    // Initialize data on mount
+    onMounted(() => {
+      loadCampaigns()
+    })
 
     return {
       userPoints,
       searchQuery,
-      activeCampaigns,
+      isLoading,
+      error,
+      campaigns,
       filteredCampaigns,
       handleSearch,
       clearSearch,
       formatDateRange,
-      viewCampaignDetails
+      formatStatus,
+      viewCampaignDetails,
+      loadCampaigns,
+      getCampaignImageUrl
     }
   }
 }
@@ -355,6 +304,82 @@ export default {
 
 .dashboard-section:first-child {
   margin-top: 1rem;
+}
+
+/* Loading Section */
+.loading-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1rem;
+  text-align: center;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(79, 195, 247, 0.3);
+  border-top: 4px solid #4FC3F7;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+.loading-text {
+  color: #1F2937;
+  font-family: 'Baloo 2', sans-serif;
+  font-weight: 500;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Error Section */
+.error-section {
+  background: #FEF2F2;
+  border: 2px solid #FECACA;
+  margin-top: 1rem;
+  border-radius: 12px;
+  padding: 1rem;
+}
+
+.error-message {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: #DC2626;
+  font-family: 'Baloo 2', sans-serif;
+}
+
+.error-icon {
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.error-text {
+  flex: 1;
+  font-weight: 500;
+}
+
+.retry-btn {
+  background: #DC2626;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'Baloo 2', sans-serif;
+}
+
+.retry-btn:hover {
+  background: #B91C1C;
+  transform: translateY(-1px);
 }
 
 /* Points Section */
@@ -538,10 +563,21 @@ export default {
   font-size: 0.625rem;
   font-weight: 600;
   font-family: 'Baloo 2', sans-serif;
+  backdrop-filter: blur(10px);
 }
 
 .campaign-status.active {
   background: rgba(16, 185, 129, 0.9);
+  color: white;
+}
+
+.campaign-status.upcoming {
+  background: rgba(245, 158, 11, 0.9);
+  color: white;
+}
+
+.campaign-status.ended {
+  background: rgba(239, 68, 68, 0.9);
   color: white;
 }
 
@@ -607,9 +643,16 @@ export default {
   font-weight: 600;
 }
 
-.detail-value.reward {
+.detail-value.status.active {
   color: #059669;
-  font-weight: 700;
+}
+
+.detail-value.status.upcoming {
+  color: #D97706;
+}
+
+.detail-value.status.ended {
+  color: #DC2626;
 }
 
 .campaign-arrow {
