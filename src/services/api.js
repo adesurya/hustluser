@@ -1,4 +1,4 @@
-// src/services/api.js - Updated version with dashboard APIs
+// src/services/api.js - Updated version with leaderboard APIs
 import axios from 'axios'
 
 class ApiService {
@@ -150,6 +150,43 @@ class ApiService {
   async getCampaignById(campaignId) {
     const response = await this.client.get(`/campaigns/${campaignId}`)
     return response
+  }
+
+  // Leaderboard APIs
+  async getLeaderboardDaily(date) {
+    const formattedDate = date || new Date().toISOString().split('T')[0]
+    const response = await this.client.get(`/leaderboard/daily?date=${formattedDate}`)
+    return response
+  }
+
+  async getLeaderboardWeekly(startDate, endDate) {
+    // Untuk weekly, kita bisa menggunakan daily API dengan range tanggal
+    // atau jika ada endpoint khusus weekly, sesuaikan di sini
+    const response = await this.client.get(`/leaderboard/weekly?start_date=${startDate}&end_date=${endDate}`)
+    return response
+  }
+
+  async getLeaderboardMonthly(year, month) {
+    const currentYear = year || new Date().getFullYear()
+    const currentMonth = month || (new Date().getMonth() + 1)
+    const response = await this.client.get(`/leaderboard/monthly?year=${currentYear}&month=${currentMonth}`)
+    return response
+  }
+
+  // Helper method untuk mendapatkan tanggal awal dan akhir minggu ini
+  static getCurrentWeekDates() {
+    const now = new Date()
+    const dayOfWeek = now.getDay()
+    const diff = now.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1) // Adjust when day is Sunday
+    
+    const monday = new Date(now.setDate(diff))
+    const sunday = new Date(monday)
+    sunday.setDate(monday.getDate() + 6)
+    
+    return {
+      start: monday.toISOString().split('T')[0],
+      end: sunday.toISOString().split('T')[0]
+    }
   }
 
   // Debug method to check authentication status

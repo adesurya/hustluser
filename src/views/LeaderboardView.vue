@@ -14,6 +14,7 @@
           class="filter-tab"
           :class="{ active: activeFilter === filter.id }"
           @click="setActiveFilter(filter.id)"
+          :disabled="isLoading"
         >
           <span class="filter-icon">{{ filter.icon }}</span>
           <span class="filter-label">{{ filter.label }}</span>
@@ -21,97 +22,104 @@
       </div>
     </div>
 
+    <!-- Loading State -->
+    <div v-if="isLoading" class="dashboard-section loading-section">
+      <div class="loading-spinner"></div>
+      <p class="loading-text">Loading leaderboard...</p>
+    </div>
+
     <!-- Top 3 Winners Section -->
-    <div class="dashboard-section winners-section">
+    <div v-else-if="topUsers.length > 0" class="dashboard-section winners-section">
       <div class="section-header">
         <h3 class="section-title">Top Champions</h3>
         <span class="period-label">{{ getCurrentPeriodLabel() }}</span>
       </div>
       <div class="winners-podium">
         <!-- 2nd Place -->
-        <div class="winner-card second-place">
+        <div v-if="topUsers[1]" class="winner-card second-place">
           <div class="winner-rank">
             <span class="rank-number">2</span>
           </div>
           <div class="winner-avatar silver">
-            <span class="avatar-text">{{ getInitials(topUsers[1].username) }}</span>
+            <span class="avatar-text">{{ getInitials(topUsers[1].user.username) }}</span>
           </div>
           <div class="winner-info">
-            <h4 class="winner-name">{{ maskUsername(topUsers[1].username) }}</h4>
+            <h4 class="winner-name">{{ maskUsername(topUsers[1].user.username) }}</h4>
             <div class="winner-coins">
               <span class="coin-icon">🪙</span>
-              <span class="coin-amount">{{ formatNumber(topUsers[1].coins) }}</span>
+              <span class="coin-amount">{{ formatNumber(topUsers[1].points) }}</span>
             </div>
+            <div class="winner-badge">{{ topUsers[1].badge }}</div>
           </div>
         </div>
 
         <!-- 1st Place -->
-        <div class="winner-card first-place">
+        <div v-if="topUsers[0]" class="winner-card first-place">
           <div class="winner-crown">👑</div>
           <div class="winner-rank">
             <span class="rank-number">1</span>
           </div>
           <div class="winner-avatar gold">
-            <span class="avatar-text">{{ getInitials(topUsers[0].username) }}</span>
+            <span class="avatar-text">{{ getInitials(topUsers[0].user.username) }}</span>
           </div>
           <div class="winner-info">
-            <h4 class="winner-name">{{ maskUsername(topUsers[0].username) }}</h4>
+            <h4 class="winner-name">{{ topUsers[0].user.username }}</h4>
             <div class="winner-coins">
               <span class="coin-icon">🪙</span>
-              <span class="coin-amount">{{ formatNumber(topUsers[0].coins) }}</span>
+              <span class="coin-amount">{{ formatNumber(topUsers[0].points) }}</span>
             </div>
+            <div class="winner-badge">{{ topUsers[0].badge }}</div>
           </div>
         </div>
 
         <!-- 3rd Place -->
-        <div class="winner-card third-place">
+        <div v-if="topUsers[2]" class="winner-card third-place">
           <div class="winner-rank">
             <span class="rank-number">3</span>
           </div>
           <div class="winner-avatar bronze">
-            <span class="avatar-text">{{ getInitials(topUsers[2].username) }}</span>
+            <span class="avatar-text">{{ getInitials(topUsers[2].user.username) }}</span>
           </div>
           <div class="winner-info">
-            <h4 class="winner-name">{{ maskUsername(topUsers[2].username) }}</h4>
+            <h4 class="winner-name">{{ maskUsername(topUsers[2].user.username) }}</h4>
             <div class="winner-coins">
               <span class="coin-icon">🪙</span>
-              <span class="coin-amount">{{ formatNumber(topUsers[2].coins) }}</span>
+              <span class="coin-amount">{{ formatNumber(topUsers[2].points) }}</span>
             </div>
+            <div class="winner-badge">{{ topUsers[2].badge }}</div>
           </div>
         </div>
       </div>
     </div>
 
     <!-- Other Users Section -->
-    <div class="dashboard-section users-section">
+    <div v-if="!isLoading && otherUsers.length > 0" class="dashboard-section users-section">
       <div class="section-header">
         <h3 class="section-title">Juara Lainnya</h3>
-        <span class="users-count">{{ otherUsers.length }} users</span>
+        <span class="users-count">{{ totalParticipants }} participants</span>
       </div>
       
       <div class="users-list">
         <div 
           v-for="user in paginatedUsers" 
-          :key="user.id" 
+          :key="user.user.id" 
           class="user-item"
         >
           <div class="user-rank">
             <span class="rank-text">#{{ user.rank }}</span>
           </div>
           <div class="user-avatar">
-            <span class="avatar-text">{{ getInitials(user.username) }}</span>
+            <span class="avatar-text">{{ getInitials(user.user.username) }}</span>
           </div>
           <div class="user-info">
-            <h4 class="user-name">{{ maskUsername(user.username) }}</h4>
+            <h4 class="user-name">{{ user.rank === 1 ? user.user.username : maskUsername(user.user.username) }}</h4>
             <div class="user-coins">
               <span class="coin-icon">🪙</span>
-              <span class="coin-amount">{{ formatNumber(user.coins) }}</span>
+              <span class="coin-amount">{{ formatNumber(user.points) }}</span>
             </div>
           </div>
-          <div class="user-trend">
-            <span class="trend-icon" :class="user.trend">
-              {{ user.trend === 'up' ? '📈' : user.trend === 'down' ? '📉' : '➡️' }}
-            </span>
+          <div class="user-badge">
+            <span class="badge-text">{{ user.badge }}</span>
           </div>
         </div>
       </div>
@@ -147,27 +155,52 @@
         </button>
       </div>
     </div>
+
+    <!-- Empty State -->
+    <div v-if="!isLoading && allUsers.length === 0" class="dashboard-section empty-section">
+      <div class="empty-state">
+        <div class="empty-icon">🏆</div>
+        <h4 class="empty-title">No participants yet</h4>
+        <p class="empty-message">Be the first to earn points and appear on the leaderboard!</p>
+      </div>
+    </div>
+
+    <!-- Error State -->
+    <div v-if="error" class="dashboard-section error-section">
+      <div class="error-message">
+        <span class="error-icon">⚠️</span>
+        <span class="error-text">{{ error }}</span>
+        <button class="retry-btn" @click="loadLeaderboard">Retry</button>
+      </div>
+    </div>
+
     <BottomNavigation />
   </div>
 </template>
 
 <script>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import BottomNavigation from '../components/BottomNavigation.vue'
 import HustlHeader from '../components/HustlHeader.vue'
-
+import apiService from '../services/api'
 
 export default {
   name: 'LeaderboardView',
   components: {
     BottomNavigation,
     HustlHeader
-
   },
   setup() {
-    const activeFilter = ref('weekly')
+    const activeFilter = ref('daily')
     const currentPage = ref(1)
-    const usersPerPage = 10
+    const usersPerPage = 7 // Show 7 users per page (ranks 4-10 on first page)
+    const isLoading = ref(true)
+    const error = ref('')
+    
+    // API response data
+    const leaderboardData = ref(null)
+    const allUsers = ref([])
+    const totalParticipants = ref(0)
 
     // Filter options
     const filters = ref([
@@ -176,23 +209,13 @@ export default {
       { id: 'monthly', label: 'Monthly', icon: '📈' }
     ])
 
-    // Dummy leaderboard data - sorted by coins (highest to lowest)
-    const allUsers = ref([
-      { id: 1, username: 'AlexanderSmith', coins: 15240, trend: 'up', period: 'weekly' },
-      { id: 2, username: 'MariaGonzalez', coins: 14890, trend: 'up', period: 'weekly' },
-      { id: 3, username: 'JohnDavidson', coins: 14320, trend: 'down', period: 'weekly' },
-      { id: 4, username: 'SarahWilliams', coins: 13750, trend: 'up', period: 'weekly' },
-      { id: 5, username: 'MichaelBrown', coins: 13210, trend: 'same', period: 'weekly' }
-    ])
-
     // Computed properties
-    const topUsers = computed(() => allUsers.value.slice(0, 3))
+    const topUsers = computed(() => {
+      return allUsers.value.slice(0, 3)
+    })
     
     const otherUsers = computed(() => {
-      return allUsers.value.slice(3).map((user, idx) => ({
-        ...user,
-        rank: idx + 4
-      }))
+      return allUsers.value.slice(3)
     })
 
     const totalPages = computed(() => Math.ceil(otherUsers.value.length / usersPerPage))
@@ -222,9 +245,9 @@ export default {
       return pages
     })
 
-    // Methods
+    // Helper methods
     const maskUsername = (username) => {
-      if (username.length <= 3) return username
+      if (!username || username.length <= 3) return username
       const firstTwo = username.substring(0, 2)
       const lastOne = username.substring(username.length - 1)
       const masked = '*'.repeat(Math.max(1, username.length - 3))
@@ -232,16 +255,12 @@ export default {
     }
 
     const getInitials = (username) => {
+      if (!username) return '??'
       return username.substring(0, 2).toUpperCase()
     }
 
     const formatNumber = (num) => {
       return num.toLocaleString('id-ID')
-    }
-
-    const setActiveFilter = (filterId) => {
-      activeFilter.value = filterId
-      currentPage.value = 1
     }
 
     const getCurrentPeriodLabel = () => {
@@ -250,7 +269,93 @@ export default {
         weekly: 'This Week',
         monthly: 'This Month'
       }
-      return labels[activeFilter.value] || 'This Week'
+      return labels[activeFilter.value] || 'This Period'
+    }
+
+    // API integration methods
+    const getWeekDates = () => {
+      const now = new Date()
+      const dayOfWeek = now.getDay()
+      const diff = now.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1)
+      
+      const monday = new Date(now.setDate(diff))
+      const sunday = new Date(monday)
+      sunday.setDate(monday.getDate() + 6)
+      
+      return {
+        start: monday.toISOString().split('T')[0],
+        end: sunday.toISOString().split('T')[0]
+      }
+    }
+
+    const loadLeaderboard = async () => {
+      isLoading.value = true
+      error.value = ''
+      
+      try {
+        let response
+        
+        switch (activeFilter.value) {
+          case 'daily': {
+            const today = new Date().toISOString().split('T')[0]
+            response = await apiService.getLeaderboardDaily(today)
+            break
+          }
+            
+          case 'weekly': {
+            // For weekly, we'll use daily API for current week
+            // If you have a specific weekly endpoint, replace this logic
+            const weekDates = getWeekDates()
+            try {
+              response = await apiService.getLeaderboardWeekly(weekDates.start, weekDates.end)
+            } catch (weeklyError) {
+              // Fallback to daily if weekly endpoint doesn't exist
+              console.warn('Weekly endpoint not available, using daily data')
+              response = await apiService.getLeaderboardDaily(weekDates.start)
+            }
+            break
+          }
+            
+          case 'monthly': {
+            const now = new Date()
+            const year = now.getFullYear()
+            const month = now.getMonth() + 1
+            response = await apiService.getLeaderboardMonthly(year, month)
+            break
+          }
+            
+          default:
+            throw new Error('Invalid filter selected')
+        }
+
+        if (response.success) {
+          leaderboardData.value = response.data
+          allUsers.value = response.data.leaderboard || []
+          totalParticipants.value = response.data.total_participants || 0
+          
+          // Reset pagination when filter changes
+          currentPage.value = 1
+        } else {
+          throw new Error(response.message || 'Failed to load leaderboard')
+        }
+        
+      } catch (err) {
+        console.error('Error loading leaderboard:', err)
+        error.value = 'Failed to load leaderboard. Please try again.'
+        allUsers.value = []
+        totalParticipants.value = 0
+      } finally {
+        isLoading.value = false
+      }
+    }
+
+    // Event handlers
+    const setActiveFilter = async (filterId) => {
+      if (activeFilter.value !== filterId) {
+        activeFilter.value = filterId
+        currentPage.value = 1
+        await loadLeaderboard()
+      }
     }
 
     const goToPage = (page) => {
@@ -259,21 +364,31 @@ export default {
       }
     }
 
+    // Initialize on mount
+    onMounted(() => {
+      loadLeaderboard()
+    })
+
     return {
       activeFilter,
       currentPage,
       filters,
+      isLoading,
+      error,
       topUsers,
       otherUsers,
       paginatedUsers,
       totalPages,
+      totalParticipants,
       visiblePages,
+      allUsers,
       maskUsername,
       getInitials,
       formatNumber,
       setActiveFilter,
       getCurrentPeriodLabel,
-      goToPage
+      goToPage,
+      loadLeaderboard
     }
   }
 }
@@ -331,6 +446,79 @@ export default {
   margin-top: 1rem;
 }
 
+/* Loading Section */
+.loading-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1rem;
+  text-align: center;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(79, 195, 247, 0.3);
+  border-top: 4px solid #4FC3F7;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+.loading-text {
+  color: #1F2937;
+  font-family: 'Baloo 2', sans-serif;
+  font-weight: 500;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Error Section */
+.error-section {
+  background: #FEF2F2;
+  border: 2px solid #FECACA;
+}
+
+.error-message {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: #DC2626;
+  font-family: 'Baloo 2', sans-serif;
+}
+
+.error-icon {
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.error-text {
+  flex: 1;
+  font-weight: 500;
+}
+
+.retry-btn {
+  background: #DC2626;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'Baloo 2', sans-serif;
+}
+
+.retry-btn:hover {
+  background: #B91C1C;
+  transform: translateY(-1px);
+}
+
 /* Section Headers */
 .section-header {
   display: flex;
@@ -384,7 +572,7 @@ export default {
   font-family: 'Baloo 2', sans-serif;
 }
 
-.filter-tab:hover {
+.filter-tab:hover:not(:disabled) {
   background: rgba(79, 195, 247, 0.1);
 }
 
@@ -392,6 +580,11 @@ export default {
   background: #4FC3F7;
   color: white;
   box-shadow: 0 2px 6px rgba(79, 195, 247, 0.3);
+}
+
+.filter-tab:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .filter-icon {
@@ -536,6 +729,7 @@ export default {
   color: #1F2937;
   font-family: 'Baloo 2', sans-serif;
   line-height: 1.2;
+  text-align: center;
 }
 
 .winner-coins {
@@ -556,6 +750,14 @@ export default {
   font-weight: 700;
   color: #4FC3F7;
   font-family: 'Baloo 2', sans-serif;
+}
+
+.winner-badge {
+  font-size: 0.7rem;
+  color: #6B7280;
+  font-family: 'Baloo 2', sans-serif;
+  font-weight: 500;
+  text-align: center;
 }
 
 /* Users List */
@@ -648,31 +850,48 @@ export default {
   font-family: 'Baloo 2', sans-serif;
 }
 
-.user-trend {
+.user-badge {
   flex-shrink: 0;
 }
 
-.trend-icon {
-  font-size: 1rem;
-  transition: transform 0.2s;
+.badge-text {
+  font-size: 0.7rem;
+  color: #6B7280;
+  font-family: 'Baloo 2', sans-serif;
+  font-weight: 500;
 }
 
-.trend-icon.up {
-  animation: trendUp 2s infinite;
+/* Empty State */
+.empty-section {
+  padding: 3rem 1.25rem;
+  text-align: center;
 }
 
-.trend-icon.down {
-  animation: trendDown 2s infinite;
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: #6B7280;
 }
 
-@keyframes trendUp {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-2px); }
+.empty-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  opacity: 0.7;
 }
 
-@keyframes trendDown {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(2px); }
+.empty-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 0.5rem;
+  font-family: 'Baloo 2', sans-serif;
+}
+
+.empty-message {
+  font-size: 0.875rem;
+  font-family: 'Baloo 2', sans-serif;
+  line-height: 1.5;
 }
 
 /* Pagination */

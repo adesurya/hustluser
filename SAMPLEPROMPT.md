@@ -1,263 +1,189 @@
-Pada halaman dashboard terdapat 4 section utama, yaitu
-1. Section coin point
-2. Section Category
-3. Section Featured Products
-4. Section Active campaign
+Saat ini saya ingin mengembangkan halaman menu (page) Profile. Pada Halaman tersebut terdapat beberapa section antara lain :
+1. Section pertama profile user
+2. Section kedua menampilkan informasi coins available dan button Redeem untuk penarikan dana
+3. Section ketiga menampilkan Recent Coint beserta status nilai dan aktifitasnya (debit/credit). Yang akan ditampilkan disini adalah 5 Aktifitas Recent Coint. pada section ini juga ada button See More. Apabila di klik akan menampilkan lengkap recent coint
+4. Section keempat menampilkan Recent Redeems point beserta status redeem point. Yang akan ditampilkan disini adalah 5 Aktifitas Redeem. pada section ini juga ada button See More. Apabila di klik akan menampilkan lengkap daftar Redeem 
+
+Apabila page detail untuk Recent Coint dan Redeem Point belum ada, anda boleh membuatkan dengan mempertahankan style, layout dan uiux dari template yang digunakan saat ini.
 
 Setiap section ini memiliki API masing-masing yang akan menyediakan datanya
 
-Pastikan response sesuai dengan layout yang sudah dikembangkan. Pastikan juga setiap informasi product yang di klik akan menampilkan informasi detailnya Seperti ketika click category akan menampilkan detail category yang di click. Apabila click product akan menampilkan detail productnya
+Pastikan response sesuai dengan layout yang sudah dikembangkan.
 
 Berikut API yang berelasi dengan Section tersebut
 
-1. Sample Request API Coin Point
-curl --location 'https://apihustl.sijago.ai/api/v1/points/my-points' \
+1. Untuk API Profile User anda dapat menggunakan API berikut
+curl --location 'http://localhost:3000/api/v1/auth/profile/13' \
+--header 'Content-Type: application/json' \
 --header 'Authorization: Bearer {token}'
 
-ample Response API Coin Point
+Response API Profile User
 {
     "success": true,
-    "message": "Points retrieved successfully",
-    "timestamp": "2025-08-12T04:28:39.478Z",
+    "message": "Your profile retrieved successfully",
+    "timestamp": "2025-08-12T03:50:56.728Z",
     "data": {
-        "currentBalance": 1070,
-        "summary": {
-            "currentBalance": 1070,
-            "totalEarned": 1070,
-            "totalSpent": 0,
-            "transactionCounts": {
-                "credit": 9,
-                "debit": 0
-            }
-        },
-        "availableActivities": [
-            {
-                "id": 1,
-                "code": "PRODUCT_SHARE",
-                "name": "Product Share",
-                "description": "Points awarded for sharing products outside campaigns",
-                "points": 10,
-                "dailyLimit": 10,
-                "totalLimit": null,
-                "canEarn": true,
-                "reason": null
-            }
-        ]
-    },
-    "code": "SUCCESS"
-}
-
-Untuk response yang akan anda tampilkan pada point adalah informasi dari data.currentBalance
-
-2. Sample Request API Category
-curl --location 'https://apihustl.sijago.ai/api/v1/categories/'
-
-Sample Rezponse API Category
-{
-    "success": true,
-    "message": "Active categories retrieved successfully",
-    "timestamp": "2025-08-17T06:59:25.133Z",
-    "data": [
-        {
-            "id": 1,
-            "name": "Electronics",
-            "slug": "electronics",
-            "description": "Electronic devices and gadgets",
-            "image": null,
-            "sortOrder": 1,
-            "imageUrl": null
-        }
-    ],
-    "code": "SUCCESS"
-}
-
-Untuk response category yang akan anda tampilkan adalah pada informasi dari array data
-
-Apabila anda ingi menampilkan detail category, anda dapat menggunakan  Sample Request API Category by ID berikut
-curl --location 'https://apihustl.sijago.ai/api/v1/categories/1'
-
-Sample Response API Category by ID 
-{
-    "success": true,
-    "message": "Category retrieved successfully",
-    "timestamp": "2025-08-12T05:00:08.727Z",
-    "data": {
-        "id": 1,
-        "name": "Electronics",
-        "slug": "electronics",
-        "description": "Electronic devices and gadgets",
-        "image": null,
-        "isActive": true,
-        "sortOrder": 1,
-        "createdBy": null,
-        "updatedBy": null,
-        "created_at": "2025-07-25 18:27:24",
-        "updated_at": "2025-07-25 18:35:12",
-        "deleted_at": null,
-        "imageUrl": null
-    },
-    "code": "SUCCESS"
-}
-
-dan list Product ketika category ini di click akan memanggil API 
-curl --location 'https://apihustl.sijago.ai/api/v1/products?categoryId=1'
-
-response API
-{
-    "success": true,
-    "message": "Products retrieved successfully",
-    "timestamp": "2025-08-12T03:49:03.057Z",
-    "data": [
-        {
-            "id": 1,
-            "title": "Smartphone Android Terbaru",
-            "slug": "smartphone-android-terbaru",
-            "description": "Smartphone Android dengan teknologi terdepan, kamera berkualitas tinggi, dan performa yang luar biasa.",
-            "points": 1500,
-            "price": "5999999.00",
-            "url": "https://example.com/products/smartphone-android",
-            "image": null,
-            "categoryId": 1,
+        "user": {
+            "id": 13,
+            "username": "adesurya",
+            "email": "adesurya.tkj@gmail.com",
+            "phoneNumber": "08170261628",
+            "role": "user",
+            "googleId": null,
+            "profilePicture": null,
+            "isVerified": true,
             "isActive": true,
-            "isFeatured": true,
-            "stockQuantity": 50,
-            "viewCount": 0,
-            "sortOrder": 0,
-            "metaTitle": "Smartphone Android Terbaru - Teknologi Terdepan",
-            "metaDescription": "Dapatkan smartphone Android terbaru dengan fitur canggih dan harga terjangkau",
-            "createdBy": null,
-            "updatedBy": null,
-            "createdAt": "2025-07-25 18:27:24",
-            "updatedAt": "2025-07-25 18:35:12",
-            "created_at": "2025-07-25 18:27:24",
-            "updated_at": "2025-07-25 18:35:12",
-            "deletedAt": null,
-            "category": {
-                "id": 1,
-                "name": "Electronics",
-                "slug": "electronics"
+            "lastLogin": "2025-08-12T03:50:40.000Z",
+            "passwordChangedAt": "2025-07-27T03:32:29.000Z",
+            "emailVerifiedAt": "2025-07-27T03:33:22.000Z",
+            "twoFactorEnabled": false,
+            "currentPoints": 1070,
+            "created_at": "2025-07-27 10:32:29",
+            "updated_at": "2025-08-12 10:50:40",
+            "deleted_at": null,
+            "isLocked": null,
+            "canEarnPoints": true,
+            "accountAge": null,
+            "verificationStatus": {
+                "email": true,
+                "twoFactor": false
             },
-            "formattedPrice": "Rp 5.999.999,00",
-            "imageUrl": null
+            "metrics": {
+                "totalPoints": 1070,
+                "lastLogin": "2025-08-12T03:50:40.000Z"
+            }
         }
-    ],
-    "code": "SUCCESS",
-    "meta": {
+    },
+    "code": "SUCCESS"
+}
+
+
+Tampilkan pada section pertama informasi seperti Username, Email, Phone Number
+
+2. Section kedua anda sudah menampilkan informasi coin dari API. Untuk button Redeem, ketika di klik anda akan mengarahkan ke page baru (untuk page ini anda dapat membuat dan  sesuaikan dengan tone style UIUX dan layout aplikasi saat ini) dengan API yang akan direquest sebagai berikut
+curl --location 'https://apihustl.sijago.ai/api/v1/points/redeem' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Bearer {token}' \
+--data '{
+    "pointsToRedeem": 1000,
+    "redemptionType": "cash",
+    "redemptionDetails": {
+      "bankAccount": "1234567890",
+      "bankName": "Bank ABCD",
+      "accountName": "John Doe"
+    }
+  }'
+  
+Response dari api tersebut adalah
+{
+    "success": true,
+    "message": "Redemption request submitted successfully",
+    "timestamp": "2025-08-17T16:09:57.845Z",
+    "data": {
+        "redemption": {
+            "id": 7,
+            "pointsRedeemed": 1000,
+            "redemptionType": "cash",
+            "redemptionValue": 1000,
+            "status": "pending",
+            "requestedAt": "2025-08-17T16:09:57.834Z"
+        }
+    },
+    "code": "SUCCESS"
+}
+
+3. Section ketiga untuk Recent Coint anda dapat menggunakan API berikut
+curl --location 'http://localhost:3000/api/v1/points/my-transactions' \
+--header 'Authorization: Bearer {token}'
+
+Response API
+{
+    "success": true,
+    "message": "Transaction history retrieved successfully",
+    "timestamp": "2025-08-12T04:11:46.088Z",
+    "data": {
+        "transactions": [
+            {
+                "balanceAfter": 1070,
+                "id": 14,
+                "userId": 13,
+                "transactionType": "credit",
+                "amount": 5,
+                "balanceBefore": 1065,
+                "activityType": "DAILY_LOGIN",
+                "activityDescription": "Daily Login Bonus",
+                "referenceId": null,
+                "referenceType": "daily_login",
+                "status": "completed",
+                "processedBy": null,
+                "processedAt": "2025-08-12 10:50:40",
+                "metadata": {
+                    "event": "daily_login",
+                    "loginDate": "2025-08-12",
+                    "timestamp": "2025-08-12T03:50:40.168Z",
+                    "activityId": 3,
+                    "activityName": "Daily Login Bonus"
+                },
+                "notes": null,
+                "created_at": "2025-08-12 10:50:40",
+                "updated_at": "2025-08-12 10:50:40",
+                "deletedAt": null
+            }
+        ],
         "pagination": {
             "currentPage": 1,
-            "itemsPerPage": 5,
-            "totalItems": 1,
             "totalPages": 1,
-            "hasNextPage": false,
-            "hasPrevPage": false
+            "totalItems": 9,
+            "itemsPerPage": 20
         }
-    }
-}
-
-API nomor 2 ini juga akan diimplementasikan pada menu page Category
-
-3. Sample Request untuk API Featured Product pada section ketiga akan menggunakan API 
-curl --location 'https://apihustl.sijago.ai/api/v1/products/featured'
-
-Response dari API Featured Product adalah sebagai berikut
-{
-    "success": true,
-    "message": "Featured products retrieved successfully",
-    "timestamp": "2025-08-12T03:48:52.786Z",
-    "data": [
-        {
-            "id": 1,
-            "title": "Smartphone Android Terbaru",
-            "slug": "smartphone-android-terbaru",
-            "description": "Smartphone Android dengan teknologi terdepan, kamera berkualitas tinggi, dan performa yang luar biasa.",
-            "points": 1500,
-            "price": "5999999.00",
-            "url": "https://example.com/products/smartphone-android",
-            "image": null,
-            "categoryId": 1,
-            "isActive": true,
-            "isFeatured": true,
-            "stockQuantity": 50,
-            "viewCount": 0,
-            "sortOrder": 0,
-            "metaTitle": "Smartphone Android Terbaru - Teknologi Terdepan",
-            "metaDescription": "Dapatkan smartphone Android terbaru dengan fitur canggih dan harga terjangkau",
-            "createdBy": null,
-            "updatedBy": null,
-            "createdAt": "2025-07-25 18:27:24",
-            "updatedAt": "2025-07-25 18:35:12",
-            "created_at": "2025-07-25 18:27:24",
-            "updated_at": "2025-07-25 18:35:12",
-            "deletedAt": null,
-            "category": {
-                "id": 1,
-                "name": "Electronics",
-                "slug": "electronics"
-            },
-            "formattedPrice": "Rp 5.999.999,00",
-            "imageUrl": null
-        }
-    ],
+    },
     "code": "SUCCESS"
 }
 
-Ketika product ini di klik maka akan menampilkan detail product dan memanggil API yang sama dengan proses sebelumnya yaitu API  https://apihustl.sijago.ai/api/v1/products?categoryId=1
+Apabila response dari data.transactions.transactionType = credit maka tanda didepan point akan "+" dab apabila debit akan "-"
 
+4. Section keempat adalam informasi redeem. Untuk API yang dapat digunakan adalah berikut
+curl --location 'http://localhost:3000/api/v1/points/my-redemptions' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Bearer {token}'
 
-4. Section Active Campaign akan memanggil API berikut
-curl --location 'https://apihustl.sijago.ai/api/v1/campaigns/active'
-
-Sample response dari campaign active adalah sebagai berikut
+Response dari API tersebut adalah
 {
     "success": true,
-    "message": "Active campaigns retrieved successfully",
-    "data": [
-        {
-            "id": 13,
-            "name": "Test Campaign",
-            "slug": "test-campaign",
-            "description": "asdsadsa",
-            "image": null,
-            "isActive": true,
-            "startDate": "2025-08-13 10:46:00",
-            "endDate": "2025-08-20 03:44:00",
-            "createdBy": 1,
-            "updatedBy": null,
-            "created_at": "2025-08-13 17:45:46",
-            "updated_at": "2025-08-13 17:45:58",
-            "deleted_at": null,
-            "status": "active"
-        }
-    ]
-}
-
-dan list campaign juga akan diimplementasikan pada page menu Campaign. Apabila salah satu campaign di klik maka akan memanggil API 
-curl --location 'https://apihustl.sijago.ai/api/v1/campaigns/15'
-
-dan response akan sebagai berikut
-{
-    "success": true,
-    "message": "Campaign retrieved successfully",
+    "message": "Redemption history retrieved successfully",
+    "timestamp": "2025-08-12T03:52:56.384Z",
     "data": {
-        "id": 17,
-        "name": "Summer Sale 2029",
-        "slug": "summer-sale-2029",
-        "description": "Dapatkan poin lebih banyak!",
-        "image": "test-campaign-17.jpg",
-        "isActive": true,
-        "startDate": "2025-08-18 07:00:00",
-        "endDate": "2025-09-01 06:59:59",
-        "createdBy": 1,
-        "updatedBy": null,
-        "created_at": "2025-08-17 14:03:17",
-        "updated_at": "2025-08-17 19:39:02",
-        "deleted_at": null,
-        "products": [],
-        "status": "upcoming",
-        "productCount": 0,
-        "imageUrl": "https://apihustl.sijago.ai/uploads/campaigns/test-campaign-17.jpg"
-    }
+        "redemptions": [
+            {
+                "id": 3,
+                "userId": 13,
+                "pointsRedeemed": 100,
+                "redemptionType": "cash",
+                "redemptionValue": "1.00",
+                "redemptionDetails": {
+                    "bankName": "Bank ABC",
+                    "accountName": "John Doe",
+                    "bankAccount": "1234567890"
+                },
+                "status": "pending",
+                "requestedAt": "2025-08-12 10:52:33",
+                "processedAt": null,
+                "processedBy": null,
+                "adminNotes": null,
+                "transactionId": null,
+                "created_at": "2025-08-12 10:52:33",
+                "updated_at": "2025-08-12 10:52:33",
+                "deletedAt": null
+            }
+        ],
+        "pagination": {
+            "currentPage": 1,
+            "totalPages": 1,
+            "totalItems": 2,
+            "itemsPerPage": 20
+        }
+    },
+    "code": "SUCCESS"
 }
 
-Lakukan implementasi dan integrasi API diatas dengan code vue js saya
-
+Untuk nilai status yang akan ditampilkan akan diambil dari response data.redemptions.status
