@@ -1,83 +1,124 @@
 <template>
   <div class="profile-view profile-page">
     <HustlHeader :isDashboard="true" />
-    <!-- User Info Section -->
-    <div class="dashboard-section profile-header">
-      <div class="user-avatar">
-        <span class="avatar-text">{{ userInitials }}</span>
-      </div>
-      <div class="user-info">
-        <h2 class="username">{{ userData.username }}</h2>
-        <p class="user-email">{{ userData.email }}</p>
-      </div>
+
+    <!-- Loading State -->
+    <div v-if="isLoading" class="dashboard-section loading-section">
+      <div class="loading-spinner"></div>
+      <p class="loading-text">Loading profile...</p>
     </div>
 
-    <!-- Coin Balance Section -->
-    <div class="dashboard-section coin-section">
-      <div class="section-header">
-        <h3 class="section-title">Your Balance</h3>
-      </div>
-      <div class="coin-balance-card">
-        <div class="coin-info">
-          <div class="coin-icon">🪙</div>
-          <div class="balance-details">
-            <span class="balance-amount">{{ userCoins }}</span>
-            <span class="balance-label">Coins Available</span>
-          </div>
+    <template v-else>
+      <!-- User Info Section -->
+      <div class="dashboard-section profile-header">
+        <div class="user-avatar">
+          <img 
+            v-if="profileData.profilePicture" 
+            :src="profileData.profilePicture" 
+            :alt="profileData.username"
+            class="avatar-image"
+          />
+          <span v-else class="avatar-text">{{ userInitials }}</span>
         </div>
-        <button class="redeem-btn" @click="handleRedeem">
-          <span class="redeem-text">Redeem</span>
-          <span class="redeem-icon">🎁</span>
-        </button>
-      </div>
-    </div>
-
-    <!-- Recent Coins Section -->
-    <div class="dashboard-section">
-      <div class="section-header">
-        <h3 class="section-title">Recent Coins</h3>
-        <button class="see-more-btn" @click="viewAllCoins">See More</button>
-      </div>
-      <div class="coins-list">
-        <div v-for="coin in recentCoins" :key="coin.id" class="coin-item">
-          <div class="coin-item-icon" :style="{ background: coin.type === 'earned' ? '#10B981' : '#EF4444' }">
-            <span>{{ coin.type === 'earned' ? '+' : '-' }}</span>
-          </div>
-          <div class="coin-item-info">
-            <h4 class="coin-item-title">{{ coin.description }}</h4>
-            <p class="coin-item-date">{{ formatDate(coin.date) }}</p>
-          </div>
-          <div class="coin-item-amount" :class="coin.type === 'earned' ? 'earned' : 'spent'">
-            {{ coin.type === 'earned' ? '+' : '-' }}{{ coin.amount }}
+        <div class="user-info">
+          <h2 class="username">{{ profileData.username }}</h2>
+          <p class="user-email">{{ profileData.email }}</p>
+          <p class="user-phone">{{ profileData.phoneNumber }}</p>
+          <div class="user-status">
+            <span class="status-badge verified" v-if="profileData.isVerified">
+              <span class="status-icon">✅</span>
+              <span class="status-text">Verified</span>
+            </span>
+            <span class="status-badge active" v-if="profileData.isActive">
+              <span class="status-icon">🟢</span>
+              <span class="status-text">Active</span>
+            </span>
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- Recent Redeems Section -->
-    <div class="dashboard-section">
-      <div class="section-header">
-        <h3 class="section-title">Recent Redeems</h3>
-        <button class="see-more-btn" @click="viewAllRedeems">See More</button>
-      </div>
-      <div class="redeems-list">
-        <div v-for="redeem in recentRedeems" :key="redeem.id" class="redeem-item">
-          <div class="redeem-item-icon">
-            <span>🎁</span>
+      <!-- Coin Balance Section -->
+      <div class="dashboard-section coin-section">
+        <div class="section-header">
+          <h3 class="section-title">Your Balance</h3>
+        </div>
+        <div class="coin-balance-card">
+          <div class="coin-info">
+            <div class="coin-icon">🪙</div>
+            <div class="balance-details">
+              <span class="balance-amount">{{ formatNumber(profileData.currentPoints) }}</span>
+              <span class="balance-label">Coins Available</span>
+            </div>
           </div>
-          <div class="redeem-item-info">
-            <h4 class="redeem-item-title">{{ redeem.item }}</h4>
-            <p class="redeem-item-date">{{ formatDate(redeem.date) }}</p>
-          </div>
-          <div class="redeem-item-status" :class="redeem.status.toLowerCase()">
-            {{ redeem.status }}
-          </div>
+          <button class="redeem-btn" @click="navigateToRedeem">
+            <span class="redeem-text">Redeem</span>
+            <span class="redeem-icon">🎁</span>
+          </button>
         </div>
       </div>
-    </div>
+
+      <!-- Recent Coins Section -->
+      <div class="dashboard-section">
+        <div class="section-header">
+          <h3 class="section-title">Recent Coins</h3>
+          <button class="see-more-btn" @click="navigateToTransactions">See More</button>
+        </div>
+        <div v-if="recentTransactions.length > 0" class="coins-list">
+          <div v-for="transaction in recentTransactions.slice(0, 5)" :key="transaction.id" class="coin-item">
+            <div class="coin-item-icon" :style="{ background: transaction.transactionType === 'credit' ? '#10B981' : '#EF4444' }">
+              <span>{{ transaction.transactionType === 'credit' ? '+' : '-' }}</span>
+            </div>
+            <div class="coin-item-info">
+              <h4 class="coin-item-title">{{ transaction.activityDescription }}</h4>
+              <p class="coin-item-date">{{ formatDate(transaction.created_at) }}</p>
+            </div>
+            <div class="coin-item-amount" :class="transaction.transactionType">
+              {{ transaction.transactionType === 'credit' ? '+' : '-' }}{{ formatNumber(transaction.amount) }}
+            </div>
+          </div>
+        </div>
+        <div v-else class="empty-state">
+          <p class="empty-text">No recent transactions</p>
+        </div>
+      </div>
+
+      <!-- Recent Redeems Section -->
+      <div class="dashboard-section">
+        <div class="section-header">
+          <h3 class="section-title">Recent Redeems</h3>
+          <button class="see-more-btn" @click="navigateToRedemptions">See More</button>
+        </div>
+        <div v-if="recentRedemptions.length > 0" class="redeems-list">
+          <div v-for="redemption in recentRedemptions.slice(0, 5)" :key="redemption.id" class="redeem-item">
+            <div class="redeem-item-icon">
+              <span>🎁</span>
+            </div>
+            <div class="redeem-item-info">
+              <h4 class="redeem-item-title">{{ formatRedemptionTitle(redemption) }}</h4>
+              <p class="redeem-item-date">{{ formatDate(redemption.created_at) }}</p>
+            </div>
+            <div class="redeem-item-status" :class="redemption.status.toLowerCase()">
+              {{ formatStatus(redemption.status) }}
+            </div>
+          </div>
+        </div>
+        <div v-else class="empty-state">
+          <p class="empty-text">No recent redemptions</p>
+        </div>
+      </div>
+
+      <!-- Error State -->
+      <div v-if="error" class="dashboard-section error-section">
+        <div class="error-message">
+          <span class="error-icon">⚠️</span>
+          <span class="error-text">{{ error }}</span>
+          <button class="retry-btn" @click="loadProfileData">Retry</button>
+        </div>
+      </div>
+    </template>
 
     <!-- Logout Section -->
-    <div class="dashboard-section logout-section">
+    <div v-if="!isLoading" class="dashboard-section logout-section">
       <button class="logout-btn" @click="handleLogout">
         <span class="logout-icon">🚪</span>
         <span class="logout-text">Logout</span>
@@ -90,11 +131,12 @@
 </template>
 
 <script>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import BottomNavigation from '../components/BottomNavigation.vue'
 import HustlHeader from '../components/HustlHeader.vue'
+import apiService from '../services/api'
 
 export default {
   name: 'ProfileView',
@@ -105,95 +147,29 @@ export default {
   setup() {
     const router = useRouter()
     const authStore = useAuthStore()
+    
+    // State management
+    const isLoading = ref(true)
+    const error = ref('')
+    const profileData = ref({})
+    const recentTransactions = ref([])
+    const recentRedemptions = ref([])
 
-    // User data from auth store
-    const userData = computed(() => ({
-      username: authStore.userName || 'User',
-      email: authStore.userEmail || 'user@example.com'
-    }))
-
+    // Computed properties
     const userInitials = computed(() => {
-      const username = userData.value.username
+      const username = profileData.value.username || 'User'
       return username.substring(0, 2).toUpperCase()
     })
 
-    const userCoins = computed(() => authStore.userPoints || 1250)
+    // Helper methods
+    const formatNumber = (num) => {
+      if (!num) return '0'
+      return num.toLocaleString('id-ID')
+    }
 
-    // Dummy data for recent coins (top 5)
-    const recentCoins = ref([
-      {
-        id: 1,
-        description: 'Samsung Smart TV 55" Purchase',
-        amount: 75,
-        type: 'earned',
-        date: '2025-08-30T10:00:00Z'
-      },
-      {
-        id: 2,
-        description: 'iPhone 15 Pro Max Purchase',
-        amount: 180,
-        type: 'earned',
-        date: '2025-08-30T09:45:00Z'
-      },
-      {
-        id: 3,
-        description: 'MacBook Air M3 Purchase',
-        amount: 150,
-        type: 'earned',
-        date: '2025-08-30T09:30:00Z'
-      },
-      {
-        id: 4,
-        description: 'Nike Air Max 270 Purchase',
-        amount: 18,
-        type: 'earned',
-        date: '2025-08-30T09:15:00Z'
-      },
-      {
-        id: 5,
-        description: 'Redeem Gift Card',
-        amount: 100,
-        type: 'spent',
-        date: '2025-08-30T09:00:00Z'
-      }
-    ])
-
-    // Dummy data for recent redeems (last 5)
-    const recentRedeems = ref([
-      {
-        id: 1,
-        item: 'Amazon Gift Card $10',
-        status: 'Completed',
-        date: '2025-08-29T15:30:00Z'
-      },
-      {
-        id: 2,
-        item: 'Starbucks Voucher $5',
-        status: 'Processing',
-        date: '2025-08-29T14:20:00Z'
-      },
-      {
-        id: 3,
-        item: 'Google Play Gift Card $15',
-        status: 'Completed',
-        date: '2025-08-28T16:45:00Z'
-      },
-      {
-        id: 4,
-        item: 'Netflix Subscription 1 Month',
-        status: 'Completed',
-        date: '2025-08-28T10:30:00Z'
-      },
-      {
-        id: 5,
-        item: 'Spotify Premium 1 Month',
-        status: 'Failed',
-        date: '2025-08-27T12:15:00Z'
-      }
-    ])
-
-    // Methods
     const formatDate = (dateString) => {
+      if (!dateString) return 'Unknown date'
+      
       const date = new Date(dateString)
       const now = new Date()
       const diffTime = Math.abs(now - date)
@@ -210,16 +186,105 @@ export default {
       })
     }
 
-    const handleRedeem = () => {
-      console.log('Navigate to redeem page')
+    const formatRedemptionTitle = (redemption) => {
+      const points = formatNumber(redemption.pointsRedeemed)
+      const type = redemption.redemptionType.charAt(0).toUpperCase() + redemption.redemptionType.slice(1)
+      return `${type} Redemption - ${points} points`
     }
 
-    const viewAllCoins = () => {
-      console.log('Navigate to all coins history')
+    const formatStatus = (status) => {
+      const statusMap = {
+        'pending': 'Pending',
+        'processing': 'Processing', 
+        'completed': 'Completed',
+        'failed': 'Failed',
+        'cancelled': 'Cancelled'
+      }
+      return statusMap[status] || status.charAt(0).toUpperCase() + status.slice(1)
     }
 
-    const viewAllRedeems = () => {
-      console.log('Navigate to all redeems history')
+    // API integration methods
+    const loadProfileData = async () => {
+      isLoading.value = true
+      error.value = ''
+
+      try {
+        // Get user ID from auth store
+        const userId = authStore.user?.id
+        if (!userId) {
+          throw new Error('User ID not found. Please login again.')
+        }
+
+        // Load profile data, transactions, and redemptions in parallel
+        const [profileResult, transactionsResult, redemptionsResult] = await Promise.allSettled([
+          apiService.getUserProfileById(userId),
+          apiService.getMyTransactions({ limit: 10 }), // Get 10 latest transactions
+          apiService.getMyRedemptions({ limit: 10 })   // Get 10 latest redemptions
+        ])
+
+        // Handle profile data
+        if (profileResult.status === 'fulfilled' && profileResult.value.success) {
+          profileData.value = profileResult.value.data.user
+        } else {
+          console.warn('Failed to load profile:', profileResult.reason)
+          // Fallback to auth store data
+          profileData.value = {
+            username: authStore.userName || 'User',
+            email: authStore.userEmail || 'user@example.com',
+            phoneNumber: 'Not provided',
+            currentPoints: authStore.userPoints || 0,
+            isVerified: false,
+            isActive: true,
+            profilePicture: null
+          }
+        }
+
+        // Handle transactions data
+        if (transactionsResult.status === 'fulfilled' && transactionsResult.value.success) {
+          recentTransactions.value = transactionsResult.value.data.transactions || []
+        } else {
+          console.warn('Failed to load transactions:', transactionsResult.reason)
+          recentTransactions.value = []
+        }
+
+        // Handle redemptions data
+        if (redemptionsResult.status === 'fulfilled' && redemptionsResult.value.success) {
+          recentRedemptions.value = redemptionsResult.value.data.redemptions || []
+        } else {
+          console.warn('Failed to load redemptions:', redemptionsResult.reason)
+          recentRedemptions.value = []
+        }
+
+      } catch (err) {
+        console.error('Error loading profile data:', err)
+        error.value = 'Failed to load profile data. Please try again.'
+        
+        // Fallback data from auth store
+        profileData.value = {
+          username: authStore.userName || 'User',
+          email: authStore.userEmail || 'user@example.com',
+          phoneNumber: 'Not provided',
+          currentPoints: authStore.userPoints || 0,
+          isVerified: false,
+          isActive: true,
+          profilePicture: null
+        }
+      } finally {
+        isLoading.value = false
+      }
+    }
+
+    // Navigation methods
+    const navigateToRedeem = () => {
+      router.push('/profile/redeem')
+    }
+
+    const navigateToTransactions = () => {
+      router.push('/profile/transactions')
+    }
+
+    const navigateToRedemptions = () => {
+      router.push('/profile/redemptions')
     }
 
     const handleLogout = () => {
@@ -229,40 +294,33 @@ export default {
       }
     }
 
+    // Initialize on mount
+    onMounted(() => {
+      loadProfileData()
+    })
+
     return {
-      userData,
+      isLoading,
+      error,
+      profileData,
+      recentTransactions,
+      recentRedemptions,
       userInitials,
-      userCoins,
-      recentCoins,
-      recentRedeems,
+      formatNumber,
       formatDate,
-      handleRedeem,
-      viewAllCoins,
-      viewAllRedeems,
-      handleLogout
+      formatRedemptionTitle,
+      formatStatus,
+      navigateToRedeem,
+      navigateToTransactions,
+      navigateToRedemptions,
+      handleLogout,
+      loadProfileData
     }
   }
 }
 </script>
 
 <style scoped>
-/* Add to existing styles */
-.header-settings-btn {
-  background: rgba(255, 255, 255, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 8px;
-  padding: 0.5rem;
-  cursor: pointer;
-  color: #1F2937;
-  font-size: 1rem;
-  transition: all 0.2s;
-  backdrop-filter: blur(10px);
-}
-
-.header-settings-btn:hover {
-  background: rgba(255, 255, 255, 0.3);
-  transform: scale(1.05);
-}
 /* Override main.css container restrictions for ProfileView - Fixed for all screen sizes */
 .profile-view {
   min-height: 100vh;
@@ -301,6 +359,79 @@ export default {
   overflow: visible !important;
 }
 
+/* Loading Section */
+.loading-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1rem;
+  text-align: center;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(79, 195, 247, 0.3);
+  border-top: 4px solid #4FC3F7;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+.loading-text {
+  color: #1F2937;
+  font-family: 'Baloo 2', sans-serif;
+  font-weight: 500;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Error Section */
+.error-section {
+  background: #FEF2F2;
+  border: 2px solid #FECACA;
+}
+
+.error-message {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: #DC2626;
+  font-family: 'Baloo 2', sans-serif;
+}
+
+.error-icon {
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.error-text {
+  flex: 1;
+  font-weight: 500;
+}
+
+.retry-btn {
+  background: #DC2626;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'Baloo 2', sans-serif;
+}
+
+.retry-btn:hover {
+  background: #B91C1C;
+  transform: translateY(-1px);
+}
+
 /* Dashboard Section - Clean containers */
 .dashboard-section {
   background: white;
@@ -326,8 +457,8 @@ export default {
 }
 
 .user-avatar {
-  width: 64px;
-  height: 64px;
+  width: 80px;
+  height: 80px;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border-radius: 50%;
   display: flex;
@@ -335,11 +466,18 @@ export default {
   justify-content: center;
   box-shadow: 0 4px 12px rgba(102, 126, 234, 0.25);
   flex-shrink: 0;
+  overflow: hidden;
+}
+
+.avatar-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .avatar-text {
   color: white;
-  font-size: 1.5rem;
+  font-size: 1.75rem;
   font-weight: 700;
   font-family: 'Baloo 2', sans-serif;
 }
@@ -362,6 +500,46 @@ export default {
   color: #6B7280;
   font-family: 'Baloo 2', sans-serif;
   font-weight: 500;
+  margin-bottom: 0.25rem;
+}
+
+.user-phone {
+  font-size: 0.875rem;
+  color: #6B7280;
+  font-family: 'Baloo 2', sans-serif;
+  font-weight: 500;
+  margin-bottom: 0.75rem;
+}
+
+.user-status {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.status-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-family: 'Baloo 2', sans-serif;
+}
+
+.status-badge.verified {
+  background: #D1FAE5;
+  color: #065F46;
+}
+
+.status-badge.active {
+  background: #FEF3C7;
+  color: #92400E;
+}
+
+.status-icon {
+  font-size: 0.75rem;
 }
 
 /* Coin Section */
@@ -468,6 +646,18 @@ export default {
   transform: translateY(-1px);
 }
 
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 2rem 1rem;
+  color: #6B7280;
+}
+
+.empty-text {
+  font-family: 'Baloo 2', sans-serif;
+  font-weight: 500;
+}
+
 /* Coins List */
 .coins-list, .redeems-list {
   display: flex;
@@ -537,11 +727,11 @@ export default {
   font-family: 'Baloo 2', sans-serif;
 }
 
-.coin-item-amount.earned {
+.coin-item-amount.credit {
   color: #10B981;
 }
 
-.coin-item-amount.spent {
+.coin-item-amount.debit {
   color: #EF4444;
 }
 
@@ -554,19 +744,29 @@ export default {
   text-transform: uppercase;
 }
 
+.redeem-item-status.pending {
+  background: #FEF3C7;
+  color: #92400E;
+}
+
+.redeem-item-status.processing {
+  background: #DBEAFE;
+  color: #1E40AF;
+}
+
 .redeem-item-status.completed {
   background: #D1FAE5;
   color: #065F46;
 }
 
-.redeem-item-status.processing {
-  background: #FEF3C7;
-  color: #92400E;
-}
-
 .redeem-item-status.failed {
   background: #FEE2E2;
   color: #991B1B;
+}
+
+.redeem-item-status.cancelled {
+  background: #F3F4F6;
+  color: #374151;
 }
 
 /* Logout Section */
@@ -641,19 +841,19 @@ export default {
   }
 
   .user-avatar {
-    width: 80px;
-    height: 80px;
+    width: 96px;
+    height: 96px;
   }
 
   .avatar-text {
-    font-size: 1.75rem;
+    font-size: 2rem;
   }
 
   .username {
     font-size: 1.5rem;
   }
 
-  .user-email {
+  .user-email, .user-phone {
     font-size: 1rem;
   }
 
@@ -721,12 +921,12 @@ export default {
   }
 
   .user-avatar {
-    width: 96px;
-    height: 96px;
+    width: 112px;
+    height: 112px;
   }
 
   .avatar-text {
-    font-size: 2rem;
+    font-size: 2.25rem;
   }
 
   .username {

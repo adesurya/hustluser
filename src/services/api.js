@@ -173,6 +173,27 @@ class ApiService {
     return response
   }
 
+  // Profile APIs
+  async getUserProfileById(userId) {
+    const response = await this.client.get(`/auth/profile/${userId}`)
+    return response
+  }
+
+  async getMyTransactions(params = {}) {
+    const response = await this.client.get('/points/my-transactions', { params })
+    return response
+  }
+
+  async getMyRedemptions(params = {}) {
+    const response = await this.client.get('/points/my-redemptions', { params })
+    return response
+  }
+
+  async createRedemption(redemptionData) {
+    const response = await this.client.post('/points/redeem', redemptionData)
+    return response
+  }
+
   // Helper method untuk mendapatkan tanggal awal dan akhir minggu ini
   static getCurrentWeekDates() {
     const now = new Date()

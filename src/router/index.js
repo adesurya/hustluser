@@ -73,6 +73,24 @@ const routes = [
   {
     path: '/:pathMatch(.*)*',
     redirect: '/login'
+  },
+  {
+    path: '/profile/redeem',
+    name: 'Redeem',
+    component: () => import('../views/RedeemView.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/profile/transactions',
+    name: 'Transactions',
+    component: () => import('../views/TransactionsView.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/profile/redemptions',
+    name: 'Redemptions',
+    component: () => import('../views/RedemptionsView.vue'),
+    meta: { requiresAuth: true }
   }
 ]
 
