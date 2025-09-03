@@ -79,8 +79,8 @@
               <div class="product-price">{{ product.formattedPrice || formatPrice(product.price) }}</div>
               <div class="product-actions">
                 <span class="earn-coins">🪙 Earn {{ product.points }} Coins</span>
-                <button class="share-btn" @click.stop="shareProduct(product)">
-                  <span class="share-icon">📤</span>
+                <button class="share-btn" @click="openShareModal(product)" @click.stop>
+                  <span class="share-icon">🔗</span>
                 </button>
               </div>
             </div>
@@ -122,6 +122,14 @@
       </div>
     </template>
 
+    <ShareModal 
+      :isVisible="showShareModal" 
+      :product="selectedProductForShare"
+      @close="closeShareModal"
+      @shared="handleShareSuccess"
+      @points-earned="handlePointsEarned"
+    />
+
     <!-- Bottom Navigation Component -->
     <BottomNavigation />
   </div>
@@ -134,12 +142,14 @@ import { useAuthStore } from '../stores/auth'
 import BottomNavigation from '../components/BottomNavigation.vue'
 import HustlHeader from '../components/HustlHeader.vue'
 import apiService from '../services/api'
+import ShareModal from '../components/ShareModal.vue'
 
 export default {
   name: 'DashboardView',
   components: {
     BottomNavigation,
-    HustlHeader
+    HustlHeader,
+    ShareModal 
   },
   setup() {
     const router = useRouter()

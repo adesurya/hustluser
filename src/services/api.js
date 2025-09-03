@@ -194,7 +194,46 @@ class ApiService {
     return response
   }
 
-  // Helper method untuk mendapatkan tanggal awal dan akhir minggu ini
+  // Generate Affiliate Link API
+  async generateAffiliateLink(productData) {
+    const response = await this.client.post('/tiktok/affiliate-links', {
+      productId: productData.productId,
+      materialId: productData.materialId,
+      channel: productData.channel || 'hazel',
+      tags: productData.tags || ['user_share'],
+      materialType: productData.materialType || 1
+    })
+    return response
+  }
+
+  // Share Affiliate Link API
+  async shareAffiliateLink(shareData) {
+    const response = await this.client.post('/share/affiliate-link', {
+      affiliateLinkId: shareData.affiliateLinkId,
+      platform: shareData.platform,
+      metadata: {
+        userAgent: navigator.userAgent,
+        ipAddress: shareData.ipAddress || 'unknown',
+        ...shareData.metadata
+      }
+    })
+    return response
+  }
+
+  // Utility method to extract material ID from product URL
+  static extractMaterialId(productUrl) {
+    if (!productUrl) return null
+    
+    // Extract material ID from URLs like:
+    // https://shop-id.tokopedia.com/view/product/1730865346384987673
+    // https://www.tokopedia.com/product/1730865346384987673
+    const regex = /product\/(\d+)/i
+    const match = productUrl.match(regex)
+    
+    return match ? match[1] : null
+  }
+
+   // Helper method untuk mendapatkan tanggal awal dan akhir minggu ini
   static getCurrentWeekDates() {
     const now = new Date()
     const dayOfWeek = now.getDay()

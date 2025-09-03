@@ -9,8 +9,8 @@
           <span class="back-icon">←</span>
           <span class="back-text">Back</span>
         </button>
-        <button class="share-btn" @click="shareProduct">
-          <span class="share-icon">📤</span>
+        <button class="share-btn" @click="openShareModal">
+          <span class="share-icon">🔗</span>
         </button>
       </div>
     </div>
@@ -21,12 +21,12 @@
       <p class="loading-text">Loading product details...</p>
     </div>
 
-    <!-- Product Information Section - Mobile-First Layout -->
+    <!-- Product Information Section -->
     <div v-else-if="product" class="dashboard-section product-info-section">
       <!-- Product Image -->
       <div class="product-image-container">
         <div class="product-image">
-          <img :src="getProductImageUrl(product.image)" :alt="product.title" />
+          <img :src="product.imageUrl || getProductImageUrl(product.image)" :alt="product.title" />
           <div class="product-badge">{{ product.category?.name || 'Product' }}</div>
         </div>
       </div>
@@ -87,8 +87,8 @@
           <span class="favorite-text">{{ isFavorite ? 'Favorited' : 'Add to Favorites' }}</span>
         </button>
         
-        <button class="share-product-btn" @click="shareProduct">
-          <span class="share-icon">📤</span>
+        <button class="share-product-btn" @click="openShareModal">
+          <span class="share-icon">🔗</span>
           <span class="share-text">Share Product</span>
         </button>
       </div>
@@ -125,7 +125,7 @@
           @click="viewRelatedProduct(relatedProduct)"
         >
           <div class="related-image">
-            <img :src="getProductImageUrl(relatedProduct.image)" :alt="relatedProduct.title" />
+            <img :src="relatedProduct.imageUrl || getProductImageUrl(relatedProduct.image)" :alt="relatedProduct.title" />
           </div>
           <div class="related-info">
             <h4 class="related-name">{{ relatedProduct.title }}</h4>
@@ -145,6 +145,15 @@
       </div>
     </div>
 
+    <!-- Share Modal -->
+    <ShareModal 
+      :isVisible="showShareModal" 
+      :product="product"
+      @close="closeShareModal"
+      @shared="handleShareSuccess"
+      @points-earned="handlePointsEarned"
+    />
+
     <!-- Bottom Navigation -->
     <BottomNavigation />
   </div>
@@ -155,22 +164,28 @@ import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import BottomNavigation from '../components/BottomNavigation.vue'
 import HustlHeader from '../components/HustlHeader.vue'
+import ShareModal from '../components/ShareModal.vue'
 import apiService from '../services/api'
+import { useAuthStore } from '../stores/auth'
 
 export default {
   name: 'ProductDetailView',
   components: {
     BottomNavigation,
-    HustlHeader
+    HustlHeader,
+    ShareModal
   },
   setup() {
     const router = useRouter()
     const route = useRoute()
+    const authStore = useAuthStore()
+    
     const product = ref(null)
     const relatedProducts = ref([])
     const isFavorite = ref(false)
     const isLoading = ref(true)
     const error = ref('')
+    const showShareModal = ref(false)
 
     // Methods
     const getProductImageUrl = (imagePath) => {
@@ -187,42 +202,44 @@ export default {
       error.value = ''
 
       try {
-        // First check if we have product data in sessionStorage
-        const storedProduct = sessionStorage.getItem('selectedProduct')
-        if (storedProduct) {
-          try {
-            const parsedProduct = JSON.parse(storedProduct)
-            product.value = parsedProduct
-            
-            // Check if product is in favorites
-            const favorites = JSON.parse(localStorage.getItem('favoriteProducts') || '[]')
-            isFavorite.value = favorites.some(fav => fav.id === parsedProduct.id)
-            
-            // Load related products based on category
-            if (parsedProduct.categoryId) {
-              await loadRelatedProducts(parsedProduct.categoryId, parsedProduct.id)
-            }
-            
-            isLoading.value = false
-            return
-          } catch (parseError) {
-            console.warn('Error parsing stored product data:', parseError)
-          }
+        const productId = route.params.id
+        
+        if (!productId) {
+          error.value = 'Product ID not provided'
+          return
         }
 
-        // If no stored data, try to load from API using route parameter
-        const productId = route.params.id
-        if (productId) {
-          // Note: You may need to implement getProductById in your API service
-          // For now, we'll redirect back if no stored data
-          error.value = 'Product data not found. Please select a product from the categories.'
+        console.log('Loading product with ID:', productId)
+        
+        const response = await apiService.getProductById(productId)
+        
+        if (response.success) {
+          product.value = response.data
+          
+          // Check if product is in favorites
+          const favorites = JSON.parse(localStorage.getItem('favoriteProducts') || '[]')
+          isFavorite.value = favorites.some(fav => fav.id === product.value.id)
+          
+          // Load related products based on category
+          if (product.value.categoryId) {
+            await loadRelatedProducts(product.value.categoryId, product.value.id)
+          }
+          
+          console.log('Product loaded successfully:', product.value)
+          
         } else {
-          error.value = 'Product ID not provided'
+          error.value = response.message || 'Failed to load product details'
         }
 
       } catch (err) {
         console.error('Error loading product:', err)
-        error.value = 'Failed to load product details. Please try again.'
+        if (err.message.includes('404')) {
+          error.value = 'Product not found. It may have been removed or the ID is incorrect.'
+        } else if (err.message.includes('Network')) {
+          error.value = 'Network error. Please check your connection and try again.'
+        } else {
+          error.value = 'Failed to load product details. Please try again.'
+        }
       } finally {
         isLoading.value = false
       }
@@ -237,7 +254,6 @@ export default {
         })
         
         if (response.success) {
-          // Filter out current product and limit to 3-4 related products
           relatedProducts.value = response.data
             .filter(p => p.id !== excludeProductId)
             .slice(0, 4)
@@ -258,18 +274,17 @@ export default {
       const productIndex = favorites.findIndex(fav => fav.id === product.value.id)
       
       if (productIndex > -1) {
-        // Remove from favorites
         favorites.splice(productIndex, 1)
         isFavorite.value = false
         console.log('Removed from favorites:', product.value.title)
       } else {
-        // Add to favorites
         favorites.push({
           id: product.value.id,
           title: product.value.title,
           price: product.value.formattedPrice || formatPrice(product.value.price),
           image: product.value.image,
-          points: product.value.points
+          points: product.value.points,
+          imageUrl: product.value.imageUrl
         })
         isFavorite.value = true
         console.log('Added to favorites:', product.value.title)
@@ -278,57 +293,74 @@ export default {
       localStorage.setItem('favoriteProducts', JSON.stringify(favorites))
     }
 
-    const shareProduct = () => {
-      if (!product.value) return
-      
-      const shareData = {
-        title: product.value.title,
-        text: `Check out this product: ${product.value.title} - ${product.value.formattedPrice || formatPrice(product.value.price)}. Earn ${product.value.points} coins!`,
-        url: window.location.href
+    // Share Modal Methods
+    const openShareModal = () => {
+      if (!product.value) {
+        console.warn('No product data available for sharing')
+        return
       }
       
-      if (navigator.share && navigator.canShare(shareData)) {
-        navigator.share(shareData)
-          .then(() => console.log('Product shared successfully'))
-          .catch((error) => console.log('Error sharing product:', error))
-      } else {
-        // Fallback: copy to clipboard
-        const shareText = `${shareData.title}\n${shareData.text}\n${shareData.url}`
-        navigator.clipboard.writeText(shareText)
-          .then(() => {
-            alert('Product link copied to clipboard!')
-          })
-          .catch(() => {
-            prompt('Copy this link to share:', shareText)
-          })
+      // Validate product has required URL for material ID extraction
+      if (!product.value.url) {
+        alert('This product cannot be shared as it does not have a valid product URL.')
+        return
       }
+      
+      showShareModal.value = true
+    }
+
+    const closeShareModal = () => {
+      showShareModal.value = false
+    }
+
+    const handleShareSuccess = (shareData) => {
+      console.log('Product shared successfully:', shareData)
+      
+      // Show success notification
+      if (shareData.pointsEarned > 0) {
+        // You can show a toast notification here
+        console.log(`Earned ${shareData.pointsEarned} points for sharing!`)
+      }
+    }
+
+    const handlePointsEarned = (points) => {
+      // Refresh user points in auth store
+      authStore.refreshUserPoints()
+      console.log(`Points earned: ${points}`)
     }
 
     const handlePurchase = () => {
       if (!product.value) return
       
-      // Check if product URL is available for external purchase
       if (product.value.url) {
         window.open(product.value.url, '_blank')
       } else {
-        // Simulate purchase process
         alert(`Redirecting to payment for ${product.value.title}`)
         console.log('Purchase initiated for:', product.value.title)
       }
     }
 
     const viewRelatedProduct = (relatedProduct) => {
-      // Store in sessionStorage and navigate
-      sessionStorage.setItem('selectedProduct', JSON.stringify(relatedProduct))
-      // Force page reload to show new product
       router.push(`/product/${relatedProduct.id}`)
-      // Reload the page to show new product data
-      window.location.reload()
     }
+
+    // Watch for route changes to reload product data
+    const unwatchRoute = router.afterEach((to, from) => {
+      if (to.name === 'ProductDetail' && to.params.id !== from.params.id) {
+        loadProductData()
+      }
+    })
 
     // Initialize on mount
     onMounted(() => {
       loadProductData()
+    })
+
+    // Cleanup route watcher
+    onMounted(() => {
+      return () => {
+        if (unwatchRoute) unwatchRoute()
+      }
     })
 
     return {
@@ -337,9 +369,13 @@ export default {
       isFavorite,
       isLoading,
       error,
+      showShareModal,
       goBack,
       toggleFavorite,
-      shareProduct,
+      openShareModal,
+      closeShareModal,
+      handleShareSuccess,
+      handlePointsEarned,
       handlePurchase,
       viewRelatedProduct,
       loadProductData,
@@ -351,7 +387,7 @@ export default {
 </script>
 
 <style scoped>
-/* Mobile-First Product Detail View */
+/* Keep all existing styles from the original ProductDetailView */
 .product-detail-view {
   min-height: 100vh;
   background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%);
@@ -361,7 +397,6 @@ export default {
   overflow-y: auto;
 }
 
-/* Force full width on all screen sizes - maintain mobile layout */
 .product-detail-view .page-container {
   max-width: none !important;
   width: 100% !important;
@@ -540,7 +575,7 @@ export default {
   transform: scale(1.1);
 }
 
-/* Product Info Section - Mobile-First Layout */
+/* Product Info Section */
 .product-info-section {
   padding: 1.5rem 1.25rem;
 }
@@ -582,7 +617,7 @@ export default {
   backdrop-filter: blur(10px);
 }
 
-/* Product Details - Mobile-First Layout */
+/* Product Details */
 .product-details {
   display: flex;
   flex-direction: column;
@@ -920,13 +955,12 @@ export default {
   font-weight: 600;
 }
 
-/* Responsive Design - MAINTAIN MOBILE LAYOUT */
+/* Responsive Design */
 @media (min-width: 768px) {
   .product-detail-view {
     background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%) !important;
   }
 
-  /* Keep mobile layout structure - DO NOT change to row layout */
   .product-image {
     max-width: 350px;
     height: 350px;
@@ -982,7 +1016,6 @@ export default {
     overflow: visible !important;
   }
 
-  /* MAINTAIN mobile-first layout even on desktop */
   .product-image {
     max-width: 400px;
     height: 400px;
