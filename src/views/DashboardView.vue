@@ -164,6 +164,10 @@ export default {
     const featuredProducts = ref([])
     const activeCampaign = ref(null)
 
+    // Share modal state
+    const showShareModal = ref(false)
+    const selectedProductForShare = ref(null)
+
     // User points from API or store
     const userPoints = computed(() => 
       userPointsData.value?.currentBalance || authStore.userPoints || 0
@@ -221,6 +225,44 @@ export default {
       if (diffDays === 0) return 'Ends today'
       if (diffDays === 1) return 'Ends tomorrow'
       return `${diffDays} days left`
+    }
+
+    // Share Modal Methods
+    const openShareModal = (product) => {
+      if (!product) {
+        console.warn('No product data available for sharing')
+        return
+      }
+      
+      // Validate product has required URL for material ID extraction
+      if (!product.url) {
+        alert('This product cannot be shared as it does not have a valid product URL.')
+        return
+      }
+      
+      selectedProductForShare.value = product
+      showShareModal.value = true
+    }
+
+    const closeShareModal = () => {
+      showShareModal.value = false
+      selectedProductForShare.value = null
+    }
+
+    const handleShareSuccess = (shareData) => {
+      console.log('Product shared successfully:', shareData)
+      
+      // Show success notification
+      if (shareData.pointsEarned > 0) {
+        // You can show a toast notification here
+        console.log(`Earned ${shareData.pointsEarned} points for sharing!`)
+      }
+    }
+
+    const handlePointsEarned = (points) => {
+      // Refresh user points in auth store
+      authStore.refreshUserPoints()
+      console.log(`Points earned: ${points}`)
     }
 
     // Load dashboard data
@@ -313,31 +355,6 @@ export default {
       router.push(`/campaign/${campaign.id}`)
     }
 
-    const shareProduct = (product) => {
-      const shareData = {
-        title: product.title,
-        text: `Check out this product: ${product.title} - ${product.formattedPrice || formatPrice(product.price)}. Earn ${product.points} coins!`,
-        url: window.location.origin + `/product/${product.id}`
-      }
-      
-      if (navigator.share && navigator.canShare(shareData)) {
-        navigator.share(shareData)
-          .then(() => console.log('Product shared successfully'))
-          .catch((error) => console.log('Error sharing product:', error))
-      } else {
-        // Fallback: copy to clipboard
-        const shareText = `${shareData.title}\n${shareData.text}\n${shareData.url}`
-        navigator.clipboard.writeText(shareText)
-          .then(() => {
-            alert('Product link copied to clipboard!')
-          })
-          .catch(() => {
-            // Manual fallback
-            prompt('Copy this link to share:', shareText)
-          })
-      }
-    }
-
     const navigateToCategories = () => {
       router.push('/category')
     }
@@ -359,11 +376,12 @@ export default {
       categories,
       featuredProducts,
       activeCampaign,
+      showShareModal,
+      selectedProductForShare,
       handleSearch,
       selectCategory,
       viewProductDetails,
       viewCampaignDetails,
-      shareProduct,
       navigateToCategories,
       navigateToCampaigns,
       loadDashboardData,
@@ -372,7 +390,11 @@ export default {
       getProductImageUrl,
       getCampaignImageUrl,
       formatPrice,
-      formatCampaignDate
+      formatCampaignDate,
+      openShareModal,
+      closeShareModal,
+      handleShareSuccess,
+      handlePointsEarned
     }
   }
 }

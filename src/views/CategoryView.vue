@@ -176,6 +176,10 @@ export default {
     const totalPages = ref(1)
     const hasMoreProducts = ref(false)
 
+    // Share modal state
+    const showShareModal = ref(false)
+    const selectedProductForShare = ref(null)
+
     // Category colors array for dynamic assignment
     const categoryColors = [
       '#4FC3F7', '#FF69B4', '#FF6B35', '#4ECDC4', 
@@ -448,6 +452,35 @@ export default {
       await loadProducts()
     }
 
+    // Share Modal Methods
+    const openShareModal = (product) => {
+      if (!product) {
+        console.warn('No product data available for sharing')
+        return
+      }
+      
+      selectedProductForShare.value = product
+      showShareModal.value = true
+    }
+
+    const closeShareModal = () => {
+      showShareModal.value = false
+      selectedProductForShare.value = null
+    }
+
+    const handleShareSuccess = (shareData) => {
+      console.log('Product shared successfully:', shareData)
+      
+      if (shareData.pointsEarned > 0) {
+        console.log(`Earned ${shareData.pointsEarned} points for sharing!`)
+      }
+    }
+
+    const handlePointsEarned = (points) => {
+      console.log(`Points earned: ${points}`)
+    }
+
+
     const loadMoreProducts = async () => {
       if (hasMoreProducts.value) {
         currentPage.value++
@@ -495,6 +528,8 @@ export default {
       products,
       totalPages,
       hasMoreProducts,
+      showShareModal,              
+      selectedProductForShare,     
       handleSearch,
       clearSearch,
       selectCategory,
@@ -509,7 +544,11 @@ export default {
       getCategoryIcon,
       getProductImageUrl,
       formatPrice,
-      getFavoriteIcon
+      getFavoriteIcon,
+      openShareModal,             // GANTI dari shareProduct ke ini
+      closeShareModal,            // TAMBAHKAN ini
+      handleShareSuccess,         // TAMBAHKAN ini
+      handlePointsEarned         // TAMBAHKAN ini
     }
   }
 }

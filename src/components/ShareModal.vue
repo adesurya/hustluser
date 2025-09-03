@@ -109,10 +109,6 @@ export default {
       return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
     }
 
-    const isAndroid = () => {
-      return /Android/i.test(navigator.userAgent)
-    }
-
     const isIOS = () => {
       return /iPhone|iPad|iPod/i.test(navigator.userAgent)
     }
@@ -294,7 +290,6 @@ export default {
 
       // Mobile handling with enhanced detection
       return new Promise((resolve) => {
-        const startTime = Date.now()
         let resolved = false
 
         // Set up visibility change handler
@@ -353,7 +348,7 @@ export default {
       const fullMessage = `${shareText}\n\n${shareUrl}`
       
       switch (platform) {
-        case 'copyurl':
+        case 'copyurl': {
           try {
             await navigator.clipboard.writeText(shareUrl)
             return { success: true, method: 'clipboard' }
@@ -368,21 +363,25 @@ export default {
             document.body.removeChild(textArea)
             return { success: true, method: 'fallback' }
           }
+        }
           
         case 'whatsapp':
           return await openAppWithFallback('whatsapp', fullMessage)
           
-        case 'facebook':
-          return await openAppWithFallback('facebook', { text: shareText, url: shareUrl })
+        case 'facebook': {
+          const facebookMessage = { text: shareText, url: shareUrl }
+          return await openAppWithFallback('facebook', facebookMessage)
+        }
           
-        case 'twitter':
+        case 'twitter': {
           const twitterMessage = shareText.length > 200 ? shareText.substring(0, 200) + '... ' + shareUrl : fullMessage
           return await openAppWithFallback('twitter', twitterMessage)
+        }
           
         case 'telegram':
           return await openAppWithFallback('telegram', fullMessage)
           
-        case 'instagram':
+        case 'instagram': {
           try {
             const instagramText = `${shareText}\n\n${shareUrl}\n\n#hazel #shopping #deals`
             await navigator.clipboard.writeText(instagramText)
@@ -405,6 +404,7 @@ export default {
           } catch (err) {
             return { success: false, error: 'Failed to copy to clipboard' }
           }
+        }
           
         default:
           throw new Error('Unsupported sharing platform')
