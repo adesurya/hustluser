@@ -144,13 +144,14 @@
 </template>
 
 <script>
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, onBeforeUnmount } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import BottomNavigation from '../components/BottomNavigation.vue'
 import HustlHeader from '../components/HustlHeader.vue'
-import apiService from '../services/api'
 import ShareModal from '../components/ShareModal.vue'
-
+import apiService from '../services/api'
+import { useWishlist } from '../composables/useWishlist'
+import { showToast } from '../utils/toast'
 
 export default {
   name: 'CategoryView',
@@ -172,13 +173,20 @@ export default {
     const error = ref('')
     const categories = ref([])
     const products = ref([])
-    const favorites = ref(new Set())
     const totalPages = ref(1)
     const hasMoreProducts = ref(false)
 
     // Share modal state
     const showShareModal = ref(false)
     const selectedProductForShare = ref(null)
+
+    // Wishlist integration
+    const { 
+      wishlistIds, 
+      toggleWishlist, 
+      isInWishlist,
+      loadWishlist 
+    } = useWishlist()
 
     // Category colors array for dynamic assignment
     const categoryColors = [
@@ -218,7 +226,7 @@ export default {
     }
 
     const getFavoriteIcon = (productId) => {
-      return favorites.value.has(productId) ? '❤️' : '🤍'
+      return isInWishlist(productId) ? '❤️' : '🤍'
     }
 
     const getStarRating = (rating) => {
@@ -313,16 +321,6 @@ export default {
       }
     }
 
-    const loadFavorites = () => {
-      try {
-        const storedFavorites = JSON.parse(localStorage.getItem('favoriteProducts') || '[]')
-        favorites.value = new Set(storedFavorites.map(fav => fav.id))
-      } catch (err) {
-        console.error('Error loading favorites:', err)
-        favorites.value = new Set()
-      }
-    }
-
     const loadData = async () => {
       isLoading.value = true
       error.value = ''
@@ -333,7 +331,8 @@ export default {
           loadProducts()
         ])
         
-        loadFavorites()
+        // Load wishlist data
+        loadWishlist()
 
         if (route.query.categoryId) {
           const categoryId = parseInt(route.query.categoryId)
@@ -397,49 +396,11 @@ export default {
       await loadProducts()
     }
 
+    // FIXED: Hapus duplicate toast notification
     const toggleFavorite = (product) => {
-      const productId = product.id
-      const storedFavorites = JSON.parse(localStorage.getItem('favoriteProducts') || '[]')
-      
-      if (favorites.value.has(productId)) {
-        favorites.value.delete(productId)
-        const updatedFavorites = storedFavorites.filter(fav => fav.id !== productId)
-        localStorage.setItem('favoriteProducts', JSON.stringify(updatedFavorites))
-      } else {
-        favorites.value.add(productId)
-        const favoriteProduct = {
-          id: product.id,
-          title: product.title,
-          price: product.formattedPrice || formatPrice(product.price),
-          image: product.image,
-          points: product.points
-        }
-        storedFavorites.push(favoriteProduct)
-        localStorage.setItem('favoriteProducts', JSON.stringify(storedFavorites))
-      }
-    }
-
-    const shareProduct = (product) => {
-      const shareData = {
-        title: product.title,
-        text: `Check out this product: ${product.title} - ${product.formattedPrice || formatPrice(product.price)}. Earn ${product.points} coins!`,
-        url: window.location.origin + `/product/${product.id}`
-      }
-      
-      if (navigator.share && navigator.canShare(shareData)) {
-        navigator.share(shareData)
-          .then(() => console.log('Product shared successfully'))
-          .catch((error) => console.log('Error sharing product:', error))
-      } else {
-        const shareText = `${shareData.title}\n${shareData.text}\n${shareData.url}`
-        navigator.clipboard.writeText(shareText)
-          .then(() => {
-            alert('Product link copied to clipboard!')
-          })
-          .catch(() => {
-            prompt('Copy this link to share:', shareText)
-          })
-      }
+      // Toast sudah dihandle di useWishlist composable, 
+      // tidak perlu toast lagi di sini
+      toggleWishlist(product)
     }
 
     const viewProductDetails = (product) => {
@@ -450,6 +411,13 @@ export default {
     const goToPage = async (page) => {
       currentPage.value = page
       await loadProducts()
+    }
+
+    const loadMoreProducts = async () => {
+      if (hasMoreProducts.value) {
+        currentPage.value++
+        await loadProducts()
+      }
     }
 
     // Share Modal Methods
@@ -472,20 +440,17 @@ export default {
       console.log('Product shared successfully:', shareData)
       
       if (shareData.pointsEarned > 0) {
-        console.log(`Earned ${shareData.pointsEarned} points for sharing!`)
+        showToast({
+          type: 'success',
+          title: 'Points Earned!',
+          message: `You earned ${shareData.pointsEarned} points for sharing!`,
+          duration: 3000
+        })
       }
     }
 
     const handlePointsEarned = (points) => {
       console.log(`Points earned: ${points}`)
-    }
-
-
-    const loadMoreProducts = async () => {
-      if (hasMoreProducts.value) {
-        currentPage.value++
-        await loadProducts()
-      }
     }
 
     // Watch for route changes
@@ -517,6 +482,11 @@ export default {
       loadData()
     })
 
+    // Cleanup
+    onBeforeUnmount(() => {
+      // Clean up any listeners if needed
+    })
+
     return {
       searchQuery,
       selectedCategory,
@@ -529,13 +499,13 @@ export default {
       totalPages,
       hasMoreProducts,
       showShareModal,              
-      selectedProductForShare,     
+      selectedProductForShare,
+      wishlistIds,
       handleSearch,
       clearSearch,
       selectCategory,
       getStarRating,
       toggleFavorite,
-      shareProduct,
       viewProductDetails,
       goToPage,
       loadMoreProducts,
@@ -545,10 +515,10 @@ export default {
       getProductImageUrl,
       formatPrice,
       getFavoriteIcon,
-      openShareModal,             // GANTI dari shareProduct ke ini
-      closeShareModal,            // TAMBAHKAN ini
-      handleShareSuccess,         // TAMBAHKAN ini
-      handlePointsEarned         // TAMBAHKAN ini
+      openShareModal,
+      closeShareModal,
+      handleShareSuccess,
+      handlePointsEarned
     }
   }
 }

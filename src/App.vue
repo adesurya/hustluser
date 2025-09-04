@@ -4,6 +4,7 @@
       <div class="app-main">
         <LoadingOverlay v-if="authStore.isLoading" />
         <router-view />
+        <ToastNotification />
       </div>
     </div>
   </div>

@@ -70,9 +70,15 @@ const routes = [
     component: () => import('../views/ProfileView.vue'),
     meta: { requiresAuth: true }
   },
+  // Wishlist Routes
   {
-    path: '/:pathMatch(.*)*',
-    redirect: '/login'
+    path: '/profile/wishlist',
+    name: 'Wishlist',
+    component: () => import('../views/WishlistView.vue'),
+    meta: { 
+      requiresAuth: true,
+      title: 'My Wishlist'
+    }
   },
   {
     path: '/profile/redeem',
@@ -91,6 +97,10 @@ const routes = [
     name: 'Redemptions',
     component: () => import('../views/RedemptionsView.vue'),
     meta: { requiresAuth: true }
+  },
+  {
+    path: '/:pathMatch(.*)*',
+    redirect: '/login'
   }
 ]
 

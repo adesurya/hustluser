@@ -82,9 +82,17 @@
     <!-- Action Buttons Section -->
     <div v-if="product" class="dashboard-section actions-section">
       <div class="action-buttons">
-        <button class="favorite-btn" @click="toggleFavorite" :class="{ active: isFavorite }">
-          <span class="heart-icon">{{ isFavorite ? '❤️' : '🤍' }}</span>
-          <span class="favorite-text">{{ isFavorite ? 'Favorited' : 'Add to Favorites' }}</span>
+        <button 
+          class="favorite-btn" 
+          @click="handleToggleFavorite" 
+          :class="{ active: isInWishlist(product.id) }"
+          :disabled="wishlistLoading"
+        >
+          <span class="heart-icon">{{ isInWishlist(product.id) ? '❤️' : '🤍' }}</span>
+          <span class="favorite-text">
+            {{ isInWishlist(product.id) ? 'Favorited' : 'Add to Favorites' }}
+            {{ wishlistLoading ? ' (...)' : '' }}
+          </span>
         </button>
         
         <button class="share-product-btn" @click="openShareModal">
@@ -160,13 +168,14 @@
 </template>
 
 <script>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import BottomNavigation from '../components/BottomNavigation.vue'
 import HustlHeader from '../components/HustlHeader.vue'
 import ShareModal from '../components/ShareModal.vue'
 import apiService from '../services/api'
 import { useAuthStore } from '../stores/auth'
+import { useWishlist } from '../composables/useWishlist'
 
 export default {
   name: 'ProductDetailView',
@@ -180,9 +189,15 @@ export default {
     const route = useRoute()
     const authStore = useAuthStore()
     
+    // Use the wishlist composable
+    const {
+      isLoading: wishlistLoading,
+      isInWishlist,
+      toggleWishlist
+    } = useWishlist()
+    
     const product = ref(null)
     const relatedProducts = ref([])
-    const isFavorite = ref(false)
     const isLoading = ref(true)
     const error = ref('')
     const showShareModal = ref(false)
@@ -194,6 +209,27 @@ export default {
 
     const formatPrice = (price) => {
       return apiService.constructor.formatPrice(price)
+    }
+
+    // Handle favorite toggle with proper error handling
+    const handleToggleFavorite = async () => {
+      if (!product.value || wishlistLoading.value) {
+        console.warn('Product not loaded or wishlist operation in progress')
+        return
+      }
+
+      try {
+        // Call the wishlist composable's toggle function
+        const success = toggleWishlist(product.value)
+        
+        if (success) {
+          console.log('Wishlist toggled successfully for:', product.value.title)
+        } else {
+          console.error('Failed to toggle wishlist for:', product.value.title)
+        }
+      } catch (error) {
+        console.error('Error toggling favorite:', error)
+      }
     }
 
     // Load product data
@@ -215,10 +251,6 @@ export default {
         
         if (response.success) {
           product.value = response.data
-          
-          // Check if product is in favorites
-          const favorites = JSON.parse(localStorage.getItem('favoriteProducts') || '[]')
-          isFavorite.value = favorites.some(fav => fav.id === product.value.id)
           
           // Load related products based on category
           if (product.value.categoryId) {
@@ -267,32 +299,6 @@ export default {
       router.go(-1)
     }
 
-    const toggleFavorite = () => {
-      if (!product.value) return
-      
-      const favorites = JSON.parse(localStorage.getItem('favoriteProducts') || '[]')
-      const productIndex = favorites.findIndex(fav => fav.id === product.value.id)
-      
-      if (productIndex > -1) {
-        favorites.splice(productIndex, 1)
-        isFavorite.value = false
-        console.log('Removed from favorites:', product.value.title)
-      } else {
-        favorites.push({
-          id: product.value.id,
-          title: product.value.title,
-          price: product.value.formattedPrice || formatPrice(product.value.price),
-          image: product.value.image,
-          points: product.value.points,
-          imageUrl: product.value.imageUrl
-        })
-        isFavorite.value = true
-        console.log('Added to favorites:', product.value.title)
-      }
-      
-      localStorage.setItem('favoriteProducts', JSON.stringify(favorites))
-    }
-
     // Share Modal Methods
     const openShareModal = () => {
       if (!product.value) {
@@ -318,7 +324,6 @@ export default {
       
       // Show success notification
       if (shareData.pointsEarned > 0) {
-        // You can show a toast notification here
         console.log(`Earned ${shareData.pointsEarned} points for sharing!`)
       }
     }
@@ -345,33 +350,27 @@ export default {
     }
 
     // Watch for route changes to reload product data
-    const unwatchRoute = router.afterEach((to, from) => {
-      if (to.name === 'ProductDetail' && to.params.id !== from.params.id) {
+    watch(() => route.params.id, (newId, oldId) => {
+      if (newId && newId !== oldId) {
         loadProductData()
       }
-    })
+    }, { immediate: false })
 
     // Initialize on mount
     onMounted(() => {
       loadProductData()
     })
 
-    // Cleanup route watcher
-    onMounted(() => {
-      return () => {
-        if (unwatchRoute) unwatchRoute()
-      }
-    })
-
     return {
       product,
       relatedProducts,
-      isFavorite,
       isLoading,
       error,
       showShareModal,
+      wishlistLoading,
       goBack,
-      toggleFavorite,
+      handleToggleFavorite,
+      isInWishlist,
       openShareModal,
       closeShareModal,
       handleShareSuccess,
@@ -781,6 +780,7 @@ export default {
   align-items: center;
   gap: 0.375rem;
   font-family: 'Baloo 2', sans-serif;
+  min-height: 80px;
 }
 
 .favorite-btn:hover,
@@ -795,6 +795,18 @@ export default {
   background: rgba(239, 68, 68, 0.05);
 }
 
+.favorite-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.favorite-btn:disabled:hover {
+  border-color: #E2E8F0;
+  background: white;
+  transform: none;
+}
+
 .heart-icon,
 .share-icon {
   font-size: 1.5rem;
@@ -806,6 +818,7 @@ export default {
   font-weight: 600;
   color: #374151;
   text-align: center;
+  line-height: 1.2;
 }
 
 .favorite-btn.active .favorite-text {
@@ -956,25 +969,6 @@ export default {
 }
 
 /* Responsive Design */
-@media (min-width: 768px) {
-  .product-detail-view {
-    background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%) !important;
-  }
-
-  .product-image {
-    max-width: 350px;
-    height: 350px;
-  }
-
-  .product-title {
-    font-size: 1.5rem;
-  }
-
-  .related-products-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-
 @media (min-width: 1024px) {
   body {
     background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%) !important;
