@@ -144,12 +144,15 @@
 </template>
 
 <script>
-import { ref, onMounted, watch, onBeforeUnmount } from 'vue'
+import { ref, computed, onMounted, watch, onBeforeUnmount } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import BottomNavigation from '../components/BottomNavigation.vue'
 import HustlHeader from '../components/HustlHeader.vue'
 import ShareModal from '../components/ShareModal.vue'
-import apiService from '../services/api'
+import { useApiCache } from '../composables/useApiCache'
+import { useWishlist } from '../composables/useWishlist'
+import { showToast } from '../utils/toast'
+//import apiService from '../services/api'
 import { useWishlist } from '../composables/useWishlist'
 import { showToast } from '../utils/toast'
 

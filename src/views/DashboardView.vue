@@ -6,6 +6,9 @@
     <div v-if="isLoading" class="dashboard-section loading-section">
       <div class="loading-spinner"></div>
       <p class="loading-text">Loading dashboard...</p>
+      <p v-if="cacheStatus.isFromCache" class="cache-info">
+        Data loaded from {{ cacheStatus.source }} cache
+      </p>
     </div>
 
     <template v-else>
@@ -136,13 +139,17 @@
 </template>
 
 <script>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, inject } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import BottomNavigation from '../components/BottomNavigation.vue'
 import HustlHeader from '../components/HustlHeader.vue'
-import apiService from '../services/api'
+//import apiService from '../services/api'
 import ShareModal from '../components/ShareModal.vue'
+import { useEnhancedAuthStore } from '../stores/enhancedAuth'
+import { useApiCache, useCachedProducts, useCachedCategories } from '../composables/useApiCache'
+
+
 
 export default {
   name: 'DashboardView',
@@ -153,8 +160,9 @@ export default {
   },
   setup() {
     const router = useRouter()
-    const authStore = useAuthStore()
     const searchQuery = ref('')
+    const authStore = useEnhancedAuthStore()
+    const api = inject('api')
     
     // State management
     const isLoading = ref(true)
@@ -172,6 +180,36 @@ export default {
     const userPoints = computed(() => 
       userPointsData.value?.currentBalance || authStore.userPoints || 0
     )
+
+    // Use cached data composables
+    const { data: categories, isLoading: categoriesLoading, cacheHit: categoriesCacheHit } = useCachedCategories()
+    const { data: featuredProducts, isLoading: productsLoading, cacheHit: productsCacheHit } = useApiCache('featuredProducts')
+    const { data: campaigns, isLoading: campaignLoading, cacheHit: campaignsCacheHit } = useApiCache('campaigns')
+
+    const isLoading = computed(() => 
+      categoriesLoading.value || productsLoading.value || campaignLoading.value
+    )
+    
+    const cacheStatus = computed(() => {
+      const sources = []
+      if (categoriesCacheHit.value) sources.push('categories')
+      if (productsCacheHit.value) sources.push('products')
+      if (campaignsCacheHit.value) sources.push('campaigns')
+      
+      return {
+        isFromCache: sources.length > 0,
+        source: sources.length === 3 ? 'full' : 'partial',
+        details: sources
+      }
+    })
+
+    const refreshData = async () => {
+      await Promise.all([
+        api.refreshCache('categories'),
+        api.refreshCache('featuredProducts'),
+        api.refreshCache('campaigns')
+      ])
+    }
 
     // Category colors mapping
     const categoryColors = {
@@ -394,7 +432,13 @@ export default {
       openShareModal,
       closeShareModal,
       handleShareSuccess,
-      handlePointsEarned
+      handlePointsEarned,
+      categories: computed(() => categories.value?.data?.slice(0, 5) || []),
+      featuredProducts: computed(() => featuredProducts.value?.data?.slice(0, 6) || []),
+      activeCampaign: computed(() => campaigns.value?.data?.[0] || null),
+      isLoading,
+      cacheStatus,
+      refreshData
     }
   }
 }
