@@ -173,9 +173,11 @@ import { useRouter, useRoute } from 'vue-router'
 import BottomNavigation from '../components/BottomNavigation.vue'
 import HustlHeader from '../components/HustlHeader.vue'
 import ShareModal from '../components/ShareModal.vue'
-import apiService from '../services/api'
 import { useAuthStore } from '../stores/auth'
 import { useWishlist } from '../composables/useWishlist'
+import apiService from '../services/api'
+import cacheOptimization from '../utils/cacheOptimization'
+import performanceService from '../services/performanceService'
 
 export default {
   name: 'ProductDetailView',
@@ -189,26 +191,144 @@ export default {
     const route = useRoute()
     const authStore = useAuthStore()
     
+    // State management
+    const isLoading = ref(true)
+    const error = ref('')
+    const product = ref(null)
+    const relatedProducts = ref([])
+    const showShareModal = ref(false)
+    
     // Use the wishlist composable
     const {
       isLoading: wishlistLoading,
       isInWishlist,
       toggleWishlist
     } = useWishlist()
-    
-    const product = ref(null)
-    const relatedProducts = ref([])
-    const isLoading = ref(true)
-    const error = ref('')
-    const showShareModal = ref(false)
 
-    // Methods
+    // Utility methods
     const getProductImageUrl = (imagePath) => {
       return apiService.constructor.getImageUrl(imagePath, 'products')
     }
 
     const formatPrice = (price) => {
       return apiService.constructor.formatPrice(price)
+    }
+
+    // FIXED: Enhanced product ID validation and extraction
+    const getProductIdFromRoute = () => {
+      const routeId = route.params.id
+      console.log('Raw route ID:', routeId, 'Type:', typeof routeId)
+      
+      // Check if routeId exists and is not undefined
+      if (!routeId || routeId === 'undefined') {
+        console.error('Product ID is undefined or missing from route')
+        return null
+      }
+      
+      // Convert to number and validate
+      const productId = parseInt(routeId, 10)
+      
+      if (isNaN(productId) || productId <= 0) {
+        console.error('Invalid product ID:', routeId)
+        return null
+      }
+      
+      console.log('Valid product ID extracted:', productId)
+      return productId
+    }
+
+    // FIXED: Enhanced product data loading with better error handling
+    const loadProductData = async () => {
+      isLoading.value = true
+      error.value = ''
+      
+      try {
+        const productId = getProductIdFromRoute()
+        
+        if (!productId) {
+          error.value = 'Invalid product ID. Please check the URL and try again.'
+          return
+        }
+
+        console.log('Loading product with ID:', productId)
+        
+        const startTime = Date.now()
+        
+        // FIXED: Use direct API call with proper caching
+        const response = await cacheOptimization.getCachedApiCall(
+          `product_${productId}`,
+          () => apiService.getProductById(productId),
+          { ttl: 20 * 60 * 1000 } // 20 minutes cache
+        )
+        
+        const responseTime = Date.now() - startTime
+        performanceService.notifyCacheOperation('api', `product_${productId}`, responseTime)
+        
+        if (response && response.success) {
+          product.value = response.data
+          console.log('Product loaded successfully:', product.value)
+          
+          // Load related products based on category
+          if (product.value.categoryId) {
+            await loadRelatedProducts(product.value.categoryId, product.value.id)
+          }
+          
+        } else {
+          const errorMsg = response?.message || 'Failed to load product details'
+          console.error('API response error:', errorMsg)
+          error.value = errorMsg
+        }
+
+      } catch (err) {
+        console.error('Error loading product:', err)
+        
+        // Enhanced error message based on error type
+        if (err.message.includes('404')) {
+          error.value = 'Product not found. It may have been removed or the ID is incorrect.'
+        } else if (err.message.includes('400')) {
+          error.value = 'Invalid product request. Please check the product ID.'
+        } else if (err.message.includes('Network')) {
+          error.value = 'Network error. Please check your connection and try again.'
+        } else if (err.message.includes('ID must be a positive integer')) {
+          error.value = 'Invalid product ID format. Please check the URL.'
+        } else {
+          error.value = `Failed to load product details: ${err.message}`
+        }
+      } finally {
+        isLoading.value = false
+      }
+    }
+
+    // FIXED: Enhanced related products loading
+    const loadRelatedProducts = async (categoryId, excludeProductId) => {
+      try {
+        console.log('Loading related products for category:', categoryId)
+        
+        const startTime = Date.now()
+        
+        const response = await cacheOptimization.getCachedApiCall(
+          `related_products_${categoryId}`,
+          () => apiService.getProducts({ 
+            categoryId: categoryId,
+            limit: 6 
+          }),
+          { ttl: 15 * 60 * 1000 } // 15 minutes cache
+        )
+        
+        const responseTime = Date.now() - startTime
+        performanceService.notifyCacheOperation('api', `related_products_${categoryId}`, responseTime)
+        
+        if (response && response.success) {
+          relatedProducts.value = response.data
+            .filter(p => p.id !== excludeProductId)
+            .slice(0, 4)
+          
+          console.log('Related products loaded:', relatedProducts.value.length)
+        }
+      } catch (err) {
+        console.warn('Failed to load related products:', err)
+        relatedProducts.value = []
+      }
     }
 
     // Handle favorite toggle with proper error handling
@@ -219,7 +339,6 @@ export default {
       }
 
       try {
-        // Call the wishlist composable's toggle function
         const success = toggleWishlist(product.value)
         
         if (success) {
@@ -232,71 +351,21 @@ export default {
       }
     }
 
-    // Load product data
-    const loadProductData = async () => {
-      isLoading.value = true
-      error.value = ''
-
-      try {
-        const productId = route.params.id
-        
-        if (!productId) {
-          error.value = 'Product ID not provided'
-          return
-        }
-
-        console.log('Loading product with ID:', productId)
-        
-        const response = await apiService.getProductById(productId)
-        
-        if (response.success) {
-          product.value = response.data
-          
-          // Load related products based on category
-          if (product.value.categoryId) {
-            await loadRelatedProducts(product.value.categoryId, product.value.id)
-          }
-          
-          console.log('Product loaded successfully:', product.value)
-          
-        } else {
-          error.value = response.message || 'Failed to load product details'
-        }
-
-      } catch (err) {
-        console.error('Error loading product:', err)
-        if (err.message.includes('404')) {
-          error.value = 'Product not found. It may have been removed or the ID is incorrect.'
-        } else if (err.message.includes('Network')) {
-          error.value = 'Network error. Please check your connection and try again.'
-        } else {
-          error.value = 'Failed to load product details. Please try again.'
-        }
-      } finally {
-        isLoading.value = false
-      }
-    }
-
-    // Load related products from same category
-    const loadRelatedProducts = async (categoryId, excludeProductId) => {
-      try {
-        const response = await apiService.getProducts({ 
-          categoryId: categoryId,
-          limit: 6 
-        })
-        
-        if (response.success) {
-          relatedProducts.value = response.data
-            .filter(p => p.id !== excludeProductId)
-            .slice(0, 4)
-        }
-      } catch (err) {
-        console.warn('Failed to load related products:', err)
-      }
-    }
-
+    // Navigation methods
     const goBack = () => {
-      router.go(-1)
+      // Check if there's history to go back to
+      if (window.history.length > 1) {
+        router.go(-1)
+      } else {
+        // Fallback to categories page
+        router.push('/categories')
+      }
+    }
+
+    const viewRelatedProduct = (relatedProduct) => {
+      if (relatedProduct && relatedProduct.id) {
+        router.push(`/product/${relatedProduct.id}`)
+      }
     }
 
     // Share Modal Methods
@@ -322,7 +391,6 @@ export default {
     const handleShareSuccess = (shareData) => {
       console.log('Product shared successfully:', shareData)
       
-      // Show success notification
       if (shareData.pointsEarned > 0) {
         console.log(`Earned ${shareData.pointsEarned} points for sharing!`)
       }
@@ -334,6 +402,7 @@ export default {
       console.log(`Points earned: ${points}`)
     }
 
+    // Purchase handling
     const handlePurchase = () => {
       if (!product.value) return
       
@@ -345,19 +414,48 @@ export default {
       }
     }
 
-    const viewRelatedProduct = (relatedProduct) => {
-      router.push(`/product/${relatedProduct.id}`)
-    }
-
-    // Watch for route changes to reload product data
+    // FIXED: Enhanced route watching with proper validation
     watch(() => route.params.id, (newId, oldId) => {
-      if (newId && newId !== oldId) {
+      console.log('Route ID changed:', { newId, oldId })
+      
+      if (newId && newId !== oldId && newId !== 'undefined') {
+        console.log('Loading new product data for ID:', newId)
         loadProductData()
       }
     }, { immediate: false })
 
-    // Initialize on mount
+    // FIXED: Enhanced initialization with better debugging
     onMounted(() => {
+      console.log('ProductDetailView mounted')
+      console.log('Current route params:', route.params)
+      console.log('Current route path:', route.path)
+      
+      // Check if we have session storage data first
+      const sessionProduct = sessionStorage.getItem('selectedProduct')
+      if (sessionProduct) {
+        try {
+          const parsedProduct = JSON.parse(sessionProduct)
+          console.log('Found product in session storage:', parsedProduct)
+          
+          // Verify the product ID matches the route
+          const routeId = getProductIdFromRoute()
+          if (routeId && parsedProduct.id === routeId) {
+            product.value = parsedProduct
+            isLoading.value = false
+            
+            // Still load related products
+            if (parsedProduct.categoryId) {
+              loadRelatedProducts(parsedProduct.categoryId, parsedProduct.id)
+            }
+            
+            return
+          }
+        } catch (err) {
+          console.warn('Error parsing session product data:', err)
+        }
+      }
+      
+      // Load from API if no session data or ID mismatch
       loadProductData()
     })
 
@@ -386,7 +484,7 @@ export default {
 </script>
 
 <style scoped>
-/* Keep all existing styles from the original ProductDetailView */
+/* All existing styles remain the same */
 .product-detail-view {
   min-height: 100vh;
   background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%);
@@ -969,6 +1067,26 @@ export default {
 }
 
 /* Responsive Design */
+@media (min-width: 768px) {
+  .dashboard-section {
+    margin: 0 2rem 1.5rem 2rem;
+    padding: 1.5rem;
+  }
+
+  .product-image {
+    max-width: 350px;
+    height: 350px;
+  }
+
+  .product-title {
+    font-size: 1.625rem;
+  }
+
+  .related-products-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
 @media (min-width: 1024px) {
   body {
     background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%) !important;
@@ -1010,6 +1128,11 @@ export default {
     overflow: visible !important;
   }
 
+  .dashboard-section {
+    margin: 0 3rem 2rem 3rem;
+    padding: 2rem;
+  }
+
   .product-image {
     max-width: 400px;
     height: 400px;
@@ -1021,6 +1144,14 @@ export default {
 
   .related-products-grid {
     grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (min-width: 1200px) {
+  .dashboard-section {
+    margin: 0 auto 2rem auto;
+    max-width: 1000px;
+    width: calc(100% - 4rem);
   }
 }
 </style>

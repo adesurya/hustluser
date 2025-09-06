@@ -176,12 +176,14 @@
 </template>
 
 <script>
+// RedeemView.vue <script> section with caching implementation
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import BottomNavigation from '../components/BottomNavigation.vue'
 import HustlHeader from '../components/HustlHeader.vue'
 import apiService from '../services/api'
+import { useCachedApi } from '../composables/useCachedApi'
 
 export default {
   name: 'RedeemView',
@@ -192,12 +194,16 @@ export default {
   setup() {
     const router = useRouter()
     const authStore = useAuthStore()
+    
+    // Use cached API composable for points data
+    const { getMyPoints } = useCachedApi()
 
     // State
     const currentPoints = ref(authStore.userPoints || 0)
     const isSubmitting = ref(false)
     const error = ref('')
     const success = ref('')
+    const isLoadingPoints = ref(false)
 
     const redeemData = reactive({
       pointsToRedeem: 100,
@@ -243,6 +249,35 @@ export default {
       router.go(-1)
     }
 
+    // Load current points with caching
+    const loadCurrentPoints = async () => {
+      isLoadingPoints.value = true
+      
+      try {
+        // Use cached API call with short TTL for points
+        const response = await getMyPoints({ 
+          ttl: 30 * 1000, // 30 seconds TTL for real-time points
+          forceRefresh: false 
+        })
+        
+        if (response.success) {
+          currentPoints.value = response.data.currentBalance || 0
+          // Update auth store for consistency
+          authStore.setUserPoints(currentPoints.value)
+        } else {
+          console.warn('Failed to load points from cached API:', response.message)
+          // Fallback to auth store value
+          currentPoints.value = authStore.userPoints || 0
+        }
+      } catch (err) {
+        console.warn('Failed to load current points:', err)
+        // Fallback to auth store value
+        currentPoints.value = authStore.userPoints || 0
+      } finally {
+        isLoadingPoints.value = false
+      }
+    }
+
     const handleRedeem = async () => {
       error.value = ''
       success.value = ''
@@ -254,6 +289,18 @@ export default {
         if (response.success) {
           success.value = 'Redemption request submitted successfully! Please wait for processing.'
           
+          // Update current points locally first for immediate feedback
+          const newPointsBalance = currentPoints.value - redeemData.pointsToRedeem
+          currentPoints.value = newPointsBalance
+          authStore.setUserPoints(newPointsBalance)
+          
+          // Force refresh points cache to get updated data from server
+          try {
+            await getMyPoints({ forceRefresh: true })
+          } catch (cacheError) {
+            console.warn('Failed to refresh points cache:', cacheError)
+          }
+          
           // Reset form
           redeemData.pointsToRedeem = 100
           redeemData.redemptionDetails = {
@@ -261,9 +308,6 @@ export default {
             accountName: '',
             bankAccount: ''
           }
-
-          // Update current points
-          currentPoints.value = currentPoints.value - redeemData.pointsToRedeem
 
           // Redirect after success
           setTimeout(() => {
@@ -282,29 +326,24 @@ export default {
       }
     }
 
-    // Load current points on mount
+    // Initialize on mount
     onMounted(async () => {
-      try {
-        const response = await apiService.getMyPoints()
-        if (response.success) {
-          currentPoints.value = response.data.currentBalance || 0
-        }
-      } catch (err) {
-        console.warn('Failed to load current points:', err)
-      }
+      await loadCurrentPoints()
     })
 
     return {
       currentPoints,
       redeemData,
       isSubmitting,
+      isLoadingPoints,
       error,
       success,
       isFormValid,
       formatNumber,
       formatCurrency,
       goBack,
-      handleRedeem
+      handleRedeem,
+      loadCurrentPoints
     }
   }
 }

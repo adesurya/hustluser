@@ -124,11 +124,12 @@
 </template>
 
 <script>
+// TransactionsView.vue <script> section with enhanced caching implementation
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import BottomNavigation from '../components/BottomNavigation.vue'
 import HustlHeader from '../components/HustlHeader.vue'
-import apiService from '../services/api'
+import { useCachedApi } from '../composables/useCachedApi'
 
 export default {
   name: 'TransactionsView',
@@ -139,6 +140,9 @@ export default {
   setup() {
     const router = useRouter()
     
+    // Use cached API composable with enhanced error handling
+    const { getTransactions } = useCachedApi()
+    
     // State management
     const isLoading = ref(true)
     const error = ref('')
@@ -146,6 +150,12 @@ export default {
     const activeFilter = ref('all')
     const currentPage = ref(1)
     const itemsPerPage = 10
+    const lastRefreshTime = ref(null)
+    const cacheStatus = ref({
+      isFromCache: false,
+      source: 'network',
+      responseTime: 0
+    })
 
     // Filter options
     const filters = ref([
@@ -219,13 +229,15 @@ export default {
     const formatTransactionType = (activityType) => {
       const typeMap = {
         'DAILY_LOGIN': 'Daily Login',
-        'PRODUCT_PURCHASE': 'Product Purchase',
+        'PRODUCT_PURCHASE': 'Product Purchase', 
         'REFERRAL_BONUS': 'Referral Bonus',
         'CAMPAIGN_REWARD': 'Campaign Reward',
         'REDEMPTION': 'Redemption',
-        'ADJUSTMENT': 'Admin Adjustment'
+        'ADJUSTMENT': 'Admin Adjustment',
+        'AFFILIATE_COMMISSION': 'Affiliate Commission',
+        'SHARE_BONUS': 'Share Bonus'
       }
-      return typeMap[activityType] || activityType.replace('_', ' ')
+      return typeMap[activityType] || activityType.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
     }
 
     const formatStatus = (status) => {
@@ -239,18 +251,44 @@ export default {
       return statusMap[status] || status.charAt(0).toUpperCase() + status.slice(1)
     }
 
-    // API methods
-    const loadTransactions = async () => {
+    // Enhanced load transactions with caching metrics
+    const loadTransactions = async (forceRefresh = false) => {
       isLoading.value = true
       error.value = ''
+      
+      const startTime = Date.now()
 
       try {
-        const response = await apiService.getMyTransactions({ 
-          limit: 100  // Load more transactions for filtering
-        })
+        // Use cached API call with enhanced options
+        const response = await getTransactions(
+          { limit: 100 }, // Load more transactions for filtering
+          { 
+            ttl: 15 * 60 * 1000, // 15 minutes cache for transaction history
+            forceRefresh: forceRefresh 
+          }
+        )
+
+        const responseTime = Date.now() - startTime
 
         if (response.success) {
           allTransactions.value = response.data.transactions || []
+          lastRefreshTime.value = new Date()
+          
+          // Update cache status based on response time and patterns
+          cacheStatus.value = {
+            isFromCache: responseTime < 100, // Likely from cache if very fast
+            source: responseTime < 100 ? 'cache' : 'network',
+            responseTime: responseTime,
+            dataFreshness: forceRefresh ? 'fresh' : 'cached'
+          }
+          
+          console.log(`Transactions loaded from ${cacheStatus.value.source} in ${responseTime}ms`)
+          
+          if (cacheStatus.value.isFromCache) {
+            console.log('✅ Cache hit - Fast load from cached transactions')
+          } else {
+            console.log('🌐 Network call - Fresh transaction data loaded')
+          }
         } else {
           throw new Error(response.message || 'Failed to load transactions')
         }
@@ -259,8 +297,39 @@ export default {
         console.error('Error loading transactions:', err)
         error.value = 'Failed to load transactions. Please try again.'
         allTransactions.value = []
+        
+        // Update cache status for error case
+        cacheStatus.value = {
+          isFromCache: false,
+          source: 'error',
+          responseTime: Date.now() - startTime,
+          dataFreshness: 'error'
+        }
       } finally {
         isLoading.value = false
+      }
+    }
+
+    // Force refresh transactions data
+    const refreshTransactions = async () => {
+      console.log('🔄 Force refreshing transactions data...')
+      await loadTransactions(true)
+    }
+
+    // Smart refresh based on data age
+    const smartRefresh = async () => {
+      if (lastRefreshTime.value) {
+        const timeSinceLastRefresh = Date.now() - lastRefreshTime.value.getTime()
+        const refreshThreshold = 10 * 60 * 1000 // 10 minutes
+        
+        if (timeSinceLastRefresh > refreshThreshold) {
+          console.log('⏰ Data is stale, refreshing transactions...')
+          await refreshTransactions()
+        } else {
+          console.log('✨ Data is fresh, using cached transactions')
+        }
+      } else {
+        await loadTransactions()
       }
     }
 
@@ -282,9 +351,35 @@ export default {
       router.go(-1)
     }
 
-    // Initialize on mount
+    // Enhanced transaction item click with cache info
+    const viewTransactionDetails = (transaction) => {
+      const details = [
+        `Transaction ID: ${transaction.id}`,
+        `Type: ${formatTransactionType(transaction.activityType)}`,
+        `Amount: ${transaction.transactionType === 'credit' ? '+' : '-'}${formatNumber(transaction.amount)}`,
+        `Status: ${formatStatus(transaction.status)}`,
+        `Date: ${formatDate(transaction.created_at)}`,
+        `Description: ${transaction.activityDescription}`
+      ]
+      
+      // Add cache information for debugging
+      if (cacheStatus.value.isFromCache) {
+        details.push(``)
+        details.push(`🔧 Debug Info:`)
+        details.push(`Data source: ${cacheStatus.value.source}`)
+        details.push(`Response time: ${cacheStatus.value.responseTime}ms`)
+        details.push(`Data freshness: ${cacheStatus.value.dataFreshness}`)
+        if (lastRefreshTime.value) {
+          details.push(`Last refresh: ${lastRefreshTime.value.toLocaleTimeString()}`)
+        }
+      }
+      
+      alert(details.join('\n'))
+    }
+
+    // Initialize on mount with smart refresh
     onMounted(() => {
-      loadTransactions()
+      smartRefresh()
     })
 
     return {
@@ -298,6 +393,8 @@ export default {
       totalPages,
       visiblePages,
       filters,
+      lastRefreshTime,
+      cacheStatus,
       formatNumber,
       formatDate,
       formatTransactionType,
@@ -305,7 +402,10 @@ export default {
       setActiveFilter,
       goToPage,
       goBack,
-      loadTransactions
+      loadTransactions,
+      refreshTransactions,
+      smartRefresh,
+      viewTransactionDetails
     }
   }
 }

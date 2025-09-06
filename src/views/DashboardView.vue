@@ -139,17 +139,15 @@
 </template>
 
 <script>
-import { ref, computed, onMounted, inject } from 'vue'
+// DashboardView.vue <script> section with enhanced and consistent caching
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import BottomNavigation from '../components/BottomNavigation.vue'
 import HustlHeader from '../components/HustlHeader.vue'
-//import apiService from '../services/api'
 import ShareModal from '../components/ShareModal.vue'
-import { useEnhancedAuthStore } from '../stores/enhancedAuth'
-import { useApiCache, useCachedProducts, useCachedCategories } from '../composables/useApiCache'
-
-
+import apiService from '../services/api'
+import { useCachedApi } from '../composables/useCachedApi'
 
 export default {
   name: 'DashboardView',
@@ -161,8 +159,17 @@ export default {
   setup() {
     const router = useRouter()
     const searchQuery = ref('')
-    const authStore = useEnhancedAuthStore()
-    const api = inject('api')
+    const authStore = useAuthStore()
+    
+    // Use cached API composable for consistency with other views
+    const { 
+      getMyPoints, 
+      getCategories, 
+      getFeaturedProducts, 
+      getCampaigns,
+      // loading: isCacheLoading,
+      // error: cacheError 
+    } = useCachedApi()
     
     // State management
     const isLoading = ref(true)
@@ -176,40 +183,28 @@ export default {
     const showShareModal = ref(false)
     const selectedProductForShare = ref(null)
 
+    // Enhanced cache status tracking
+    const cacheStatus = ref({
+      isFromCache: false,
+      source: 'network',
+      details: [],
+      responseTime: 0,
+      lastRefresh: null
+    })
+
+    // Performance tracking
+    const loadingMetrics = ref({
+      startTime: null,
+      endTime: null,
+      totalTime: 0,
+      cacheHits: 0,
+      networkCalls: 0
+    })
+
     // User points from API or store
     const userPoints = computed(() => 
       userPointsData.value?.currentBalance || authStore.userPoints || 0
     )
-
-    // Use cached data composables
-    const { data: categories, isLoading: categoriesLoading, cacheHit: categoriesCacheHit } = useCachedCategories()
-    const { data: featuredProducts, isLoading: productsLoading, cacheHit: productsCacheHit } = useApiCache('featuredProducts')
-    const { data: campaigns, isLoading: campaignLoading, cacheHit: campaignsCacheHit } = useApiCache('campaigns')
-
-    const isLoading = computed(() => 
-      categoriesLoading.value || productsLoading.value || campaignLoading.value
-    )
-    
-    const cacheStatus = computed(() => {
-      const sources = []
-      if (categoriesCacheHit.value) sources.push('categories')
-      if (productsCacheHit.value) sources.push('products')
-      if (campaignsCacheHit.value) sources.push('campaigns')
-      
-      return {
-        isFromCache: sources.length > 0,
-        source: sources.length === 3 ? 'full' : 'partial',
-        details: sources
-      }
-    })
-
-    const refreshData = async () => {
-      await Promise.all([
-        api.refreshCache('categories'),
-        api.refreshCache('featuredProducts'),
-        api.refreshCache('campaigns')
-      ])
-    }
 
     // Category colors mapping
     const categoryColors = {
@@ -287,64 +282,151 @@ export default {
       selectedProductForShare.value = null
     }
 
-    const handleShareSuccess = (shareData) => {
+    const handleShareSuccess = async (shareData) => {
       console.log('Product shared successfully:', shareData)
       
       // Show success notification
       if (shareData.pointsEarned > 0) {
-        // You can show a toast notification here
         console.log(`Earned ${shareData.pointsEarned} points for sharing!`)
+        
+        // Force refresh points data after earning points
+        try {
+          const updatedPoints = await getMyPoints({ forceRefresh: true })
+          if (updatedPoints.success) {
+            userPointsData.value = updatedPoints.data
+            authStore.setUserPoints(updatedPoints.data.currentBalance)
+          }
+        } catch (err) {
+          console.warn('Failed to refresh points after sharing:', err)
+        }
       }
     }
 
-    const handlePointsEarned = (points) => {
-      // Refresh user points in auth store
-      authStore.refreshUserPoints()
+    const handlePointsEarned = async (points) => {
+      // Force refresh user points data
+      try {
+        const updatedPoints = await getMyPoints({ forceRefresh: true })
+        if (updatedPoints.success) {
+          userPointsData.value = updatedPoints.data
+          authStore.setUserPoints(updatedPoints.data.currentBalance)
+        }
+      } catch (err) {
+        console.warn('Failed to refresh points:', err)
+        // Fallback to updating auth store directly
+        authStore.refreshUserPoints()
+      }
+      
       console.log(`Points earned: ${points}`)
     }
 
-    // Load dashboard data
-    const loadDashboardData = async () => {
+    // Enhanced load dashboard data with consistent caching
+    const loadDashboardData = async (forceRefresh = false) => {
       isLoading.value = true
       error.value = ''
+      
+      // Reset metrics
+      loadingMetrics.value = {
+        startTime: Date.now(),
+        endTime: null,
+        totalTime: 0,
+        cacheHits: 0,
+        networkCalls: 0
+      }
 
       try {
-        // Load all dashboard data in parallel
+        console.log('🚀 Loading dashboard data...', forceRefresh ? '(force refresh)' : '(cached)')
+
+        // Load all dashboard data in parallel using cached API
         const [pointsResult, categoriesResult, featuredProductsResult, campaignsResult] = await Promise.allSettled([
-          apiService.getMyPoints(),
-          apiService.getCategories(),
-          apiService.getFeaturedProducts(),
-          apiService.getActiveCampaigns()
+          getMyPoints({ 
+            ttl: 30 * 1000, // 30 seconds for real-time points
+            forceRefresh 
+          }),
+          getCategories({ 
+            ttl: 30 * 60 * 1000, // 30 minutes for stable categories
+            forceRefresh 
+          }),
+          getFeaturedProducts({ 
+            ttl: 10 * 60 * 1000, // 10 minutes for featured products
+            forceRefresh 
+          }),
+          getCampaigns({ 
+            ttl: 20 * 60 * 1000, // 20 minutes for campaigns
+            forceRefresh 
+          })
         ])
 
+        // Track cache performance
+        const cacheHits = []
+        const networkCalls = []
+        
         // Handle points data
         if (pointsResult.status === 'fulfilled' && pointsResult.value.success) {
           userPointsData.value = pointsResult.value.data
+          cacheHits.push('points')
+          console.log('✅ Points data loaded successfully')
         } else {
-          console.warn('Failed to load points:', pointsResult.reason)
+          console.warn('⚠️ Failed to load points:', pointsResult.reason)
+          networkCalls.push('points')
         }
 
         // Handle categories data
         if (categoriesResult.status === 'fulfilled' && categoriesResult.value.success) {
           categories.value = categoriesResult.value.data.slice(0, 5) // Limit to 5 categories
+          cacheHits.push('categories')
+          console.log('✅ Categories data loaded successfully')
         } else {
-          console.warn('Failed to load categories:', categoriesResult.reason)
+          console.warn('⚠️ Failed to load categories:', categoriesResult.reason)
+          networkCalls.push('categories')
         }
 
         // Handle featured products data
         if (featuredProductsResult.status === 'fulfilled' && featuredProductsResult.value.success) {
           featuredProducts.value = featuredProductsResult.value.data.slice(0, 6) // Limit to 6 products
+          cacheHits.push('products')
+          console.log('✅ Featured products loaded successfully')
         } else {
-          console.warn('Failed to load featured products:', featuredProductsResult.reason)
+          console.warn('⚠️ Failed to load featured products:', featuredProductsResult.reason)
+          networkCalls.push('products')
         }
 
         // Handle campaigns data
         if (campaignsResult.status === 'fulfilled' && campaignsResult.value.success) {
           const campaigns = campaignsResult.value.data
           activeCampaign.value = campaigns.length > 0 ? campaigns[0] : null
+          cacheHits.push('campaigns')
+          console.log('✅ Campaigns data loaded successfully')
         } else {
-          console.warn('Failed to load campaigns:', campaignsResult.reason)
+          console.warn('⚠️ Failed to load campaigns:', campaignsResult.reason)
+          networkCalls.push('campaigns')
         }
+
+        // Calculate metrics
+        loadingMetrics.value.endTime = Date.now()
+        loadingMetrics.value.totalTime = loadingMetrics.value.endTime - loadingMetrics.value.startTime
+        loadingMetrics.value.cacheHits = cacheHits.length
+        loadingMetrics.value.networkCalls = networkCalls.length
+
+        // Update cache status
+        cacheStatus.value = {
+          isFromCache: cacheHits.length > 0,
+          source: cacheHits.length === 4 ? 'full-cache' : cacheHits.length > 0 ? 'partial-cache' : 'network',
+          details: cacheHits,
+          responseTime: loadingMetrics.value.totalTime,
+          lastRefresh: new Date(),
+          performance: {
+            cacheHitRate: ((cacheHits.length / 4) * 100).toFixed(1) + '%',
+            loadTime: loadingMetrics.value.totalTime + 'ms'
+          }
+        }
+
+        // Log performance summary
+        console.group('📊 Dashboard Loading Performance')
+        console.log(`Total time: ${loadingMetrics.value.totalTime}ms`)
+        console.log(`Cache hits: ${cacheHits.join(', ')} (${cacheHits.length}/4)`)
+        console.log(`Cache hit rate: ${cacheStatus.value.performance.cacheHitRate}`)
+        console.log(`Data source: ${cacheStatus.value.source}`)
+        console.groupEnd()
 
         // Check if all critical data failed to load
         const criticalFailures = [
@@ -358,10 +440,50 @@ export default {
         }
 
       } catch (err) {
-        console.error('Dashboard loading error:', err)
+        console.error('💥 Dashboard loading error:', err)
         error.value = 'Failed to load dashboard data. Please try again.'
+        
+        // Update metrics for error case
+        loadingMetrics.value.endTime = Date.now()
+        loadingMetrics.value.totalTime = loadingMetrics.value.endTime - loadingMetrics.value.startTime
+        
+        cacheStatus.value = {
+          isFromCache: false,
+          source: 'error',
+          details: [],
+          responseTime: loadingMetrics.value.totalTime,
+          lastRefresh: new Date(),
+          performance: {
+            cacheHitRate: '0%',
+            loadTime: loadingMetrics.value.totalTime + 'ms'
+          }
+        }
       } finally {
         isLoading.value = false
+      }
+    }
+
+    // Force refresh dashboard data
+    const refreshDashboard = async () => {
+      console.log('🔄 Force refreshing dashboard data...')
+      await loadDashboardData(true)
+    }
+
+    // Smart refresh based on cache age
+    const smartRefresh = async () => {
+      if (cacheStatus.value.lastRefresh) {
+        const timeSinceLastRefresh = Date.now() - cacheStatus.value.lastRefresh.getTime()
+        const refreshThreshold = 5 * 60 * 1000 // 5 minutes
+        
+        if (timeSinceLastRefresh > refreshThreshold) {
+          console.log('⏰ Dashboard data is stale, refreshing...')
+          await refreshDashboard()
+        } else {
+          console.log('✨ Dashboard data is fresh, using cached data')
+          await loadDashboardData(false)
+        }
+      } else {
+        await loadDashboardData(false)
       }
     }
 
@@ -401,9 +523,9 @@ export default {
       router.push('/campaign')
     }
 
-    // Initialize dashboard data on mount
+    // Initialize dashboard data on mount with smart refresh
     onMounted(() => {
-      loadDashboardData()
+      smartRefresh()
     })
 
     return {
@@ -416,6 +538,8 @@ export default {
       activeCampaign,
       showShareModal,
       selectedProductForShare,
+      cacheStatus,
+      loadingMetrics,
       handleSearch,
       selectCategory,
       viewProductDetails,
@@ -423,6 +547,8 @@ export default {
       navigateToCategories,
       navigateToCampaigns,
       loadDashboardData,
+      refreshDashboard,
+      smartRefresh,
       getCategoryColor,
       getCategoryIcon,
       getProductImageUrl,
@@ -432,13 +558,7 @@ export default {
       openShareModal,
       closeShareModal,
       handleShareSuccess,
-      handlePointsEarned,
-      categories: computed(() => categories.value?.data?.slice(0, 5) || []),
-      featuredProducts: computed(() => featuredProducts.value?.data?.slice(0, 6) || []),
-      activeCampaign: computed(() => campaigns.value?.data?.[0] || null),
-      isLoading,
-      cacheStatus,
-      refreshData
+      handlePointsEarned
     }
   }
 }
@@ -479,6 +599,14 @@ export default {
   color: #1F2937;
   font-family: 'Baloo 2', sans-serif;
   font-weight: 500;
+}
+
+.cache-info {
+  color: #10B981;
+  font-family: 'Baloo 2', sans-serif;
+  font-weight: 500;
+  font-size: 0.8rem;
+  margin-top: 0.5rem;
 }
 
 @keyframes spin {
@@ -552,6 +680,121 @@ export default {
   word-wrap: break-word;
   overflow-wrap: break-word;
   hyphens: auto;
+}
+
+.campaign-details {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.campaign-status {
+  padding: 0.375rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  font-family: 'Baloo 2', sans-serif;
+  text-transform: capitalize;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.campaign-status.active {
+  background: #10B981;
+  color: white;
+}
+
+.campaign-status.upcoming {
+  background: #F59E0B;
+  color: white;
+}
+
+.campaign-status.ended {
+  background: #EF4444;
+  color: white;
+}
+
+.campaign-validity {
+  font-size: 0.75rem;
+  opacity: 0.9;
+  font-family: 'Baloo 2', sans-serif;
+  font-weight: 500;
+}
+
+/* Responsive Styling for Tablet and Desktop */
+@media (min-width: 768px) {
+  .dashboard-view {
+    background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%) !important;
+  }
+  
+  .page-container,
+  .app-main {
+    background: transparent !important;
+  }
+
+  .categories-scroll-container {
+    scroll-snap-type: x mandatory;
+  }
+  
+  .category-card {
+    scroll-snap-align: center;
+  }
+}
+
+@media (min-width: 1024px) {
+  body {
+    background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%) !important;
+  }
+  
+  .dashboard-view {
+    background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%) !important;
+    min-height: auto !important;
+  }
+  
+  .page-container {
+    background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%) !important;
+    min-height: 100vh !important;
+    height: auto !important;
+    padding: 0 !important;
+    justify-content: flex-start !important;
+    align-items: stretch !important;
+  }
+  
+  .app-main {
+    background: transparent !important;
+    box-shadow: none !important;
+    min-height: auto !important;
+    max-height: none !important;
+    height: auto !important;
+    overflow: visible !important;
+    max-width: none !important;
+    width: 100% !important;
+    border-radius: 0 !important;
+  }
+
+  .categories-scroll-container {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(79, 195, 247, 0.3) transparent;
+  }
+  
+  .categories-scroll-container::-webkit-scrollbar {
+    display: block;
+    height: 4px;
+  }
+  
+  .categories-scroll-container::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+  }
+  
+  .categories-scroll-container::-webkit-scrollbar-thumb {
+    background: rgba(79, 195, 247, 0.5);
+    border-radius: 2px;
+  }
+  
+  .categories-scroll-container::-webkit-scrollbar-thumb:hover {
+    background: rgba(79, 195, 247, 0.7);
+  }
 }
 
 .dashboard-section:first-child {

@@ -69,6 +69,34 @@
       </div>
     </div>
 
+    <!-- Redemption Action Section -->
+    <div class="dashboard-section redemption-action-section">
+      <div class="redemption-card">
+        <div class="redemption-header">
+          <div class="redemption-icon">
+            <span>🏦</span>
+          </div>
+          <div class="redemption-info">
+            <h4 class="redemption-title">Request Withdrawal</h4>
+            <p class="redemption-subtitle">Convert your points to cash</p>
+          </div>
+          <div class="redemption-balance">
+            <span class="balance-amount">{{ formatNumber(authStore.userPoints || 0) }}</span>
+            <span class="balance-label">Points</span>
+          </div>
+        </div>
+        <div class="redemption-actions">
+          <button class="redemption-btn" @click="navigateToRedeem" :disabled="(authStore.userPoints || 0) < 100">
+            <span class="btn-icon">💸</span>
+            <span class="btn-text">Redeem Points</span>
+          </button>
+          <div class="redemption-note">
+            <span class="note-text">Minimum: 100 points (Rp 100)</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Recent Wishlist Items -->
     <div v-if="recentWishlistItems.length > 0" class="dashboard-section recent-wishlist-section">
       <div class="section-header">
@@ -274,6 +302,11 @@ export default {
       })
     }
 
+    const formatNumber = (num) => {
+      if (!num) return '0'
+      return num.toLocaleString('id-ID')
+    }
+
     // Wishlist management
     const loadWishlist = () => {
       try {
@@ -325,6 +358,10 @@ export default {
       router.push('/profile/redemptions')
     }
 
+    const navigateToRedeem = () => {
+      router.push('/profile/redeem')
+    }
+
     const navigateToProducts = () => {
       router.push('/category')
     }
@@ -360,11 +397,13 @@ export default {
       getInitials,
       getProductImageUrl,
       formatMemberSince,
+      formatNumber,
       removeFromWishlist,
       saveSettings,
       navigateToWishlist,
       navigateToTransactions,
       navigateToRedemptions,
+      navigateToRedeem,
       navigateToProducts,
       viewProductDetails,
       handleLogout
@@ -632,6 +671,146 @@ export default {
 .action-card:hover .action-arrow {
   color: #4FC3F7;
   transform: translateX(2px);
+}
+
+/* Redemption Action Section */
+.redemption-action-section {
+  padding: 1.25rem;
+  background: linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 100%);
+  border: 2px solid #E2E8F0;
+}
+
+.redemption-card {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.redemption-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.redemption-icon {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #10B981, #059669);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+  flex-shrink: 0;
+}
+
+.redemption-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.redemption-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1F2937;
+  font-family: 'Baloo 2', sans-serif;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.redemption-subtitle {
+  font-size: 0.875rem;
+  color: #6B7280;
+  font-family: 'Baloo 2', sans-serif;
+  font-weight: 500;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.redemption-balance {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.balance-amount {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #10B981;
+  font-family: 'Baloo 2', sans-serif;
+  line-height: 1;
+}
+
+.balance-label {
+  font-size: 0.75rem;
+  color: #6B7280;
+  font-family: 'Baloo 2', sans-serif;
+  font-weight: 500;
+}
+
+.redemption-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.redemption-btn {
+  background: linear-gradient(135deg, #10B981, #059669);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  padding: 0.875rem 1rem;
+  font-family: 'Baloo 2', sans-serif;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.redemption-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #059669, #047857);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.3);
+}
+
+.redemption-btn:disabled {
+  background: #9CA3AF;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: 0 2px 6px rgba(156, 163, 175, 0.15);
+}
+
+.btn-icon {
+  font-size: 1rem;
+}
+
+.redemption-note {
+  text-align: center;
+}
+
+.note-text {
+  font-size: 0.75rem;
+  color: #6B7280;
+  font-family: 'Baloo 2', sans-serif;
+  font-weight: 500;
+  font-style: italic;
 }
 
 /* Recent Wishlist - FIXED */
@@ -1119,6 +1298,28 @@ input:checked + .toggle-slider:before {
   .profile-stats {
     gap: 1rem;
   }
+
+  .redemption-header {
+    gap: 0.75rem;
+  }
+
+  .redemption-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 1.25rem;
+  }
+
+  .redemption-title {
+    font-size: 0.875rem;
+  }
+
+  .redemption-subtitle {
+    font-size: 0.75rem;
+  }
+
+  .balance-amount {
+    font-size: 1rem;
+  }
 }
 
 @media (min-width: 481px) and (max-width: 767px) {
@@ -1184,6 +1385,20 @@ input:checked + .toggle-slider:before {
   .action-subtitle {
     font-size: 0.75rem;
   }
+
+  .redemption-icon {
+    width: 56px;
+    height: 56px;
+    font-size: 1.75rem;
+  }
+
+  .redemption-title {
+    font-size: 1.125rem;
+  }
+
+  .balance-amount {
+    font-size: 1.5rem;
+  }
 }
 
 @media (min-width: 1024px) {
@@ -1217,6 +1432,20 @@ input:checked + .toggle-slider:before {
   
   .action-subtitle {
     font-size: 0.8rem;
+  }
+
+  .redemption-icon {
+    width: 60px;
+    height: 60px;
+    font-size: 2rem;
+  }
+
+  .redemption-title {
+    font-size: 1.25rem;
+  }
+
+  .balance-amount {
+    font-size: 1.75rem;
   }
 }
 </style>

@@ -132,11 +132,13 @@
 </template>
 
 <script>
+// RedemptionsView.vue <script> section with caching implementation
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import BottomNavigation from '../components/BottomNavigation.vue'
 import HustlHeader from '../components/HustlHeader.vue'
-import apiService from '../services/api'
+// import apiService from '../services/api'
+import { useCachedApi } from '../composables/useCachedApi'
 
 export default {
   name: 'RedemptionsView',
@@ -147,6 +149,9 @@ export default {
   setup() {
     const router = useRouter()
     
+    // Use cached API composable for redemptions data
+    const { getRedemptions } = useCachedApi()
+    
     // State management
     const isLoading = ref(true)
     const error = ref('')
@@ -154,6 +159,11 @@ export default {
     const activeFilter = ref('all')
     const currentPage = ref(1)
     const itemsPerPage = 8
+    const lastRefreshTime = ref(null)
+    const cacheStatus = ref({
+      isFromCache: false,
+      source: 'network'
+    })
 
     // Filter options
     const filters = ref([
@@ -273,18 +283,37 @@ export default {
       return statusMap[status] || status.charAt(0).toUpperCase() + status.slice(1)
     }
 
-    // API methods
-    const loadRedemptions = async () => {
+    // API methods with caching
+    const loadRedemptions = async (forceRefresh = false) => {
       isLoading.value = true
       error.value = ''
+      
+      const startTime = Date.now()
 
       try {
-        const response = await apiService.getMyRedemptions({ 
-          limit: 100  // Load more redemptions for filtering
-        })
+        // Use cached API call with configurable refresh
+        const response = await getRedemptions(
+          { limit: 100 }, // Load more redemptions for filtering
+          { 
+            ttl: 15 * 60 * 1000, // 15 minutes cache
+            forceRefresh: forceRefresh 
+          }
+        )
 
+        const responseTime = Date.now() - startTime
+        
         if (response.success) {
           allRedemptions.value = response.data.redemptions || []
+          lastRefreshTime.value = new Date()
+          
+          // Update cache status based on response time
+          cacheStatus.value = {
+            isFromCache: responseTime < 100, // Likely from cache if very fast
+            source: responseTime < 100 ? 'cache' : 'network',
+            responseTime: responseTime
+          }
+          
+          console.log(`Redemptions loaded from ${cacheStatus.value.source} in ${responseTime}ms`)
         } else {
           throw new Error(response.message || 'Failed to load redemptions')
         }
@@ -293,9 +322,22 @@ export default {
         console.error('Error loading redemptions:', err)
         error.value = 'Failed to load redemptions. Please try again.'
         allRedemptions.value = []
+        
+        // Update cache status for error case
+        cacheStatus.value = {
+          isFromCache: false,
+          source: 'error',
+          responseTime: Date.now() - startTime
+        }
       } finally {
         isLoading.value = false
       }
+    }
+
+    // Force refresh redemptions data
+    const refreshRedemptions = async () => {
+      console.log('Force refreshing redemptions data...')
+      await loadRedemptions(true)
     }
 
     // Event handlers
@@ -335,6 +377,10 @@ export default {
         details.push(`Processed: ${formatDate(redemption.processedAt)}`)
       }
       
+      if (cacheStatus.value.isFromCache) {
+        details.push(`Data from: ${cacheStatus.value.source} (${cacheStatus.value.responseTime}ms)`)
+      }
+      
       alert(details.join('\n'))
     }
 
@@ -354,6 +400,8 @@ export default {
       totalPages,
       visiblePages,
       filters,
+      lastRefreshTime,
+      cacheStatus,
       formatNumber,
       formatCurrency,
       formatDate,
@@ -366,7 +414,8 @@ export default {
       goBack,
       navigateToRedeem,
       viewRedemptionDetails,
-      loadRedemptions
+      loadRedemptions,
+      refreshRedemptions
     }
   }
 }

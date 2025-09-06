@@ -1,4 +1,4 @@
-// src/services/api.js - Updated version with leaderboard APIs
+// src/services/api.js - Enhanced version with better cache integration hooks
 import axios from 'axios'
 
 class ApiService {
@@ -12,6 +12,13 @@ class ApiService {
       }
     })
 
+    // Performance tracking for cache optimization
+    this.requestMetrics = {
+      totalRequests: 0,
+      averageResponseTime: 0,
+      endpointMetrics: new Map()
+    }
+
     // Request interceptor
     this.client.interceptors.request.use(
       (config) => {
@@ -19,6 +26,10 @@ class ApiService {
         if (token) {
           config.headers.Authorization = `Bearer ${token}`
         }
+        
+        // Track request start time for performance metrics
+        config.metadata = { startTime: Date.now() }
+        
         console.log('API Request:', config.method.toUpperCase(), config.url, 'Token:', token ? 'Present' : 'Missing')
         return config
       },
@@ -30,9 +41,21 @@ class ApiService {
     // Response interceptor
     this.client.interceptors.response.use(
       (response) => {
+        // Track response time for cache optimization
+        if (response.config.metadata) {
+          const responseTime = Date.now() - response.config.metadata.startTime
+          this.recordRequestMetrics(response.config.url, responseTime, 'success')
+        }
+        
         return response.data
       },
       (error) => {
+        // Track failed request metrics
+        if (error.config && error.config.metadata) {
+          const responseTime = Date.now() - error.config.metadata.startTime
+          this.recordRequestMetrics(error.config.url, responseTime, 'error')
+        }
+
         if (error.response) {
           // Server responded with error status
           const errorData = error.response.data
@@ -76,12 +99,56 @@ class ApiService {
     )
   }
 
+  // Record request metrics for cache optimization
+  recordRequestMetrics(url, responseTime, status) {
+    this.requestMetrics.totalRequests++
+    
+    // Extract endpoint from URL for grouping
+    const endpoint = this.extractEndpointName(url)
+    
+    if (!this.requestMetrics.endpointMetrics.has(endpoint)) {
+      this.requestMetrics.endpointMetrics.set(endpoint, {
+        count: 0,
+        totalTime: 0,
+        averageTime: 0,
+        successCount: 0,
+        errorCount: 0
+      })
+    }
+    
+    const endpointMetric = this.requestMetrics.endpointMetrics.get(endpoint)
+    endpointMetric.count++
+    endpointMetric.totalTime += responseTime
+    endpointMetric.averageTime = endpointMetric.totalTime / endpointMetric.count
+    
+    if (status === 'success') {
+      endpointMetric.successCount++
+    } else {
+      endpointMetric.errorCount++
+    }
+    
+    // Update global average
+    const totalTime = Array.from(this.requestMetrics.endpointMetrics.values())
+      .reduce((sum, metric) => sum + metric.totalTime, 0)
+    this.requestMetrics.averageResponseTime = totalTime / this.requestMetrics.totalRequests
+  }
+
+  extractEndpointName(url) {
+    // Extract meaningful endpoint name from URL for metrics
+    const urlParts = url.split('/')
+    const relevantParts = urlParts.slice(-2) // Take last 2 parts
+    return relevantParts.join('/').split('?')[0] // Remove query params
+  }
+
   // Auth APIs
   async login(credentials) {
     const response = await this.client.post('/auth/login', {
       identifier: credentials.identifier,
       password: credentials.password
     })
+    
+    // Trigger cache invalidation for user-specific data
+    this.notifyCacheInvalidation('login', response)
     return response
   }
 
@@ -108,6 +175,9 @@ class ApiService {
 
   async updateProfile(userData) {
     const response = await this.client.put('/user/profile', userData)
+    
+    // Notify cache to invalidate profile-related data
+    this.notifyCacheInvalidation('profileUpdate', response)
     return response
   }
 
@@ -160,8 +230,6 @@ class ApiService {
   }
 
   async getLeaderboardWeekly(startDate, endDate) {
-    // Untuk weekly, kita bisa menggunakan daily API dengan range tanggal
-    // atau jika ada endpoint khusus weekly, sesuaikan di sini
     const response = await this.client.get(`/leaderboard/weekly?start_date=${startDate}&end_date=${endDate}`)
     return response
   }
@@ -191,6 +259,9 @@ class ApiService {
 
   async createRedemption(redemptionData) {
     const response = await this.client.post('/points/redeem', redemptionData)
+    
+    // Notify cache to invalidate redemption and points related data
+    this.notifyCacheInvalidation('redemption', response)
     return response
   }
 
@@ -203,6 +274,9 @@ class ApiService {
       tags: productData.tags || ['user_share'],
       materialType: productData.materialType || 1
     })
+    
+    // Notify cache about potential points change
+    this.notifyCacheInvalidation('productPurchase', response)
     return response
   }
 
@@ -218,6 +292,17 @@ class ApiService {
       }
     })
     return response
+  }
+
+  // Cache invalidation notification helper
+  async notifyCacheInvalidation(action, responseData = {}) {
+    try {
+      // Dynamically import to avoid circular dependencies
+      const { default: apiCacheService } = await import('./apiCacheService')
+      await apiCacheService.invalidateRelated(action, responseData)
+    } catch (error) {
+      console.warn('Cache invalidation notification failed:', error)
+    }
   }
 
   // Utility method to extract material ID from product URL
@@ -281,6 +366,25 @@ class ApiService {
       token: token,
       tokenPreview: token ? token.substring(0, 30) + '...' : null
     }
+  }
+
+  // Get performance metrics for cache optimization
+  getPerformanceMetrics() {
+    const metrics = {
+      totalRequests: this.requestMetrics.totalRequests,
+      averageResponseTime: this.requestMetrics.averageResponseTime,
+      endpointBreakdown: {}
+    }
+    
+    // Convert Map to object for easier consumption
+    for (const [endpoint, data] of this.requestMetrics.endpointMetrics) {
+      metrics.endpointBreakdown[endpoint] = {
+        ...data,
+        successRate: data.count > 0 ? (data.successCount / data.count * 100).toFixed(2) : 0
+      }
+    }
+    
+    return metrics
   }
 
   // Utility method to format price from API

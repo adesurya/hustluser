@@ -179,10 +179,11 @@
 </template>
 
 <script>
+// LeaderboardView.vue <script> section
 import { ref, computed, onMounted } from 'vue'
 import BottomNavigation from '../components/BottomNavigation.vue'
 import HustlHeader from '../components/HustlHeader.vue'
-import apiService from '../services/api'
+import { useCachedApi } from '../composables/useCachedApi'
 
 export default {
   name: 'LeaderboardView',
@@ -191,11 +192,12 @@ export default {
     HustlHeader
   },
   setup() {
+    // Use cached API composable
+    const { loading: isLoading, error, getLeaderboard } = useCachedApi()
+    
     const activeFilter = ref('daily')
     const currentPage = ref(1)
     const usersPerPage = 7 // Show 7 users per page (ranks 4-10 on first page)
-    const isLoading = ref(true)
-    const error = ref('')
     
     // API response data
     const leaderboardData = ref(null)
@@ -289,51 +291,32 @@ export default {
     }
 
     const loadLeaderboard = async () => {
-      isLoading.value = true
-      error.value = ''
-      
       try {
-        let response
+        let params = {}
         
         switch (activeFilter.value) {
           case 'daily': {
-            const today = new Date().toISOString().split('T')[0]
-            response = await apiService.getLeaderboardDaily(today)
+            params = { date: new Date().toISOString().split('T')[0] }
             break
           }
-            
           case 'weekly': {
-            // For weekly, we'll use daily API for current week
-            // If you have a specific weekly endpoint, replace this logic
             const weekDates = getWeekDates()
-            try {
-              response = await apiService.getLeaderboardWeekly(weekDates.start, weekDates.end)
-            } catch (weeklyError) {
-              // Fallback to daily if weekly endpoint doesn't exist
-              console.warn('Weekly endpoint not available, using daily data')
-              response = await apiService.getLeaderboardDaily(weekDates.start)
-            }
+            params = { startDate: weekDates.start, endDate: weekDates.end }
             break
           }
-            
           case 'monthly': {
             const now = new Date()
-            const year = now.getFullYear()
-            const month = now.getMonth() + 1
-            response = await apiService.getLeaderboardMonthly(year, month)
+            params = { year: now.getFullYear(), month: now.getMonth() + 1 }
             break
           }
-            
-          default:
-            throw new Error('Invalid filter selected')
         }
+
+        const response = await getLeaderboard(activeFilter.value, params)
 
         if (response.success) {
           leaderboardData.value = response.data
           allUsers.value = response.data.leaderboard || []
           totalParticipants.value = response.data.total_participants || 0
-          
-          // Reset pagination when filter changes
           currentPage.value = 1
         } else {
           throw new Error(response.message || 'Failed to load leaderboard')
@@ -341,11 +324,8 @@ export default {
         
       } catch (err) {
         console.error('Error loading leaderboard:', err)
-        error.value = 'Failed to load leaderboard. Please try again.'
         allUsers.value = []
         totalParticipants.value = 0
-      } finally {
-        isLoading.value = false
       }
     }
 

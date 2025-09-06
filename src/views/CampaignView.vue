@@ -111,6 +111,8 @@ import { useAuthStore } from '../stores/auth'
 import BottomNavigation from '../components/BottomNavigation.vue'
 import HustlHeader from '../components/HustlHeader.vue'
 import apiService from '../services/api'
+import cacheOptimization from '../utils/cacheOptimization'
+import performanceService from '../services/performanceService'
 
 export default {
   name: 'CampaignView',
@@ -129,7 +131,7 @@ export default {
     const campaigns = ref([])
     const userPointsData = ref(null)
 
-    // User points from API or store
+    // User points from cached API or store
     const userPoints = computed(() => 
       userPointsData.value?.currentBalance || authStore.userPoints || 0
     )
@@ -160,37 +162,108 @@ export default {
     }
 
     const formatDateRange = (startDate, endDate) => {
-      const start = new Date(startDate)
-      const end = new Date(endDate)
-      const options = { day: 'numeric', month: 'short' }
+      if (!startDate || !endDate) return 'Date not available'
       
-      return `${start.toLocaleDateString('en-US', options)} - ${end.toLocaleDateString('en-US', options)}`
+      try {
+        const start = new Date(startDate)
+        const end = new Date(endDate)
+        const options = { day: 'numeric', month: 'short' }
+        
+        return `${start.toLocaleDateString('en-US', options)} - ${end.toLocaleDateString('en-US', options)}`
+      } catch (err) {
+        console.warn('Error formatting date range:', err)
+        return 'Date not available'
+      }
     }
 
-    // API loading methods
+    // Enhanced campaign loading with more detailed debugging
     const loadCampaigns = async () => {
       isLoading.value = true
       error.value = ''
-
+      
       try {
-        // Load campaigns and user points in parallel
+        console.log('Loading campaigns and user points...')
+        
+        const startTime = Date.now()
+        
         const [campaignsResult, pointsResult] = await Promise.allSettled([
-          apiService.getActiveCampaigns(),
-          apiService.getMyPoints()
+          cacheOptimization.getCachedApiCall(
+            'campaigns',
+            () => apiService.getActiveCampaigns(),
+            { ttl: 20 * 60 * 1000 } // 20 minutes cache
+          ),
+          cacheOptimization.getCachedApiCall(
+            'myPoints',
+            () => apiService.getMyPoints(),
+            { ttl: 30 * 1000 } // 30 seconds cache
+          )
         ])
+        
+        const responseTime = Date.now() - startTime
+        performanceService.notifyCacheOperation('api', 'campaigns_and_points', responseTime)
 
-        // Handle campaigns data
-        if (campaignsResult.status === 'fulfilled' && campaignsResult.value.success) {
-          campaigns.value = campaignsResult.value.data
+        // Handle campaigns data with comprehensive debugging
+        if (campaignsResult.status === 'fulfilled' && campaignsResult.value) {
+          const campaignsResponse = campaignsResult.value
+          console.log('=== CAMPAIGNS API RESPONSE ===')
+          console.log('Full response:', campaignsResponse)
+          
+          if (campaignsResponse.success && campaignsResponse.data) {
+            campaigns.value = campaignsResponse.data
+            
+            // COMPREHENSIVE DEBUG: Log campaign structure
+            console.log('=== CAMPAIGNS DATA ANALYSIS ===')
+            console.log('Campaigns loaded successfully:', campaigns.value.length)
+            console.log('Raw campaigns data:', JSON.stringify(campaigns.value, null, 2))
+            
+            // Check for ID fields in all campaigns
+            if (campaigns.value.length > 0) {
+              console.log('=== CAMPAIGN STRUCTURE ANALYSIS ===')
+              campaigns.value.forEach((campaign, index) => {
+                console.log(`Campaign ${index}:`, {
+                  id: campaign.id,
+                  campaignId: campaign.campaignId,
+                  _id: campaign._id,
+                  uuid: campaign.uuid,
+                  campaign_id: campaign.campaign_id,
+                  name: campaign.name,
+                  allKeys: Object.keys(campaign)
+                })
+              })
+              
+              // Focus on first campaign
+              const firstCampaign = campaigns.value[0]
+              console.log('=== FIRST CAMPAIGN DETAILED ANALYSIS ===')
+              console.log('Full first campaign object:', JSON.stringify(firstCampaign, null, 2))
+              console.log('Available fields:', Object.keys(firstCampaign))
+              console.log('ID-like fields check:', {
+                'id': firstCampaign.id,
+                'campaignId': firstCampaign.campaignId,
+                '_id': firstCampaign._id,
+                'uuid': firstCampaign.uuid,
+                'campaign_id': firstCampaign.campaign_id
+              })
+            }
+          } else {
+            console.warn('Failed to load campaigns:', campaignsResponse.message)
+            campaigns.value = []
+            error.value = campaignsResponse.message || 'Failed to load campaigns'
+          }
         } else {
-          console.warn('Failed to load campaigns:', campaignsResult.reason)
-          error.value = 'Failed to load campaigns'
+          console.error('Failed to load campaigns:', campaignsResult.reason)
           campaigns.value = []
+          error.value = 'Failed to load campaigns'
         }
 
         // Handle points data
-        if (pointsResult.status === 'fulfilled' && pointsResult.value.success) {
-          userPointsData.value = pointsResult.value.data
+        if (pointsResult.status === 'fulfilled' && pointsResult.value) {
+          const pointsResponse = pointsResult.value
+          if (pointsResponse.success && pointsResponse.data) {
+            userPointsData.value = pointsResponse.data
+            console.log('User points loaded:', userPointsData.value.currentBalance)
+          }
+        } else {
+          console.warn('Failed to load user points:', pointsResult.reason)
         }
 
       } catch (err) {
@@ -202,6 +275,7 @@ export default {
       }
     }
 
+
     // Event handlers
     const handleSearch = () => {
       console.log('Searching for:', searchQuery.value)
@@ -211,27 +285,100 @@ export default {
       searchQuery.value = ''
     }
 
+    // Enhanced campaign detail viewing with comprehensive debugging and fallback
     const viewCampaignDetails = async (campaign) => {
-      try {
-        isLoading.value = true
-        const response = await apiService.getCampaignById(campaign.id)
+      // Enhanced validation with detailed logging
+      console.log('=== CAMPAIGN CLICK DEBUG ===')
+      console.log('Campaign object received:', campaign)
+      console.log('Campaign type:', typeof campaign)
+      console.log('Campaign keys:', campaign ? Object.keys(campaign) : 'null')
+      
+      if (!campaign) {
+        console.error('No campaign data provided')
+        error.value = 'Invalid campaign selected'
+        return
+      }
+
+      // Check for various possible ID field names with detailed logging
+      console.log('Checking ID fields:')
+      console.log('campaign.id:', campaign.id)
+      console.log('campaign.campaignId:', campaign.campaignId)
+      console.log('campaign._id:', campaign._id)
+      console.log('campaign.uuid:', campaign.uuid)
+      console.log('campaign.campaign_id:', campaign.campaign_id)
+      
+      const campaignId = campaign.id || campaign.campaignId || campaign._id || campaign.uuid || campaign.campaign_id
+      
+      if (!campaignId) {
+        console.error('=== CAMPAIGN ID MISSING ===')
+        console.error('Campaign data:', JSON.stringify(campaign, null, 2))
+        console.error('Available campaign fields:', Object.keys(campaign))
         
-        if (response.success) {
+        // Show user-friendly error
+        error.value = 'Campaign ID not found. Please try refreshing the page.'
+        
+        // Don't try to navigate without an ID
+        return
+      }
+
+      console.log('Using campaign ID:', campaignId)
+      console.log('ID type:', typeof campaignId)
+
+      // Validate that ID is not empty string or null
+      if (campaignId === '' || campaignId === null || campaignId === 'undefined') {
+        console.error('Campaign ID is invalid:', campaignId)
+        error.value = 'Invalid campaign ID. Please try refreshing the page.'
+        return
+      }
+
+      try {
+        console.log('Loading campaign details for ID:', campaignId)
+        console.log('Full campaign object:', JSON.stringify(campaign, null, 2))
+        
+        const startTime = Date.now()
+        
+        // Use the found ID
+        const response = await cacheOptimization.getCachedApiCall(
+          `campaign_${campaignId}`,
+          () => apiService.getCampaignById(campaignId),
+          { ttl: 30 * 60 * 1000 } // 30 minutes cache
+        )
+        
+        const responseTime = Date.now() - startTime
+        performanceService.notifyCacheOperation('api', `campaign_${campaignId}`, responseTime)
+        
+        if (response && response.success) {
+          console.log('Campaign details loaded successfully')
+          
+          // Store campaign data for detail view
           sessionStorage.setItem('selectedCampaign', JSON.stringify(response.data))
-          router.push(`/campaign/${campaign.id}`)
+          
+          // Navigate to campaign detail
+          router.push(`/campaign/${campaignId}`)
         } else {
-          error.value = 'Failed to load campaign details'
+          const errorMsg = response?.message || 'Failed to load campaign details'
+          console.error('API response error:', errorMsg)
+          error.value = errorMsg
         }
       } catch (err) {
         console.error('Error loading campaign details:', err)
-        error.value = 'Failed to load campaign details'
-      } finally {
-        isLoading.value = false
+        
+        // Enhanced error handling
+        if (err.message.includes('404') || err.message.includes('not found')) {
+          error.value = 'Campaign not found. It may have been removed or expired.'
+        } else if (err.message.includes('400')) {
+          error.value = 'Invalid campaign request. Please try again.'
+        } else if (err.message.includes('Network')) {
+          error.value = 'Network error. Please check your connection and try again.'
+        } else {
+          error.value = `Failed to load campaign details: ${err.message}`
+        }
       }
     }
 
     // Initialize data on mount
     onMounted(() => {
+      console.log('CampaignView mounted')
       loadCampaigns()
     })
 
@@ -255,7 +402,7 @@ export default {
 </script>
 
 <style scoped>
-/* Override main.css container restrictions for CampaignView */
+/* All existing styles remain the same */
 .campaign-view {
   min-height: 100vh;
   background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%);
@@ -265,7 +412,6 @@ export default {
   overflow-y: auto;
 }
 
-/* Force full width on all screen sizes */
 .campaign-view .page-container {
   max-width: none !important;
   width: 100% !important;
@@ -696,37 +842,9 @@ export default {
 
 /* Responsive Design */
 @media (min-width: 768px) {
-  .campaign-view {
-    background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%) !important;
-  }
-  
-  .campaign-view .page-container {
-    max-width: none !important;
-    width: 100% !important;
-    background: transparent !important;
-    border-radius: 0 !important;
-    box-shadow: none !important;
-    backdrop-filter: none !important;
-    border: none !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    justify-content: flex-start !important;
-    align-items: stretch !important;
-  }
-
-  .campaign-view .app-main {
-    max-width: none !important;
-    width: 100% !important;
-    background: transparent !important;
-    border-radius: 0 !important;
-    box-shadow: none !important;
-    backdrop-filter: none !important;
-    border: none !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    min-height: auto !important;
-    height: auto !important;
-    overflow: visible !important;
+  .dashboard-section {
+    margin: 0 2rem 1.5rem 2rem;
+    padding: 1.5rem;
   }
 
   .campaign-image {
@@ -744,44 +862,34 @@ export default {
 }
 
 @media (min-width: 1024px) {
-  body {
-    background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%) !important;
+  .dashboard-section {
+    margin: 0 3rem 2rem 3rem;
+    padding: 2rem;
   }
-  
-  .campaign-view {
-    background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%) !important;
-    min-height: auto !important;
+
+  .campaign-card {
+    padding: 1.25rem;
   }
-  
-  .campaign-view .page-container {
-    max-width: none !important;
-    width: 100% !important;
-    background: transparent !important;
-    border-radius: 0 !important;
-    box-shadow: none !important;
-    backdrop-filter: none !important;
-    border: none !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    justify-content: flex-start !important;
-    align-items: stretch !important;
-    min-height: 100vh !important;
-    height: auto !important;
+
+  .campaign-image {
+    width: 120px;
+    height: 90px;
   }
-  
-  .campaign-view .app-main {
-    max-width: none !important;
-    width: 100% !important;
-    background: transparent !important;
-    border-radius: 0 !important;
-    box-shadow: none !important;
-    backdrop-filter: none !important;
-    border: none !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    min-height: auto !important;
-    height: auto !important;
-    overflow: visible !important;
+
+  .campaign-title {
+    font-size: 1.125rem;
+  }
+
+  .campaign-desc {
+    font-size: 0.9rem;
+  }
+}
+
+@media (min-width: 1200px) {
+  .dashboard-section {
+    margin: 0 auto 2rem auto;
+    max-width: 1000px;
+    width: calc(100% - 4rem);
   }
 }
 </style>

@@ -27,7 +27,7 @@
 
     <template v-else>
       <!-- Categories Section -->
-      <div class="dashboard-section">
+      <div class="dashboard-section categories-section">
         <div class="section-header">
           <h3 class="section-title">Product Categories</h3>
           <span class="category-count">{{ categories.length }} Categories</span>
@@ -51,23 +51,23 @@
         </div>
       </div>
 
-      <!-- Featured Products Section -->
-      <div class="dashboard-section">
+      <!-- Products Section -->
+      <div class="dashboard-section products-section">
         <div class="section-header">
           <h3 class="section-title">
             {{ selectedCategory ? `${selectedCategory.name} Products` : 'All Products' }}
           </h3>
           <div class="products-info">
-            <span class="products-count">{{ products.length }} products</span>
+            <span class="products-count">{{ filteredProducts.length }} products</span>
             <button v-if="hasMoreProducts" class="see-more-btn" @click="loadMoreProducts">
               Load More
             </button>
           </div>
         </div>
         
-        <div v-if="products.length > 0" class="products-grid">
+        <div v-if="filteredProducts.length > 0" class="products-grid">
           <div 
-            v-for="product in products" 
+            v-for="product in filteredProducts" 
             :key="product.id" 
             class="product-card"
             @click="viewProductDetails(product)"
@@ -144,17 +144,16 @@
 </template>
 
 <script>
-import { ref, computed, onMounted, watch, onBeforeUnmount } from 'vue'
+import { ref, onMounted, watch, onBeforeUnmount, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import BottomNavigation from '../components/BottomNavigation.vue'
 import HustlHeader from '../components/HustlHeader.vue'
 import ShareModal from '../components/ShareModal.vue'
-import { useApiCache } from '../composables/useApiCache'
+import apiService from '../services/api'
 import { useWishlist } from '../composables/useWishlist'
 import { showToast } from '../utils/toast'
-//import apiService from '../services/api'
-import { useWishlist } from '../composables/useWishlist'
-import { showToast } from '../utils/toast'
+import cacheOptimization from '../utils/cacheOptimization'
+import performanceService from '../services/performanceService'
 
 export default {
   name: 'CategoryView',
@@ -190,6 +189,20 @@ export default {
       isInWishlist,
       loadWishlist 
     } = useWishlist()
+
+    // FIXED: Computed property untuk filter products berdasarkan selected category
+    const filteredProducts = computed(() => {
+      if (!selectedCategory.value) {
+        return products.value
+      }
+      
+      return products.value.filter(product => {
+        const productCategoryId = product.categoryId || 
+                                 product.category_id || 
+                                 product.category?.id
+        return productCategoryId === selectedCategory.value.id
+      })
+    })
 
     // Category colors array for dynamic assignment
     const categoryColors = [
@@ -245,12 +258,22 @@ export default {
     // API loading methods
     const loadCategories = async () => {
       try {
-        const response = await apiService.getCategories()
-        if (response.success) {
-          categories.value = response.data
-          await loadCategoriesWithCounts()
+        const startTime = Date.now()
+        const response = await cacheOptimization.getCachedApiCall(
+          'categories', 
+          () => apiService.getCategories(),
+          { ttl: 30 * 60 * 1000 }
+        )
+        
+        const responseTime = Date.now() - startTime
+        performanceService.notifyCacheOperation('api', 'categories', responseTime)
+        
+        if (response && response.success) {
+          categories.value = response.data || []
+          console.log('Categories loaded:', categories.value.length)
         } else {
-          console.warn('Failed to load categories:', response.message)
+          console.warn('Failed to load categories:', response?.message)
+          error.value = 'Failed to load categories'
         }
       } catch (err) {
         console.error('Error loading categories:', err)
@@ -258,63 +281,99 @@ export default {
       }
     }
 
+    // FIXED: Load all products to get accurate counts
     const loadCategoriesWithCounts = async () => {
-      try {
-        const countPromises = categories.value.map(async (category) => {
-          try {
-            const response = await apiService.getProducts({ 
-              categoryId: category.id,
-              limit: 1
-            })
-            
-            return {
-              ...category,
-              productCount: response.meta?.pagination?.totalItems || 0
-            }
-          } catch (err) {
-            console.warn(`Failed to load count for category ${category.id}:`, err)
-            return {
-              ...category,
-              productCount: 0
-            }
-          }
-        })
+      if (categories.value.length === 0) return
 
-        const categoriesWithCountsResult = await Promise.all(countPromises)
-        categories.value = categoriesWithCountsResult
+      try {
+        console.log('Loading accurate product counts...')
         
+        const startTime = Date.now()
+        const response = await cacheOptimization.getCachedApiCall(
+          'all_products_for_counting',
+          () => apiService.getProducts({ 
+            limit: 999, 
+            page: 1 
+          }),
+          { ttl: 5 * 60 * 1000 }
+        )
+        
+        const responseTime = Date.now() - startTime
+        performanceService.notifyCacheOperation('api', 'all_products_counting', responseTime)
+        
+        if (response && response.success && response.data) {
+          const allProducts = response.data
+          console.log(`Found ${allProducts.length} total products for counting`)
+          
+          // Count products by category
+          const categoryCounts = {}
+          allProducts.forEach(product => {
+            const categoryId = product.categoryId || 
+                             product.category_id || 
+                             product.category?.id
+            
+            if (categoryId) {
+              categoryCounts[categoryId] = (categoryCounts[categoryId] || 0) + 1
+            }
+          })
+          
+          console.log('Accurate category counts:', categoryCounts)
+          
+          // Update categories with accurate counts
+          categories.value = categories.value.map(category => ({
+            ...category,
+            productCount: categoryCounts[category.id] || 0
+          }))
+          
+          console.log('Categories updated with accurate counts:', 
+            categories.value.map(cat => ({
+              name: cat.name,
+              id: cat.id,
+              count: cat.productCount
+            }))
+          )
+        }
       } catch (err) {
-        console.error('Error loading category counts:', err)
+        console.error('Error loading accurate category counts:', err)
       }
     }
 
+    // FIXED: Load all products initially with simpler cache key
     const loadProducts = async (params = {}) => {
       try {
+        const startTime = Date.now()
         const queryParams = {
-          page: currentPage.value,
-          limit: itemsPerPage,
+          page: 1,
+          limit: 999,
           ...params
-        }
-
-        if (selectedCategory.value) {
-          queryParams.categoryId = selectedCategory.value.id
         }
 
         if (searchQuery.value.trim()) {
           queryParams.search = searchQuery.value.trim()
         }
 
-        const response = await apiService.getProducts(queryParams)
+        // FIXED: Use simpler cache key without JSON
+        const cacheKey = searchQuery.value ? 'products_search' : 'all_products'
         
-        if (response.success) {
-          products.value = response.data
+        const response = await cacheOptimization.getCachedApiCall(
+          cacheKey,
+          () => apiService.getProducts(queryParams),
+          { ttl: 5 * 60 * 1000 }
+        )
+        
+        const responseTime = Date.now() - startTime
+        performanceService.notifyCacheOperation('api', 'products', responseTime)
+        
+        if (response && response.success) {
+          products.value = response.data || []
+          console.log(`Loaded ${products.value.length} products`)
           
           if (response.meta?.pagination) {
-            totalPages.value = response.meta.pagination.totalPages
-            hasMoreProducts.value = response.meta.pagination.hasNextPage
+            totalPages.value = response.meta.pagination.totalPages || 1
+            hasMoreProducts.value = response.meta.pagination.hasNextPage || false
           }
         } else {
-          console.warn('Failed to load products:', response.message)
+          console.warn('Failed to load products:', response?.message)
           products.value = []
         }
       } catch (err) {
@@ -329,20 +388,29 @@ export default {
       error.value = ''
 
       try {
-        await Promise.all([
-          loadCategories(),
-          loadProducts()
-        ])
+        console.log('Starting data load...')
+        
+        // Load categories first
+        await loadCategories()
+        
+        // Load products
+        await loadProducts()
+        
+        // Load accurate category counts after products are loaded
+        if (categories.value.length > 0) {
+          await loadCategoriesWithCounts()
+        }
         
         // Load wishlist data
         loadWishlist()
 
+        // Handle route parameters
         if (route.query.categoryId) {
           const categoryId = parseInt(route.query.categoryId)
           const category = categories.value.find(cat => cat.id === categoryId)
           if (category) {
             selectedCategory.value = category
-            await loadProducts({ categoryId })
+            console.log('Selected category from route:', category.name)
           }
         }
 
@@ -350,6 +418,8 @@ export default {
           searchQuery.value = route.query.search
           await loadProducts({ search: route.query.search })
         }
+
+        console.log('Data loading completed successfully')
 
       } catch (err) {
         console.error('Error loading data:', err)
@@ -381,11 +451,15 @@ export default {
       await loadProducts()
     }
 
+    // FIXED: Category selection now properly filters products
     const selectCategory = async (category) => {
       if (selectedCategory.value?.id === category.id) {
+        // Deselect category
         selectedCategory.value = null
         router.replace({ name: 'Category' })
+        console.log('Category deselected - showing all products')
       } else {
+        // Select category
         selectedCategory.value = category
         searchQuery.value = ''
         currentPage.value = 1
@@ -394,15 +468,12 @@ export default {
           name: 'Category',
           query: { categoryId: category.id }
         })
+        
+        console.log(`Category selected: ${category.name} - filtering products`)
       }
-      
-      await loadProducts()
     }
 
-    // FIXED: Hapus duplicate toast notification
     const toggleFavorite = (product) => {
-      // Toast sudah dihandle di useWishlist composable, 
-      // tidak perlu toast lagi di sini
       toggleWishlist(product)
     }
 
@@ -464,19 +535,17 @@ export default {
         if (category && selectedCategory.value?.id !== categoryId) {
           selectedCategory.value = category
           currentPage.value = 1
-          await loadProducts()
         }
       } else if (!newQuery.categoryId && selectedCategory.value) {
         selectedCategory.value = null
         currentPage.value = 1
-        await loadProducts()
       }
 
       if (newQuery.search && newQuery.search !== searchQuery.value) {
         searchQuery.value = newQuery.search
         selectedCategory.value = null
         currentPage.value = 1
-        await loadProducts()
+        await loadProducts({ search: newQuery.search })
       }
     })
 
@@ -499,6 +568,7 @@ export default {
       error,
       categories,
       products,
+      filteredProducts, // FIXED: Use filtered products
       totalPages,
       hasMoreProducts,
       showShareModal,              
@@ -528,45 +598,22 @@ export default {
 </script>
 
 <style scoped>
-/* Override main.css container restrictions for CategoryView - Fixed for all screen sizes */
+/* FIXED: Proper container layout for desktop */
 .category-view {
   min-height: 100vh;
   background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%);
   padding-bottom: 100px;
-  display: flex;
-  flex-direction: column;
-  overflow-y: auto;
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
 }
 
-/* Force full width and transparent background on ALL screen sizes */
-.category-view .page-container {
-  max-width: none !important;
-  width: 100% !important;
-  background: transparent !important;
-  border-radius: 0 !important;
-  box-shadow: none !important;
-  backdrop-filter: none !important;
-  border: none !important;
-  padding: 0 !important;
-  margin: 0 !important;
+/* FIXED: Remove problematic container overrides */
+.category-view * {
+  box-sizing: border-box;
 }
 
-.category-view .app-main {
-  max-width: none !important;
-  width: 100% !important;
-  background: transparent !important;
-  border-radius: 0 !important;
-  box-shadow: none !important;
-  backdrop-filter: none !important;
-  border: none !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  min-height: auto !important;
-  height: auto !important;
-  overflow: visible !important;
-}
-
-/* Dashboard sections */
+/* Dashboard sections with proper spacing */
 .dashboard-section {
   background: white;
   margin: 0 1rem 1.5rem 1rem;
@@ -574,10 +621,25 @@ export default {
   border-radius: 16px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.9);
+  width: calc(100% - 2rem);
+  max-width: calc(100vw - 2rem);
 }
 
 .dashboard-section:first-child {
   margin-top: 1rem;
+}
+
+/* FIXED: Proper section containers */
+.categories-section,
+.products-section {
+  background: white;
+  margin: 0 1rem 1.5rem 1rem;
+  padding: 1.25rem;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  width: calc(100% - 2rem);
+  max-width: calc(100vw - 2rem);
 }
 
 /* Loading Section */
@@ -660,6 +722,8 @@ export default {
   margin: 0 0 1.5rem 0;
   box-shadow: none;
   border: none;
+  width: calc(100% - 2rem);
+  max-width: calc(100vw - 2rem);
 }
 
 .search-container {
@@ -671,7 +735,8 @@ export default {
   gap: 0.75rem;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.9);
-  position: relative;
+  width: 100%;
+  max-width: 100%;
 }
 
 .search-icon {
@@ -687,6 +752,7 @@ export default {
   color: #1F2937;
   font-family: 'Baloo 2', sans-serif;
   font-weight: 500;
+  min-width: 0;
 }
 
 .search-input::placeholder {
@@ -707,6 +773,7 @@ export default {
   color: white;
   font-size: 0.75rem;
   transition: all 0.2s;
+  flex-shrink: 0;
 }
 
 .clear-search-btn:hover {
@@ -720,6 +787,7 @@ export default {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1.25rem;
+  width: 100%;
 }
 
 .section-title {
@@ -761,12 +829,13 @@ export default {
   transform: translateY(-1px);
 }
 
-/* Categories Grid - Always 2 columns */
+/* Categories Grid - Responsive */
 .categories-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 0.75rem;
   margin-bottom: 1rem;
+  width: 100%;
 }
 
 .category-card {
@@ -782,6 +851,7 @@ export default {
   position: relative;
   min-height: 110px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  width: 100%;
 }
 
 .category-card:hover {
@@ -822,6 +892,7 @@ export default {
   align-items: center;
   text-align: center;
   flex: 1;
+  width: 100%;
 }
 
 .category-name {
@@ -842,12 +913,13 @@ export default {
   text-align: center;
 }
 
-/* Products Grid - Always 2 columns */
+/* Products Grid - Responsive */
 .products-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 1rem;
   margin-bottom: 1.5rem;
+  width: 100%;
 }
 
 .product-card {
@@ -859,6 +931,7 @@ export default {
   border: 2px solid #E2E8F0;
   cursor: pointer;
   transition: all 0.2s;
+  width: 100%;
 }
 
 .product-card:hover {
@@ -1057,108 +1130,150 @@ export default {
   color: white;
 }
 
-/* Responsive Design - FIXED for 770px - 1023px range */
+/* FIXED: Responsive Design - Proper desktop layout */
 @media (min-width: 768px) {
-  .category-view {
-    background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%) !important;
-  }
-  
-  /* Force overrides for tablet range */
-  .category-view .page-container {
-    max-width: none !important;
-    width: 100% !important;
-    background: transparent !important;
-    border-radius: 0 !important;
-    box-shadow: none !important;
-    backdrop-filter: none !important;
-    border: none !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    justify-content: flex-start !important;
-    align-items: stretch !important;
-    min-height: 100vh !important;
-  }
-
-  .category-view .app-main {
-    max-width: none !important;
-    width: 100% !important;
-    background: transparent !important;
-    border-radius: 0 !important;
-    box-shadow: none !important;
-    backdrop-filter: none !important;
-    border: none !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    min-height: auto !important;
-    height: auto !important;
-    overflow: visible !important;
-  }
-
-  .dashboard-section {
-    margin: 0 1rem 1.5rem 1rem;
-    padding: 1.25rem;
-  }
-
-  .dashboard-section:first-child {
-    margin-top: 1rem;
+  .dashboard-section,
+  .categories-section,
+  .products-section {
+    margin: 0 2rem 1.5rem 2rem;
+    padding: 1.5rem;
+    width: calc(100% - 4rem);
+    max-width: calc(100vw - 4rem);
   }
 
   .search-section {
-    margin: 0 0 1.5rem 0;
-    padding: 1rem 1.25rem;
+    margin: 0 2rem 1.5rem 2rem;
+    padding: 1rem 0;
+    width: calc(100% - 4rem);
+    max-width: calc(100vw - 4rem);
   }
 
   .categories-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 0.75rem;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
   }
 
   .products-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: 1rem;
+  }
+
+  .category-card {
+    min-height: 120px;
+    padding: 1rem;
+  }
+
+  .category-name {
+    font-size: 0.9rem;
+  }
+
+  .category-count-text {
+    font-size: 0.75rem;
   }
 }
 
-/* Desktop Responsive - Keep same overrides */
+/* Desktop - Large screens */
 @media (min-width: 1024px) {
-  body {
-    background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%) !important;
+  .dashboard-section,
+  .categories-section,
+  .products-section {
+    margin: 0 3rem 2rem 3rem;
+    padding: 2rem;
+    width: calc(100% - 6rem);
+    max-width: calc(100vw - 6rem);
   }
-  
-  .category-view {
-    background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%) !important;
-    min-height: auto !important;
+
+  .search-section {
+    margin: 0 3rem 1.5rem 3rem;
+    padding: 1.5rem 0;
+    width: calc(100% - 6rem);
+    max-width: calc(100vw - 6rem);
   }
-  
-  .category-view .page-container {
-    max-width: none !important;
-    width: 100% !important;
-    background: transparent !important;
-    border-radius: 0 !important;
-    box-shadow: none !important;
-    backdrop-filter: none !important;
-    border: none !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    justify-content: flex-start !important;
-    align-items: stretch !important;
-    min-height: 100vh !important;
-    height: auto !important;
+
+  .categories-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.25rem;
   }
-  
-  .category-view .app-main {
-    max-width: none !important;
-    width: 100% !important;
-    background: transparent !important;
-    border-radius: 0 !important;
-    box-shadow: none !important;
-    backdrop-filter: none !important;
-    border: none !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    min-height: auto !important;
-    height: auto !important;
-    overflow: visible !important;
+
+  .products-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.25rem;
+  }
+
+  .category-card {
+    min-height: 130px;
+    padding: 1.25rem 1rem;
+  }
+
+  .category-name {
+    font-size: 1rem;
+  }
+
+  .category-count-text {
+    font-size: 0.8rem;
+  }
+
+  .product-card {
+    padding: 1.25rem;
+  }
+}
+
+/* Extra large screens */
+@media (min-width: 1200px) {
+  .dashboard-section,
+  .categories-section,
+  .products-section {
+    margin: 0 4rem 2rem 4rem;
+    padding: 2.5rem;
+    width: calc(100% - 8rem);
+    max-width: calc(100vw - 8rem);
+  }
+
+  .search-section {
+    margin: 0 4rem 2rem 4rem;
+    padding: 2rem 0;
+    width: calc(100% - 8rem);
+    max-width: calc(100vw - 8rem);
+  }
+
+  .categories-grid {
+    grid-template-columns: repeat(5, 1fr);
+    gap: 1.5rem;
+  }
+
+  .products-grid {
+    grid-template-columns: repeat(5, 1fr);
+    gap: 1.5rem;
+  }
+
+  .category-card {
+    min-height: 140px;
+    padding: 1.5rem 1.25rem;
+  }
+
+  .category-name {
+    font-size: 1.1rem;
+  }
+
+  .category-count-text {
+    font-size: 0.85rem;
+  }
+}
+
+/* Ultra wide screens */
+@media (min-width: 1400px) {
+  .dashboard-section,
+  .categories-section,
+  .products-section {
+    margin: 0 auto 2rem auto;
+    max-width: 1200px;
+    width: calc(100% - 4rem);
+  }
+
+  .search-section {
+    margin: 0 auto 2rem auto;
+    max-width: 1200px;
+    width: calc(100% - 4rem);
   }
 }
 </style>
