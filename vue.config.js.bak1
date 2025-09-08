@@ -1,0 +1,59 @@
+const { defineConfig } = require('@vue/cli-service')
+
+const isDev = process.env.NODE_ENV === 'development'
+
+module.exports = defineConfig({
+  transpileDependencies: true,
+  
+  // PWA config hanya untuk production
+  ...(isDev ? {} : {
+    pwa: {
+      name: 'Hazel',
+      themeColor: '#4F46E5',
+      msTileColor: '#4F46E5',
+      appleMobileWebAppCapable: 'yes',
+      appleMobileWebAppStatusBarStyle: 'black-translucent',
+      
+      manifestOptions: {
+        name: 'Hazel - Official Linkshare Partner Tiktok',
+        short_name: 'Hazel',
+        description: 'Hazel Official Linkshare Partner Tiktok',
+        background_color: '#FFFFFF',
+        theme_color: '#4F46E5',
+        display: 'standalone',
+        orientation: 'portrait',
+        scope: '/',
+        start_url: '/',
+        icons: []
+      },
+      
+      workboxPluginMode: 'GenerateSW',
+      workboxOptions: {
+        skipWaiting: true,
+        clientsClaim: true,
+        exclude: [/\.map$/, /manifest\.json$/],
+        runtimeCaching: [
+          {
+            urlPattern: new RegExp('^https://apihustl\\.sijago\\.ai/'),
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'api-cache',
+              expiration: {
+                maxEntries: 50,
+                maxAgeSeconds: 300
+              }
+            }
+          }
+        ]
+      }
+    }
+  }),
+  
+  devServer: {
+    port: 3000,
+    host: 'localhost',
+    open: true
+  },
+  
+  productionSourceMap: false
+})
