@@ -7,6 +7,9 @@ import cachePlugin from './plugins/cachePlugin'
 import './registerServiceWorker'
 import './assets/styles/main.css'
 import ToastNotification from './components/ToastNotification.vue'
+import cacheOptimization from './utils/cacheOptimization'
+
+cacheOptimization.initialize()
 
 const app = createApp(App)
 const pinia = createPinia()
@@ -25,6 +28,8 @@ const updateOnlineStatus = () => {
   if (isOnline && wasOffline) {
     // Refresh cache when coming back online
     setTimeout(() => {
+    cacheOptimization.preloadAllCriticalData()
+
       import('./services/enhancedApi').then(({ default: api }) => {
         api.preWarmCache()
       })

@@ -750,25 +750,32 @@ export default {
 .category-view {
   min-height: 100vh;
   background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%);
-  padding-bottom: 100px; /* Increased padding to make room for fixed footer */
+  padding-bottom: 100px;
   width: 100%;
   overflow-x: hidden;
   position: relative;
 }
 
-/* Dashboard sections - Fixed container issues */
+/* Container wrapper to control all sections */
+.content-wrapper {
+  width: 100%;
+  max-width: 100%;
+  padding: 0 1rem;
+  box-sizing: border-box;
+}
+
+/* Dashboard sections - Simplified approach */
 .dashboard-section {
   background: white;
-  margin: 0 1rem 1.5rem 1rem;
-  padding: 1.25rem;
+  margin-bottom: 1.5rem;
+  padding: 1rem;
   border-radius: 16px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.9);
-  word-wrap: break-word;
-  overflow-wrap: break-word;
-  hyphens: auto;
-  max-width: calc(100% - 2rem);
+  width: 100%;
+  max-width: 100%;
   box-sizing: border-box;
+  overflow: hidden;
 }
 
 .dashboard-section:first-child {
@@ -806,14 +813,15 @@ export default {
   100% { transform: rotate(360deg); }
 }
 
-/* Search Section - Fixed positioning */
+/* Search Section */
 .search-section {
   position: relative;
   padding: 1rem;
   background: transparent;
-  margin: 0 0 1.5rem 0;
+  margin-bottom: 1.5rem;
   box-shadow: none;
   border: none;
+  width: 100%;
   max-width: 100%;
   box-sizing: border-box;
 }
@@ -829,6 +837,7 @@ export default {
   border: 1px solid rgba(255, 255, 255, 0.9);
   position: relative;
   transition: box-shadow 0.2s;
+  width: 100%;
   max-width: 100%;
   box-sizing: border-box;
 }
@@ -1037,30 +1046,32 @@ export default {
   gap: 1rem;
 }
 
-/* Categories Grid - Fixed responsive issues */
+/* Categories Grid - Simple 2 column */
 .categories-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  grid-template-columns: 1fr 1fr;
   gap: 0.75rem;
-  margin-bottom: 1rem;
+  width: 100%;
   max-width: 100%;
+  box-sizing: border-box;
 }
 
 .category-card {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 0.875rem 0.625rem;
-  border-radius: 16px;
+  padding: 1rem 0.75rem;
+  border-radius: 12px;
   border: 2px solid #E5E7EB;
   background: white;
   cursor: pointer;
   transition: all 0.2s;
-  position: relative;
   min-height: 110px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  width: 100%;
   max-width: 100%;
   box-sizing: border-box;
+  text-align: center;
 }
 
 .category-card:hover {
@@ -1079,12 +1090,12 @@ export default {
 .category-icon {
   width: 48px;
   height: 48px;
-  border-radius: 14px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 1.5rem;
-  margin-bottom: 0.625rem;
+  margin-bottom: 0.75rem;
   color: white;
   box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
   transition: all 0.2s;
@@ -1105,44 +1116,48 @@ export default {
 }
 
 .category-name {
-  font-size: 0.8rem;
+  font-size: 0.875rem;
   color: #1F2937;
   font-family: 'Baloo 2', sans-serif;
   font-weight: 600;
-  margin-bottom: 0.2rem;
+  margin-bottom: 0.25rem;
   line-height: 1.2;
   text-align: center;
   word-wrap: break-word;
 }
 
 .category-count-text {
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   color: #6B7280;
   font-family: 'Baloo 2', sans-serif;
   font-weight: 400;
   text-align: center;
 }
 
-/* Products Grid - Fixed responsive layout */
+/* Products Grid - Single column with tight control */
 .products-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 1rem;
-  margin-bottom: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
   max-width: 100%;
+  box-sizing: border-box;
 }
 
 .product-card {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   background: #F8FAFC;
-  border-radius: 16px;
-  padding: 1rem;
+  border-radius: 12px;
+  padding: 0.75rem;
   border: 2px solid #E2E8F0;
   cursor: pointer;
   transition: all 0.2s;
+  width: 100%;
   max-width: 100%;
   box-sizing: border-box;
+  align-items: center;
+  overflow: hidden;
 }
 
 .product-card:hover {
@@ -1153,12 +1168,13 @@ export default {
 
 .product-image {
   position: relative;
-  width: 100%;
-  height: 100px;
-  border-radius: 12px;
+  width: 50px;
+  height: 50px;
+  border-radius: 8px;
   overflow: hidden;
   background: #E5E7EB;
-  margin-bottom: 0.75rem;
+  margin-right: 0.5rem;
+  flex-shrink: 0;
 }
 
 .product-image img {
@@ -1169,33 +1185,32 @@ export default {
 
 .product-badge {
   position: absolute;
-  top: 6px;
-  left: 6px;
+  top: 1px;
+  left: 1px;
   background: #4FC3F7;
   color: white;
-  font-size: 0.625rem;
-  padding: 0.25rem 0.5rem;
-  border-radius: 8px;
+  font-size: 0.4375rem;
+  padding: 0.0625rem 0.1875rem;
+  border-radius: 3px;
   font-family: 'Baloo 2', sans-serif;
   font-weight: 600;
 }
 
 .favorite-btn {
   position: absolute;
-  top: 6px;
-  right: 6px;
+  top: 1px;
+  right: 1px;
   background: rgba(255, 255, 255, 0.9);
   border: none;
   border-radius: 50%;
-  width: 32px;
-  height: 32px;
+  width: 16px;
+  height: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  font-size: 1rem;
+  font-size: 0.625rem;
   transition: all 0.2s;
-  backdrop-filter: blur(10px);
 }
 
 .favorite-btn:hover {
@@ -1207,45 +1222,47 @@ export default {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 0.375rem;
+  gap: 0.125rem;
+  min-width: 0;
+  width: 100%;
   max-width: 100%;
 }
 
 .product-name {
-  font-size: 0.875rem;
+  font-size: 0.75rem;
   font-weight: 600;
   color: #1F2937;
   font-family: 'Baloo 2', sans-serif;
-  line-height: 1.3;
-  margin-bottom: 0.25rem;
-  word-wrap: break-word;
-  overflow-wrap: break-word;
-  hyphens: auto;
+  line-height: 1.2;
+  margin-bottom: 0.0625rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .product-price {
-  font-size: 0.875rem;
+  font-size: 0.75rem;
   color: #059669;
   font-family: 'Baloo 2', sans-serif;
   font-weight: 700;
-  margin-bottom: 0.25rem;
+  margin-bottom: 0.125rem;
 }
 
 .product-rating {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0.5rem;
+  gap: 0.125rem;
+  margin-bottom: 0.125rem;
 }
 
 .rating-stars {
   color: #FFA500;
-  font-size: 0.75rem;
+  font-size: 0.625rem;
   line-height: 1;
 }
 
 .rating-count {
-  font-size: 0.75rem;
+  font-size: 0.5625rem;
   color: #6B7280;
   font-family: 'Baloo 2', sans-serif;
 }
@@ -1254,17 +1271,19 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: auto;
-  gap: 0.5rem;
+  gap: 0.25rem;
 }
 
 .earn-coins {
-  font-size: 0.7rem;
+  font-size: 0.5rem;
   color: #F59E0B;
   font-family: 'Baloo 2', sans-serif;
   font-weight: 600;
   flex: 1;
   min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .share-btn {
@@ -1272,15 +1291,14 @@ export default {
   color: white;
   border: none;
   border-radius: 50%;
-  width: 28px;
-  height: 28px;
-  font-size: 0.875rem;
+  width: 14px;
+  height: 14px;
+  font-size: 0.4375rem;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.2s;
-  box-shadow: 0 2px 6px rgba(79, 195, 247, 0.3);
   flex-shrink: 0;
 }
 
@@ -1289,7 +1307,7 @@ export default {
   transform: scale(1.1);
 }
 
-/* Pagination - Fixed responsive */
+/* Pagination */
 .pagination-container {
   display: flex;
   flex-direction: column;
@@ -1456,8 +1474,7 @@ export default {
   transform: translateY(-1px);
 }
 
-/* FIXED FOOTER STYLES - Solusi utama untuk masalah sticky footer */
-/* Menggunakan :deep() untuk menembus Vue scoped styles */
+/* Fixed Footer Styles */
 :deep(.bottom-navigation) {
   position: fixed !important;
   bottom: 0 !important;
@@ -1469,7 +1486,6 @@ export default {
   box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1) !important;
 }
 
-/* Fallback selector tanpa :deep() untuk kompatibilitas */
 .bottom-navigation {
   position: fixed !important;
   bottom: 0 !important;
@@ -1481,7 +1497,6 @@ export default {
   box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1) !important;
 }
 
-/* Selector global yang lebih kuat */
 ::v-deep .bottom-navigation,
 /deep/ .bottom-navigation,
 >>> .bottom-navigation {
@@ -1495,18 +1510,14 @@ export default {
   box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1) !important;
 }
 
-/* Responsive Design - Matching DashboardView exactly */
+/* Responsive Design */
 @media (min-width: 640px) {
-  .categories-grid {
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  .content-wrapper {
+    padding: 0 1.5rem;
   }
   
-  .products-grid {
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  }
-
-  .category-view {
-    padding-bottom: 100px;
+  .dashboard-section {
+    padding: 1rem;
   }
 }
 
@@ -1520,31 +1531,67 @@ export default {
   .app-main {
     background: transparent !important;
   }
-
-  .dashboard-section {
-    margin: 0 2rem 1.5rem 2rem;
-    padding: 1.5rem;
+  
+  .content-wrapper {
+    padding: 0 3rem;
     max-width: calc(100% - 4rem);
+    margin: 0 auto;
   }
 
-  .search-section {
-    margin: 0 2rem 1.5rem 2rem;
-    padding: 1rem 0;
+  .dashboard-section {
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
+    max-width: 85%;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .search-section .search-container {
+    max-width: 85%;
+    margin: 0 auto;
   }
 
   .categories-grid {
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     gap: 1rem;
   }
 
-  .products-grid {
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1rem;
+  .category-card {
+    min-height: 120px;
+    padding: 1.25rem 1rem;
   }
 
-  .pagination-container {
-    flex-direction: row;
-    justify-content: center;
+  .category-icon {
+    width: 50px;
+    height: 50px;
+    font-size: 1.5rem;
+    margin-bottom: 0.875rem;
+  }
+
+  .category-name {
+    font-size: 0.9375rem;
+    margin-bottom: 0.375rem;
+  }
+
+  .category-count-text {
+    font-size: 0.8125rem;
+  }
+
+  .product-card {
+    padding: 1rem;
+  }
+
+  .product-image {
+    width: 60px;
+    height: 60px;
+    margin-right: 0.75rem;
+  }
+
+  .product-name {
+    font-size: 0.875rem;
+  }
+
+  .product-price {
+    font-size: 0.875rem;
   }
 }
 
@@ -1580,42 +1627,143 @@ export default {
     border-radius: 0 !important;
   }
 
-  .dashboard-section {
-    margin: 0 3rem 2rem 3rem;
-    padding: 2rem;
+  .content-wrapper {
+    padding: 0 5rem;
     max-width: calc(100% - 6rem);
+    margin: 0 auto;
   }
 
-  .search-section {
-    margin: 0 3rem 1.5rem 3rem;
-    padding: 1.5rem 0;
+  .dashboard-section {
+    padding: 1.75rem;
+    margin-bottom: 2rem;
+    max-width: 80%;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .search-section .search-container {
+    max-width: 80%;
+    margin: 0 auto;
   }
 
   .categories-grid {
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 1.25rem;
   }
 
-  .products-grid {
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 1.25rem;
+  .category-card {
+    min-height: 130px;
+    padding: 1.5rem 1.25rem;
+  }
+
+  .category-icon {
+    width: 54px;
+    height: 54px;
+    font-size: 1.625rem;
+    margin-bottom: 1rem;
+  }
+
+  .category-name {
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .category-count-text {
+    font-size: 0.875rem;
+  }
+
+  .product-card {
+    padding: 1.25rem;
+  }
+
+  .product-image {
+    width: 70px;
+    height: 70px;
+    margin-right: 1rem;
+  }
+
+  .product-name {
+    font-size: 1rem;
+  }
+
+  .product-price {
+    font-size: 1rem;
+  }
+
+  .earn-coins {
+    font-size: 0.625rem;
+  }
+
+  .share-btn {
+    width: 16px;
+    height: 16px;
+    font-size: 0.5rem;
   }
 }
 
 @media (min-width: 1200px) {
-  .dashboard-section {
-    margin: 0 4rem 2rem 4rem;
-    padding: 2.5rem;
+  .content-wrapper {
+    padding: 0 6rem;
     max-width: calc(100% - 8rem);
+    margin: 0 auto;
   }
 
-  .search-section {
-    margin: 0 4rem 2rem 4rem;
-    padding: 2rem 0;
+  .dashboard-section {
+    padding: 2rem;
+    margin-bottom: 2.5rem;
+    max-width: 75%;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .search-section .search-container {
+    max-width: 75%;
+    margin: 0 auto;
   }
 
   .category-view {
     padding-bottom: 100px;
+  }
+
+  .categories-grid {
+    gap: 1.5rem;
+  }
+
+  .category-card {
+    min-height: 140px;
+    padding: 2rem 1.5rem;
+  }
+
+  .category-icon {
+    width: 58px;
+    height: 58px;
+    font-size: 1.75rem;
+    margin-bottom: 1.125rem;
+  }
+
+  .category-name {
+    font-size: 1.0625rem;
+  }
+
+  .category-count-text {
+    font-size: 0.9375rem;
+  }
+
+  .product-card {
+    padding: 1.5rem;
+  }
+
+  .product-image {
+    width: 80px;
+    height: 80px;
+    margin-right: 1.25rem;
+  }
+
+  .product-name {
+    font-size: 1.125rem;
+  }
+
+  .product-price {
+    font-size: 1.0625rem;
   }
 }
 

@@ -11,7 +11,14 @@ class CacheOptimization {
       slowQueries: []
     }
     
+    // Don't auto-initialize in constructor
+    // this.initializeOptimizations()
+  }
+
+  initialize() {
+    console.log('Cache optimization initializing...')
     this.initializeOptimizations()
+    return this
   }
 
   initializeOptimizations() {
@@ -20,6 +27,10 @@ class CacheOptimization {
     
     // Setup performance monitoring
     this.setupPerformanceMonitoring()
+  }
+
+  preloadAllCriticalData() {
+    return this.preloadCriticalData()
   }
 
   async getCachedApiCall(cacheKey, apiCall, options = {}) {

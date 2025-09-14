@@ -413,16 +413,22 @@ export default {
 </script>
 
 <style scoped>
+/* Reset and Base Styles */
+* {
+  box-sizing: border-box;
+}
+
+/* Profile View Main Container - FIXED: Following CategoryView pattern exactly */
 .profile-view {
   min-height: 100vh;
   background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%);
-  padding-bottom: 100px;
-  display: flex;
-  flex-direction: column;
-  overflow-x: hidden; /* Prevent horizontal overflow */
+  padding-bottom: 100px; /* Consistent with CategoryView */
   width: 100%;
+  overflow-x: hidden;
+  position: relative;
 }
 
+/* Dashboard sections - FIXED: Exact same pattern as CategoryView */
 .dashboard-section {
   background: white;
   margin: 0 1rem 1.5rem 1rem;
@@ -430,17 +436,18 @@ export default {
   border-radius: 16px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.9);
-  /* FIXED: Add proper box-sizing */
-  box-sizing: border-box;
-  width: calc(100% - 2rem); /* Account for left and right margins */
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
   max-width: calc(100% - 2rem);
+  box-sizing: border-box;
 }
 
 .dashboard-section:first-child {
   margin-top: 1rem;
 }
 
-/* Profile Header */
+/* Profile Header - Enhanced styling */
 .profile-header-section {
   padding: 1.5rem 1.25rem;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -481,7 +488,7 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  min-width: 0; /* Allow text to shrink */
+  min-width: 0;
 }
 
 .profile-name {
@@ -551,7 +558,8 @@ export default {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1rem;
-  gap: 1rem; /* FIXED: Add gap for spacing */
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 .see-all-btn {
@@ -568,37 +576,37 @@ export default {
   padding: 0.25rem 0.5rem;
   border-radius: 6px;
   transition: all 0.2s;
-  flex-shrink: 0; /* FIXED: Prevent button from shrinking */
+  flex-shrink: 0;
 }
 
 .see-all-btn:hover {
   background: rgba(79, 195, 247, 0.1);
 }
 
-/* Quick Actions - FIXED */
+/* Quick Actions - FIXED: Improved responsive grid */
 .quick-actions-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr; /* FIXED: Simpler grid definition */
-  gap: 0.75rem; /* FIXED: Reduced gap */
-  width: 100%;
-  box-sizing: border-box;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  max-width: 100%;
 }
 
 .action-card {
   background: #F8FAFC;
   border: 2px solid #E2E8F0;
   border-radius: 12px;
-  padding: 0.75rem; /* FIXED: Reduced padding */
+  padding: 0.875rem;
   cursor: pointer;
   transition: all 0.2s;
   display: flex;
   align-items: center;
-  gap: 0.5rem; /* FIXED: Reduced gap */
+  gap: 0.75rem;
   text-align: left;
   font-family: 'Baloo 2', sans-serif;
   width: 100%;
   box-sizing: border-box;
-  min-width: 0; /* FIXED: Allow content to shrink */
+  min-width: 0;
 }
 
 .action-card:hover {
@@ -609,13 +617,13 @@ export default {
 }
 
 .action-icon {
-  width: 36px; /* FIXED: Reduced size */
-  height: 36px;
-  border-radius: 8px; /* FIXED: Adjusted radius */
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1rem; /* FIXED: Reduced font size */
+  font-size: 1.125rem;
   flex-shrink: 0;
 }
 
@@ -640,11 +648,11 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 0.125rem;
-  min-width: 0; /* FIXED: Allow text to shrink */
+  min-width: 0;
 }
 
 .action-title {
-  font-size: 0.8rem; /* FIXED: Reduced font size */
+  font-size: 0.875rem;
   font-weight: 600;
   color: #1F2937;
   overflow: hidden;
@@ -653,7 +661,7 @@ export default {
 }
 
 .action-subtitle {
-  font-size: 0.7rem; /* FIXED: Reduced font size */
+  font-size: 0.75rem;
   color: #6B7280;
   font-weight: 500;
   overflow: hidden;
@@ -662,7 +670,7 @@ export default {
 }
 
 .action-arrow {
-  font-size: 0.875rem; /* FIXED: Reduced font size */
+  font-size: 1rem;
   color: #9CA3AF;
   transition: all 0.2s;
   flex-shrink: 0;
@@ -813,25 +821,26 @@ export default {
   font-style: italic;
 }
 
-/* Recent Wishlist - FIXED */
+/* Recent Wishlist - FIXED: Consistent with CategoryView pattern */
 .recent-wishlist-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr; /* FIXED: Simpler grid definition */
-  gap: 0.75rem; /* FIXED: Reduced gap */
-  width: 100%;
-  box-sizing: border-box;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  max-width: 100%;
 }
 
 .wishlist-preview-card {
+  display: flex;
+  flex-direction: column;
   background: #F8FAFC;
   border-radius: 12px;
-  padding: 0.75rem;
+  padding: 0.875rem;
   border: 1px solid #E2E8F0;
   cursor: pointer;
   transition: all 0.2s;
-  width: 100%;
+  max-width: 100%;
   box-sizing: border-box;
-  min-width: 0; /* FIXED: Allow content to shrink */
 }
 
 .wishlist-preview-card:hover {
@@ -847,7 +856,7 @@ export default {
   border-radius: 8px;
   overflow: hidden;
   background: #E5E7EB;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.625rem;
 }
 
 .preview-image img {
@@ -882,10 +891,11 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
+  max-width: 100%;
 }
 
 .preview-name {
-  font-size: 0.8rem;
+  font-size: 0.875rem;
   font-weight: 600;
   color: #1F2937;
   font-family: 'Baloo 2', sans-serif;
@@ -969,7 +979,7 @@ export default {
   align-items: center;
   padding: 0.75rem 0;
   border-bottom: 1px solid #F3F4F6;
-  gap: 1rem; /* FIXED: Add gap to prevent overlap */
+  gap: 1rem;
 }
 
 .detail-row:last-child {
@@ -1242,210 +1252,154 @@ input:checked + .toggle-slider:before {
   transform: translateX(20px);
 }
 
-/* Responsive Design - FIXED */
-@media (max-width: 480px) {
-  .dashboard-section {
-    margin: 0 0.75rem 1rem 0.75rem;
-    padding: 1rem;
-    width: calc(100% - 1.5rem);
-    max-width: calc(100% - 1.5rem);
-  }
-  
+/* FIXED FOOTER STYLES - Following CategoryView exact pattern */
+:deep(.bottom-navigation) {
+  position: fixed !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  z-index: 1000 !important;
+  background: white !important;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1) !important;
+}
+
+.bottom-navigation {
+  position: fixed !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  z-index: 1000 !important;
+  background: white !important;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1) !important;
+}
+
+::v-deep .bottom-navigation,
+.bottom-navigation {
+  position: fixed !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  z-index: 1000 !important;
+  background: white !important;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Responsive Design - FIXED: Matching CategoryView exactly */
+@media (min-width: 640px) {
   .quick-actions-grid {
-    gap: 0.5rem;
-  }
-  
-  .action-card {
-    padding: 0.5rem;
-    gap: 0.375rem;
-  }
-  
-  .action-icon {
-    width: 32px;
-    height: 32px;
-    font-size: 0.875rem;
-  }
-  
-  .action-title {
-    font-size: 0.75rem;
-  }
-  
-  .action-subtitle {
-    font-size: 0.65rem;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   }
   
   .recent-wishlist-grid {
-    gap: 0.5rem;
-  }
-  
-  .profile-header {
-    gap: 0.75rem;
-  }
-  
-  .profile-avatar {
-    width: 70px;
-    height: 70px;
-  }
-  
-  .avatar-text {
-    font-size: 1.5rem;
-  }
-  
-  .profile-name {
-    font-size: 1.25rem;
-  }
-  
-  .profile-stats {
-    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   }
 
-  .redemption-header {
-    gap: 0.75rem;
-  }
-
-  .redemption-icon {
-    width: 40px;
-    height: 40px;
-    font-size: 1.25rem;
-  }
-
-  .redemption-title {
-    font-size: 0.875rem;
-  }
-
-  .redemption-subtitle {
-    font-size: 0.75rem;
-  }
-
-  .balance-amount {
-    font-size: 1rem;
-  }
-}
-
-@media (min-width: 481px) and (max-width: 767px) {
-  .dashboard-section {
-    margin: 0 1rem 1.25rem 1rem;
-    width: calc(100% - 2rem);
-    max-width: calc(100% - 2rem);
+  .profile-view {
+    padding-bottom: 100px;
   }
 }
 
 @media (min-width: 768px) {
   .profile-view {
-    padding: 0 2rem;
+    background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%) !important;
     padding-bottom: 100px;
+  }
+  
+  .page-container,
+  .app-main {
+    background: transparent !important;
   }
 
   .dashboard-section {
-    margin: 0 0 1.5rem 0;
-    width: 100%;
-    max-width: 100%;
-  }
-  
-  .dashboard-section:first-child {
-    margin-top: 1rem;
+    margin: 0 2rem 1.5rem 2rem;
+    padding: 1.5rem;
+    max-width: calc(100% - 4rem);
   }
 
   .quick-actions-grid {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     gap: 1rem;
   }
-  
+
   .recent-wishlist-grid {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     gap: 1rem;
-  }
-  
-  .profile-header {
-    gap: 1.5rem;
-  }
-  
-  .profile-avatar {
-    width: 100px;
-    height: 100px;
-  }
-  
-  .avatar-text {
-    font-size: 2rem;
-  }
-  
-  .action-card {
-    padding: 1rem;
-    gap: 0.75rem;
-  }
-  
-  .action-icon {
-    width: 40px;
-    height: 40px;
-    font-size: 1.25rem;
-  }
-  
-  .action-title {
-    font-size: 0.875rem;
-  }
-  
-  .action-subtitle {
-    font-size: 0.75rem;
-  }
-
-  .redemption-icon {
-    width: 56px;
-    height: 56px;
-    font-size: 1.75rem;
-  }
-
-  .redemption-title {
-    font-size: 1.125rem;
-  }
-
-  .balance-amount {
-    font-size: 1.5rem;
   }
 }
 
 @media (min-width: 1024px) {
+  body {
+    background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%) !important;
+  }
+  
   .profile-view {
-    padding: 0 4rem;
+    background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%) !important;
+    min-height: auto !important;
     padding-bottom: 100px;
   }
   
+  .page-container {
+    background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%) !important;
+    min-height: 100vh !important;
+    height: auto !important;
+    padding: 0 !important;
+    justify-content: flex-start !important;
+    align-items: stretch !important;
+  }
+  
+  .app-main {
+    background: transparent !important;
+    box-shadow: none !important;
+    min-height: auto !important;
+    max-height: none !important;
+    height: auto !important;
+    overflow: visible !important;
+    max-width: none !important;
+    width: 100% !important;
+    border-radius: 0 !important;
+  }
+
+  .dashboard-section {
+    margin: 0 3rem 2rem 3rem;
+    padding: 2rem;
+    max-width: calc(100% - 6rem);
+  }
+
   .quick-actions-grid {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 1.25rem;
   }
-  
+
   .recent-wishlist-grid {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 1.25rem;
   }
-  
-  .action-card {
-    padding: 1.25rem;
-    gap: 1rem;
-  }
-  
-  .action-icon {
-    width: 44px;
-    height: 44px;
-    font-size: 1.375rem;
-  }
-  
-  .action-title {
-    font-size: 1rem;
-  }
-  
-  .action-subtitle {
-    font-size: 0.8rem;
+}
+
+@media (min-width: 1200px) {
+  .dashboard-section {
+    margin: 0 4rem 2rem 4rem;
+    padding: 2.5rem;
+    max-width: calc(100% - 8rem);
   }
 
-  .redemption-icon {
-    width: 60px;
-    height: 60px;
-    font-size: 2rem;
+  .profile-view {
+    padding-bottom: 100px;
   }
+}
 
-  .redemption-title {
-    font-size: 1.25rem;
-  }
+/* Prevent content overflow on all screen sizes */
+.profile-view,
+.profile-view * {
+  max-width: 100%;
+  box-sizing: border-box;
+}
 
-  .balance-amount {
-    font-size: 1.75rem;
-  }
+/* Last section margin fix */
+.dashboard-section:last-of-type {
+  margin-bottom: 2rem;
 }
 </style>
