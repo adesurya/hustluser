@@ -92,47 +92,88 @@ export default {
 </script>
 
 <style scoped>
-/* Login page uses mobile-first design with proper typography */
+/* Login page - clean responsive design */
 .login-page {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   background: transparent;
+  position: relative;
 }
 
-/* On mobile, full screen layout */
+/* Mobile: Full screen with subtle gradient background */
 @media (max-width: 767px) {
   .login-page {
-    background: linear-gradient(0deg, #FFFFFF, #FFFFFF), linear-gradient(180deg, rgba(35, 235, 250, 0.1) 0%, rgba(255, 0, 128, 0.1) 100%);
+    background: linear-gradient(0deg, #FFFFFF, #FFFFFF), linear-gradient(180deg, rgba(35, 235, 250, 0.08) 0%, rgba(255, 0, 128, 0.08) 100%);
   }
 }
 
-/* Typography fixes */
+/* Tablet and Desktop: Transparent background (card provides the background) */
+@media (min-width: 768px) {
+  .login-page {
+    background: transparent;
+  }
+}
+
+/* Ensure consistent text colors across all screen sizes */
 .page-title {
-  color: #1F2937 !important; /* Dark gray for visibility */
+  color: #1F2937 !important;
 }
 
 .page-subtitle {
-  color: #6B7280 !important; /* Medium gray for good contrast */
+  color: #6B7280 !important;
 }
 
 .form-footer {
-  color: #4B5563 !important; /* Dark gray for readability */
-}
-
-.form-footer p {
   color: #4B5563 !important;
 }
 
+.form-footer p {
+  color: inherit !important;
+}
+
 .auth-link {
-  color: #4F46E5 !important; /* Indigo for links */
+  color: #4F46E5 !important;
+  font-weight: 700 !important;
+}
+
+.auth-link:hover {
+  color: #6366F1 !important;
 }
 
 .resend-link {
   color: #6B7280 !important;
+  font-weight: 600 !important;
 }
 
 .resend-link:hover {
   color: #4B5563 !important;
+}
+
+/* Responsive adjustments for better spacing */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .login-page {
+    justify-content: flex-start;
+  }
+}
+
+@media (min-width: 1024px) {
+  .login-page {
+    justify-content: flex-start;
+  }
+}
+
+/* Smooth transitions for interactive elements */
+.auth-link,
+.resend-link {
+  transition: color 0.2s ease;
+}
+
+/* Focus states for accessibility */
+.auth-link:focus,
+.resend-link:focus {
+  outline: 2px solid #4F46E5;
+  outline-offset: 2px;
+  border-radius: 2px;
 }
 </style>

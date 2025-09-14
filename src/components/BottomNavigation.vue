@@ -28,7 +28,7 @@ export default {
       { id: 'home', icon: '🏠', label: 'Home', route: '/dashboard' },
       { id: 'category', icon: '📋', label: 'Category', route: '/category' },
       { id: 'campaign', icon: '🎯', label: 'Campaign', route: '/campaign' },
-      { id: 'leaderboard', icon: '🏆', label: 'Leaderboard', route: '/leaderboard' },
+      { id: 'leaderboard', icon: '🏆', label: 'Mission', route: '/leaderboard' },
       { id: 'account', icon: '👤', label: 'Akun', route: '/profile' }
     ]
 

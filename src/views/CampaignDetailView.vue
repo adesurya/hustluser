@@ -45,10 +45,10 @@
           </div>
         </div>
         
-        <div class="campaign-reward">
+        <!-- <div class="campaign-reward">
           <span class="reward-icon">🎁</span>
           <span class="reward-text">{{ getStatusMessage(campaign.status) }}</span>
-        </div>
+        </div> -->
       </div>
       
       <!-- Campaign Description -->
@@ -103,12 +103,12 @@
     </div>
 
     <!-- Join Campaign Button -->
-    <div v-if="campaign && campaign.status === 'active'" class="dashboard-section join-section">
+    <!-- <div v-if="campaign && campaign.status === 'active'" class="dashboard-section join-section">
       <button class="join-campaign-btn" @click="joinCampaign">
         <span class="join-icon">🚀</span>
         <span class="join-text">Join Campaign</span>
       </button>
-    </div>
+    </div> -->
 
     <!-- Error Section -->
     <div v-if="error" class="dashboard-section error-section">

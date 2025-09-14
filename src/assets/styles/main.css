@@ -1,9 +1,9 @@
-/* src/assets/styles/main.css - UPDATED VERSION */
+/* src/assets/styles/main.css - UPDATED RESPONSIVE VERSION */
 
 /* Import Baloo 2 Font */
 @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;500;600;700;800&display=swap');
 
-/* Reset and Base Styles - Mobile First */
+/* Reset and Base Styles */
 * {
   margin: 0;
   padding: 0;
@@ -15,7 +15,7 @@ html, body {
   font-family: 'Baloo 2', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 500;
   background: linear-gradient(0deg, #FFFFFF, #FFFFFF), linear-gradient(180deg, rgba(35, 235, 250, 0.1) 0%, rgba(255, 0, 128, 0.1) 100%);
 }
@@ -31,61 +31,61 @@ body {
 .font-bold { font-weight: 700; }
 .font-extrabold { font-weight: 800; }
 
-/* Mobile First - Page Container */
-.page-container {
-  min-height: 100vh;
-  width: 100%;
-  background: linear-gradient(0deg, #FFFFFF, #FFFFFF), linear-gradient(180deg, rgba(35, 235, 250, 0.1) 0%, rgba(255, 0, 128, 0.1) 100%);
-  display: flex;
-  flex-direction: column;
-  margin: 0;
-  padding: 0;
-}
+/* ===============================
+   MOBILE FIRST DESIGN (320px+)
+   =============================== */
 
-/* Mobile First - Page Styles */
 .page-header {
-  padding: 0 1rem 1.5rem;
+  padding: 2rem 1.5rem 1.5rem;
   text-align: center;
 }
 
 .page-title {
-  font-size: 1.75rem; /* Mobile: 28px */
+  font-size: 1.75rem; /* 28px */
   font-weight: 800;
-  color: #1F2937; /* Dark gray instead of white */
-  margin-bottom: 0.5rem;
+  color: #1F2937;
+  margin-bottom: 0.75rem;
   line-height: 1.2;
   font-family: 'Baloo 2', sans-serif;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
 }
 
 .page-subtitle {
-  color: #6B7280; /* Medium gray for good contrast */
-  font-size: 1rem; /* Mobile: 16px */
-  margin-bottom: 1.5rem;
-  line-height: 1.4;
+  color: #6B7280;
+  font-size: 1rem; /* 16px */
+  margin-bottom: 0;
+  line-height: 1.5;
   font-weight: 500;
   font-family: 'Baloo 2', sans-serif;
 }
 
 .form-container {
-  padding: 0 1rem;
+  padding: 0 1.5rem;
   flex: 1;
   max-width: 100%;
 }
 
 .form-footer {
   text-align: center;
-  padding: 1rem 1rem 1.5rem;
-  font-size: 0.9rem;
-  color: #4B5563; /* Dark gray for readability */
-  line-height: 1.5;
+  padding: 1.5rem 1.5rem 2rem;
+  font-size: 0.875rem;
+  color: #4B5563;
+  line-height: 1.6;
   font-weight: 500;
   font-family: 'Baloo 2', sans-serif;
   margin-top: auto;
 }
 
+.form-footer p {
+  margin-bottom: 0.5rem;
+}
+
+.form-footer p:last-of-type {
+  margin-bottom: 0.75rem;
+}
+
 .auth-link {
-  color: #4F46E5; /* Indigo color for links */
+  color: #4F46E5;
   text-decoration: none;
   font-weight: 700;
   border-bottom: 1px solid rgba(79, 70, 229, 0.3);
@@ -103,7 +103,7 @@ body {
   text-decoration: none;
   font-weight: 600;
   display: block;
-  margin-top: 0.75rem;
+  transition: all 0.2s ease;
 }
 
 .resend-link:hover {
@@ -111,7 +111,7 @@ body {
   color: #4B5563;
 }
 
-/* Success Container - Mobile */
+/* Success Container */
 .success-container {
   display: flex;
   flex-direction: column;
@@ -123,117 +123,148 @@ body {
 }
 
 .success-title {
-  font-size: 1.375rem;
+  font-size: 1.5rem;
   font-weight: 700;
-  color: #10B981; /* Green for success */
+  color: #10B981;
   margin-bottom: 1rem;
   line-height: 1.3;
   font-family: 'Baloo 2', sans-serif;
 }
 
 .success-message {
-  color: #374151; /* Dark gray for readability */
+  color: #374151;
   margin-bottom: 1.5rem;
   line-height: 1.6;
-  max-width: 280px;
+  max-width: 300px;
   font-size: 0.875rem;
   font-weight: 400;
   font-family: 'Baloo 2', sans-serif;
 }
 
-/* Tablet Design - 768px and up */
-@media (min-width: 768px) {
-  html, body {
-    font-size: 14px;
-  }
-
-  /* Center container on tablet+ but maintain mobile design */
-  .page-container {
-    justify-content: center;
-    align-items: center;
-    padding: 2rem;
-  }
-
-  .app-main {
-    width: 100%;
-    max-width: 420px;
-    min-height: calc(100vh - 4rem);
-    background: rgba(255, 255, 255, 0.95);
-    border-radius: 24px;
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-  }
-
-  .page-title {
-    font-size: 1.5rem;
-    font-weight: 800;
-  }
-
-  .page-subtitle {
-    font-size: 0.875rem;
-    font-weight: 500;
-  }
-
-  .page-header {
-    padding: 1rem 1.5rem 1.5rem;
-  }
-
-  .form-container {
-    padding: 0 1.5rem;
-  }
-
-  .form-footer {
-    padding: 1.5rem 1.5rem 2rem;
-    font-size: 0.875rem;
-    font-weight: 500;
-  }
-
-  .success-container {
-    padding: 3rem 2rem;
-    min-height: 65vh;
-  }
-
-  .success-title {
-    font-size: 1.5rem;
-    margin-bottom: 1.25rem;
-    font-weight: 800;
-  }
-
-  .success-message {
-    font-size: 0.875rem;
-    max-width: 280px;
-    margin-bottom: 2rem;
-    font-weight: 500;
-  }
+/* Base form input styles - mobile first */
+.form-group {
+  margin-bottom: 1rem;
+  width: 100%;
 }
 
-/* Desktop Small - 1024px and up */
-@media (min-width: 1024px) {
+.form-label {
+  display: block;
+  margin-bottom: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #374151;
+  font-family: 'Baloo 2', sans-serif;
+}
+
+.form-input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 2px solid #E5E7EB;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #1F2937;
+  background: #FFFFFF;
+  font-family: 'Baloo 2', sans-serif;
+  transition: all 0.2s ease;
+  min-height: 44px;
+  box-sizing: border-box;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #4F46E5;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+.form-input::placeholder {
+  color: #9CA3AF;
+  font-weight: 400;
+}
+
+/* Button components */
+.primary-btn {
+  width: 100%;
+  background: linear-gradient(135deg, #4F46E5 0%, #6366F1 100%);
+  border: none;
+  border-radius: 10px;
+  padding: 0.875rem 1.25rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #FFFFFF;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: 'Baloo 2', sans-serif;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  flex-shrink: 0;
+}
+
+.primary-btn:hover {
+  background: linear-gradient(135deg, #4338CA 0%, #5B21B6 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+}
+
+.primary-btn:active {
+  transform: translateY(0);
+}
+
+.primary-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Checkbox components */
+.checkbox-group {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin: 1rem 0;
+}
+
+.checkbox-input {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.checkbox-label {
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: #4B5563;
+  font-weight: 500;
+  font-family: 'Baloo 2', sans-serif;
+}
+
+/* ===============================
+   TABLET DESIGN (768px - 1023px)
+   =============================== */
+
+@media (min-width: 768px) and (max-width: 1023px) {
   html, body {
-    font-size: 16px;
+    font-size: 15px;
   }
 
-  .app-main {
-    max-width: 480px;
-    border-radius: 28px;
+  .page-header {
+    padding: 1.5rem 2rem 1.5rem;
   }
 
   .page-title {
-    font-size: 1.75rem;
+    font-size: 1.625rem; /* 26px */
     font-weight: 800;
   }
 
   .page-subtitle {
-    font-size: 1.125rem;
+    font-size: 0.9375rem; /* 15px */
     font-weight: 500;
-  }
-
-  .page-header {
-    padding: 0 2rem 2.5rem;
   }
 
   .form-container {
@@ -241,13 +272,97 @@ body {
   }
 
   .form-footer {
-    padding: 2rem 2rem 2.5rem;
-    font-size: 1rem;
+    padding: 1.5rem 2rem 2rem;
+    font-size: 0.8125rem; /* 13px */
+    font-weight: 500;
+  }
+
+  .success-container {
+    padding: 2.5rem 2rem;
+    min-height: 65vh;
+  }
+
+  .success-title {
+    font-size: 1.625rem;
+    margin-bottom: 1.25rem;
+    font-weight: 800;
+  }
+
+  .success-message {
+    font-size: 0.9375rem;
+    max-width: 320px;
+    margin-bottom: 2rem;
+    font-weight: 500;
+  }
+
+  .form-group {
+    margin-bottom: 1rem;
+  }
+
+  .form-label {
+    font-size: 0.8125rem;
+    margin-bottom: 0.375rem;
+  }
+
+  .form-input {
+    padding: 0.8125rem 1.125rem;
+    font-size: 0.875rem;
+    border-radius: 10px;
+    min-height: 46px;
+  }
+
+  .primary-btn {
+    padding: 0.9375rem 1.375rem;
+    font-size: 0.9375rem;
+    border-radius: 12px;
+    min-height: 50px;
+    margin-top: 0.75rem;
+  }
+
+  .google-btn {
+    margin-bottom: 1.25rem;
+  }
+
+  .checkbox-label {
+    font-size: 0.8125rem;
+  }
+}
+
+/* ===============================
+   DESKTOP SMALL (1024px - 1199px)
+   =============================== */
+
+@media (min-width: 1024px) and (max-width: 1199px) {
+  html, body {
+    font-size: 16px;
+  }
+
+  .page-header {
+    padding: 1.75rem 2.5rem 2rem;
+  }
+
+  .page-title {
+    font-size: 1.75rem; /* 28px */
+    font-weight: 800;
+  }
+
+  .page-subtitle {
+    font-size: 1rem; /* 16px */
+    font-weight: 500;
+  }
+
+  .form-container {
+    padding: 0 2.5rem;
+  }
+
+  .form-footer {
+    padding: 2rem 2.5rem 2.5rem;
+    font-size: 0.875rem; /* 14px */
     font-weight: 400;
   }
 
   .success-container {
-    padding: 3.5rem 2.5rem;
+    padding: 3rem 2.5rem;
     min-height: 70vh;
   }
 
@@ -258,38 +373,61 @@ body {
   }
 
   .success-message {
-    font-size: 1.125rem;
+    font-size: 1rem;
     max-width: 360px;
     margin-bottom: 2.5rem;
     font-weight: 400;
   }
 }
 
-/* Desktop Large - 1200px and up */
+/* ===============================
+   DESKTOP LARGE (1200px+)
+   =============================== */
+
 @media (min-width: 1200px) {
-  .app-main {
-    max-width: 520px;
-    border-radius: 32px;
+  html, body {
+    font-size: 16px;
+  }
+
+  .page-header {
+    padding: 2rem 3rem 2.5rem;
   }
 
   .page-title {
-    font-size: 2rem;
+    font-size: 2rem; /* 32px */
     font-weight: 800;
   }
 
   .page-subtitle {
-    font-size: 1.25rem;
+    font-size: 1.125rem; /* 18px */
     font-weight: 500;
+  }
+
+  .form-container {
+    padding: 0 3rem;
+  }
+
+  .form-footer {
+    padding: 2.5rem 3rem 3rem;
+    font-size: 1rem; /* 16px */
+    font-weight: 400;
+  }
+
+  .success-container {
+    padding: 3.5rem 3rem;
+    min-height: 70vh;
   }
 
   .success-title {
     font-size: 2.125rem;
     font-weight: 800;
+    margin-bottom: 1.5rem;
   }
 
   .success-message {
-    font-size: 1.25rem;
+    font-size: 1.125rem;
     max-width: 400px;
+    margin-bottom: 2.5rem;
     font-weight: 400;
   }
 }
@@ -312,8 +450,165 @@ button {
   font-weight: 600;
 }
 
+/* Google Button - Responsive */
 .google-btn {
+  width: 100%;
+  background: #FFFFFF;
+  border: 2px solid #E5E7EB;
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  font-size: 0.9375rem;
   font-weight: 500;
+  color: #374151 !important;
+  cursor: pointer;
+  margin-bottom: 1.5rem;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  min-height: 56px;
+  font-family: 'Baloo 2', sans-serif;
+}
+
+.google-btn:hover {
+  border-color: #D1D5DB;
+  background: #F9FAFB;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.google-icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+/* Tablet Google Button */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .google-btn {
+    border-radius: 12px;
+    padding: 0.9375rem 1.125rem;
+    font-size: 0.875rem;
+    margin-bottom: 1.25rem;
+    min-height: 50px;
+  }
+
+  .google-icon {
+    width: 17px;
+    height: 17px;
+  }
+
+  .form-input.error {
+  border-color: #EF4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+.form-input.error:focus {
+  border-color: #EF4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
+}
+
+.error-text {
+  color: #EF4444;
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
+  font-weight: 500;
+  font-family: 'Baloo 2', sans-serif;
+}
+
+/* ===============================
+   LOADING STATES
+   =============================== */
+
+.loading-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top: 2px solid #FFFFFF;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* ===============================
+   SCROLLABLE CONTAINER FIXES
+   =============================== */
+
+/* Ensure proper scrolling behavior */
+.app-main {
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(156, 163, 175, 0.5) transparent;
+}
+
+/* Custom scrollbar for webkit browsers */
+.app-main::-webkit-scrollbar {
+  width: 6px;
+}
+
+.app-main::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.app-main::-webkit-scrollbar-thumb {
+  background-color: rgba(156, 163, 175, 0.5);
+  border-radius: 3px;
+}
+
+.app-main::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(156, 163, 175, 0.7);
+}
+
+}
+
+/* Desktop Google Button */
+@media (min-width: 1024px) {
+  .google-btn {
+    border-radius: 14px;
+    padding: 1rem 1.25rem;
+    font-size: 0.9375rem;
+    margin-bottom: 1.5rem;
+    min-height: 52px;
+  }
+
+  .google-icon {
+    width: 18px;
+    height: 18px;
+  }
+  .form-group {
+    margin-bottom: 1.125rem;
+  }
+
+  .form-label {
+    font-size: 0.875rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .form-input {
+    padding: 0.875rem 1.25rem;
+    font-size: 0.9375rem;
+    border-radius: 12px;
+    min-height: 48px;
+  }
+
+  .primary-btn {
+    padding: 1rem 1.5rem;
+    font-size: 1rem;
+    border-radius: 14px;
+    min-height: 52px;
+    margin-top: 1rem;
+  }
+
+  .checkbox-label {
+    font-size: 0.875rem;
+  }
 }
 
 /* Form Elements */
@@ -369,36 +664,98 @@ input, textarea, select {
   transform: translateX(-100%);
 }
 
-/* Google Button styling */
-.google-btn {
-  width: 100%;
-  background: #FFFFFF;
-  border: 2px solid #E5E7EB;
-  border-radius: 16px;
-  padding: 1.25rem 1.5rem;
-  font-size: 1rem;
-  font-weight: 500;
-  color: #374151 !important; /* Dark gray for visibility */
-  cursor: pointer;
-  margin-bottom: 2rem;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
-  min-height: 60px;
-  font-family: 'Baloo 2', sans-serif;
+/* Safe area insets for mobile devices */
+@media (max-width: 767px) {
+  .page-header {
+    padding-top: max(2rem, env(safe-area-inset-top) + 1rem);
+  }
+  
+  .form-footer {
+    padding-bottom: max(2rem, env(safe-area-inset-bottom) + 1rem);
+  }
+  .form-group:last-child {
+    margin-bottom: 0.75rem;
+  }
+
+  /* Better touch targets */
+  .form-input {
+    min-height: 44px;
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+
+  .primary-btn {
+    min-height: 48px;
+    font-size: 1rem;
+  }
+
+  /* Spacing optimizations */
+  .page-header {
+    padding-bottom: 0.75rem;
+  }
+
+  .form-container {
+    padding-bottom: 0.5rem;
+  }
 }
 
-.google-btn:hover {
-  border-color: #D1D5DB;
-  background: #F9FAFB;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+@media (min-width: 1400px) {
+  .app-main {
+    max-width: 580px;
+  }
+
+  .page-title {
+    font-size: 1.875rem !important;
+  }
+
+  .page-subtitle {
+    font-size: 1.125rem !important;
+  }
+
+  .form-input {
+    font-size: 1rem;
+    padding: 1rem 1.375rem;
+  }
+
+  .primary-btn {
+    font-size: 1.0625rem;
+    min-height: 56px;
+  }
 }
 
-.google-icon {
-  width: 20px;
-  height: 20px;
-  flex-shrink: 0;
+/* ===============================
+   ACCESSIBILITY IMPROVEMENTS
+   =============================== */
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .form-input {
+    border-width: 3px;
+  }
+
+  .primary-btn {
+    border: 2px solid transparent;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .primary-btn,
+  .google-btn,
+  .auth-link,
+  .form-input {
+    transition: none;
+  }
+
+  .signup-page {
+    animation: none;
+  }
+}
+
+/* Focus visible for keyboard navigation */
+@media (prefers-reduced-motion: no-preference) {
+  .primary-btn:focus-visible,
+  .google-btn:focus-visible {
+    outline: 2px solid #4F46E5;
+    outline-offset: 2px;
+  }
 }

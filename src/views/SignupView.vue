@@ -75,6 +75,21 @@ export default {
         return 'Please enter a valid email address'
       }
 
+      // Username validation
+      if (signupData.username.length < 3) {
+        return 'Username must be at least 3 characters'
+      }
+
+      if (!/^[a-zA-Z0-9_]+$/.test(signupData.username)) {
+        return 'Username can only contain letters, numbers, and underscores'
+      }
+
+      // Phone number validation
+      const phoneRegex = /^[+]?[1-9][\d]{0,15}$/
+      if (!phoneRegex.test(signupData.phoneNumber.replace(/\s/g, ''))) {
+        return 'Please enter a valid phone number'
+      }
+
       return null
     }
 
@@ -116,39 +131,194 @@ export default {
 </script>
 
 <style scoped>
-/* Signup page uses mobile-first design with proper typography */
+/* Signup page - clean responsive design */
 .signup-page {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   background: transparent;
+  position: relative;
 }
 
-/* On mobile, full screen layout */
+/* Mobile: Full screen with subtle gradient background */
 @media (max-width: 767px) {
   .signup-page {
-    background: linear-gradient(0deg, #FFFFFF, #FFFFFF), linear-gradient(180deg, rgba(35, 235, 250, 0.1) 0%, rgba(255, 0, 128, 0.1) 100%);
+    background: linear-gradient(0deg, #FFFFFF, #FFFFFF), linear-gradient(180deg, rgba(35, 235, 250, 0.08) 0%, rgba(255, 0, 128, 0.08) 100%);
+    display: flex;
+    flex-direction: column;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  
+  .page-header {
+    padding-top: max(1.5rem, env(safe-area-inset-top) + 1rem);
+    flex-shrink: 0;
+  }
+  
+  .form-container {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    min-height: 0;
+  }
+  
+  .form-footer {
+    padding-bottom: max(1.5rem, env(safe-area-inset-bottom) + 1rem);
+    flex-shrink: 0;
   }
 }
 
-/* Typography fixes */
+/* Tablet and Desktop: Transparent background */
+@media (min-width: 768px) {
+  .signup-page {
+    background: transparent;
+    justify-content: flex-start;
+    height: 100%;
+  }
+  
+  .form-container {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    min-height: 0;
+  }
+  
+  .form-footer {
+    flex-shrink: 0;
+  }
+}
+
+/* Enhanced styling for better visual hierarchy */
+.page-header {
+  position: relative;
+}
+
+/* Consistent text colors across all screen sizes */
 .page-title {
-  color: #1F2937 !important; /* Dark gray for visibility */
+  color: #1F2937 !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.02em;
 }
 
 .page-subtitle {
-  color: #6B7280 !important; /* Medium gray for good contrast */
+  color: #6B7280 !important;
+  font-weight: 500 !important;
+}
+
+.form-container {
+  position: relative;
+  z-index: 1;
 }
 
 .form-footer {
-  color: #4B5563 !important; /* Dark gray for readability */
+  color: #4B5563 !important;
+  font-weight: 500 !important;
+  margin-top: auto;
 }
 
 .form-footer p {
-  color: #4B5563 !important;
+  color: inherit !important;
+  margin: 0;
+  line-height: 1.6;
 }
 
 .auth-link {
-  color: #4F46E5 !important; /* Indigo for links */
+  color: #4F46E5 !important;
+  font-weight: 700 !important;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(79, 70, 229, 0.3);
+  transition: all 0.2s ease;
+  padding-bottom: 1px;
+}
+
+.auth-link:hover {
+  color: #6366F1 !important;
+  text-decoration: none;
+  border-bottom-color: #6366F1;
+  transform: translateY(-0.5px);
+}
+
+.auth-link:active {
+  transform: translateY(0);
+}
+
+.auth-link:focus {
+  outline: 2px solid #4F46E5;
+  outline-offset: 3px;
+  border-radius: 3px;
+  background: rgba(79, 70, 229, 0.05);
+}
+
+/* Smooth animations */
+.signup-page {
+  animation: fadeInUp 0.4s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Enhanced visual feedback */
+.signup-page::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: inherit;
+  z-index: -1;
+}
+
+/* Typography scaling for different screen sizes */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .page-title {
+    font-size: 1.5rem !important;
+  }
+  
+  .page-subtitle {
+    font-size: 0.875rem !important;
+  }
+}
+
+@media (min-width: 1024px) and (max-width: 1199px) {
+  .page-title {
+    font-size: 1.625rem !important;
+  }
+  
+  .page-subtitle {
+    font-size: 0.9375rem !important;
+  }
+}
+
+@media (min-width: 1200px) {
+  .page-title {
+    font-size: 1.75rem !important;
+  }
+  
+  .page-subtitle {
+    font-size: 1rem !important;
+  }
+}
+
+/* Accessibility improvements */
+@media (prefers-reduced-motion: reduce) {
+  .auth-link,
+  .signup-page {
+    transition: none;
+    animation: none;
+  }
+}
+
+@media (prefers-contrast: high) {
+  .auth-link {
+    border-bottom-width: 2px;
+  }
 }
 </style>

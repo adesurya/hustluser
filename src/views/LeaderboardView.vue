@@ -207,7 +207,6 @@ export default {
     // Filter options
     const filters = ref([
       { id: 'daily', label: 'Daily', icon: '📅' },
-      { id: 'weekly', label: 'Weekly', icon: '📊' },
       { id: 'monthly', label: 'Monthly', icon: '📈' }
     ])
 
@@ -268,28 +267,12 @@ export default {
     const getCurrentPeriodLabel = () => {
       const labels = {
         daily: 'Today',
-        weekly: 'This Week',
         monthly: 'This Month'
       }
       return labels[activeFilter.value] || 'This Period'
     }
 
     // API integration methods
-    const getWeekDates = () => {
-      const now = new Date()
-      const dayOfWeek = now.getDay()
-      const diff = now.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1)
-      
-      const monday = new Date(now.setDate(diff))
-      const sunday = new Date(monday)
-      sunday.setDate(monday.getDate() + 6)
-      
-      return {
-        start: monday.toISOString().split('T')[0],
-        end: sunday.toISOString().split('T')[0]
-      }
-    }
-
     const loadLeaderboard = async () => {
       try {
         let params = {}
@@ -297,11 +280,6 @@ export default {
         switch (activeFilter.value) {
           case 'daily': {
             params = { date: new Date().toISOString().split('T')[0] }
-            break
-          }
-          case 'weekly': {
-            const weekDates = getWeekDates()
-            params = { startDate: weekDates.start, endDate: weekDates.end }
             break
           }
           case 'monthly': {

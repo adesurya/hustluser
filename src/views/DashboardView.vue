@@ -23,7 +23,7 @@
         </div>
       </div>
 
-      <!-- Search Section -->
+      <!-- Search Section with Optimized Debounced Search -->
       <div class="dashboard-section search-section">
         <div class="search-container">
           <span class="search-icon">🔍</span>
@@ -32,43 +32,52 @@
             class="search-input"
             placeholder="Search products..."
             v-model="searchQuery"
-            @input="handleSearch"
+            @input="debouncedSearch"
+            @keydown.enter="handleSearchEnter"
+            ref="searchInput"
           />
+          <div v-if="isSearching" class="search-loading">
+            <div class="mini-spinner"></div>
+          </div>
+          <button v-if="searchQuery" class="clear-search" @click="clearSearch">✕</button>
         </div>
-      </div>
-
-      <!-- Categories Section -->
-      <div class="dashboard-section">
-        <div class="section-header">
-          <h3 class="section-title">Today's Hot Picks!</h3>
-          <button class="see-more-btn" @click="navigateToCategories">See More</button>
-        </div>
-        <div class="categories-scroll-container">
-          <div class="categories-grid">
-            <div 
-              v-for="category in categories" 
-              :key="category.id" 
-              class="category-card"
-              @click="selectCategory(category)"
-            >
-              <div class="category-icon" :style="{ background: getCategoryColor(category.id) }">
-                <span>{{ getCategoryIcon(category.name) }}</span>
-              </div>
-              <span class="category-name">{{ category.name }}</span>
+        
+        <!-- Search Results Dropdown -->
+        <div v-if="searchResults.length > 0 && searchQuery" class="search-results">
+          <div 
+            v-for="product in searchResults.slice(0, 5)" 
+            :key="product.id"
+            class="search-result-item"
+            @click="selectSearchResult(product)"
+          >
+            <img :src="getProductImageUrl(product.image)" :alt="product.title" class="search-result-image" />
+            <div class="search-result-info">
+              <h4 class="search-result-title">{{ product.title }}</h4>
+              <p class="search-result-price">{{ formatPrice(product.price) }}</p>
+              <span class="search-result-category">{{ product.category?.name }}</span>
             </div>
           </div>
+          <div v-if="searchResults.length > 5" class="search-result-more" @click="showAllSearchResults">
+            View all {{ searchResults.length }} results
+          </div>
+        </div>
+        
+        <!-- No Results -->
+        <div v-if="searchQuery && !isSearching && searchResults.length === 0" class="search-no-results">
+          <p>No products found for "{{ searchQuery }}"</p>
         </div>
       </div>
 
-      <!-- Featured Products Section -->
+      <!-- Featured Products Section with Pagination -->
       <div class="dashboard-section">
         <div class="section-header">
-          <h3 class="section-title">Featured Products</h3>
+          <h3 class="section-title">Hot / Winning Products</h3>
           <button class="see-more-btn" @click="navigateToCategories">See More</button>
         </div>
-        <div v-if="featuredProducts.length > 0" class="products-grid">
+        
+        <div v-if="paginatedFeaturedProducts.length > 0" class="products-grid">
           <div 
-            v-for="product in featuredProducts" 
+            v-for="product in paginatedFeaturedProducts" 
             :key="product.id" 
             class="product-card"
             @click="viewProductDetails(product)"
@@ -89,29 +98,76 @@
             </div>
           </div>
         </div>
-        <div v-else class="empty-products">
+        
+        <!-- Products Pagination -->
+        <div v-if="totalProductPages > 1" class="pagination-container">
+          <button 
+            class="pagination-btn"
+            :disabled="currentProductPage === 1"
+            @click="changeProductPage(currentProductPage - 1)"
+          >
+            ‹
+          </button>
+          <span class="pagination-info">{{ currentProductPage }} / {{ totalProductPages }}</span>
+          <button 
+            class="pagination-btn"
+            :disabled="currentProductPage === totalProductPages"
+            @click="changeProductPage(currentProductPage + 1)"
+          >
+            ›
+          </button>
+        </div>
+        
+        <div v-if="featuredProducts.length === 0" class="empty-products">
           <p class="empty-text">No featured products available</p>
         </div>
       </div>
 
-      <!-- Campaign Section -->
-      <div class="dashboard-section" v-if="activeCampaign">
+      <!-- Active Campaigns Section with Pagination -->
+      <div class="dashboard-section" v-if="activeCampaigns.length > 0">
         <div class="section-header">
-          <h3 class="section-title">Active Campaign</h3>
+          <h3 class="section-title">Active Campaigns</h3>
           <button class="see-more-btn" @click="navigateToCampaigns">See More</button>
         </div>
-        <div class="campaign-card" @click="viewCampaignDetails(activeCampaign)">
-          <div class="campaign-image">
-            <img :src="getCampaignImageUrl(activeCampaign.image)" :alt="activeCampaign.name" />
-            <div class="campaign-overlay">
-              <h4 class="campaign-title">{{ activeCampaign.name }}</h4>
-              <p class="campaign-description">{{ activeCampaign.description }}</p>
-              <div class="campaign-details">
-                <span class="campaign-status" :class="activeCampaign.status">{{ activeCampaign.status }}</span>
-                <span class="campaign-validity">{{ formatCampaignDate(activeCampaign.endDate) }}</span>
+        
+        <div class="campaigns-container">
+          <div 
+            v-for="campaign in paginatedActiveCampaigns" 
+            :key="campaign.id" 
+            class="campaign-card"
+            @click="viewCampaignDetails(campaign)"
+          >
+            <div class="campaign-image">
+              <img :src="getCampaignImageUrl(campaign.image)" :alt="campaign.name" />
+              <div class="campaign-overlay">
+                <h4 class="campaign-title">{{ campaign.name }}</h4>
+                <p class="campaign-description">{{ campaign.description }}</p>
+                <div class="campaign-details">
+                  <span class="campaign-status" :class="campaign.status">{{ campaign.status }}</span>
+                  <span class="campaign-validity">{{ formatCampaignDate(campaign.endDate) }}</span>
+                </div>
               </div>
             </div>
           </div>
+        </div>
+        
+        <!-- Campaigns Pagination -->
+        <div v-if="totalCampaignPages > 1" class="pagination-container">
+          <button 
+            class="pagination-btn"
+            :disabled="currentCampaignPage === 1"
+            @click="changeCampaignPage(currentCampaignPage - 1)"
+          >
+            ‹
+          </button>
+          <span class="pagination-info">{{ currentCampaignPage }} / {{ totalCampaignPages }}</span>
+          <button 
+            class="pagination-btn"
+            :disabled="currentCampaignPage === totalCampaignPages"
+            @click="changeCampaignPage(currentCampaignPage + 1)"
+          >
+            ›
+          </button>
         </div>
       </div>
 
@@ -139,8 +195,7 @@
 </template>
 
 <script>
-// DashboardView.vue <script> section with enhanced and consistent caching
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import BottomNavigation from '../components/BottomNavigation.vue'
@@ -158,32 +213,41 @@ export default {
   },
   setup() {
     const router = useRouter()
-    const searchQuery = ref('')
     const authStore = useAuthStore()
     
-    // Use cached API composable for consistency with other views
+    // Search functionality
+    const searchQuery = ref('')
+    const searchResults = ref([])
+    const isSearching = ref(false)
+    const searchInput = ref(null)
+    let searchTimeout = null
+    
+    // Use cached API composable
     const { 
       getMyPoints, 
-      getCategories, 
       getFeaturedProducts, 
       getCampaigns,
-      // loading: isCacheLoading,
-      // error: cacheError 
+      getProducts
     } = useCachedApi()
     
     // State management
     const isLoading = ref(true)
     const error = ref('')
     const userPointsData = ref(null)
-    const categories = ref([])
     const featuredProducts = ref([])
-    const activeCampaign = ref(null)
+    const activeCampaigns = ref([])
+
+    // Pagination state
+    const currentProductPage = ref(1)
+    const currentCampaignPage = ref(1)
+    const itemsPerPage = 10
+    const campaignsPerPage = 3
 
     // Share modal state
     const showShareModal = ref(false)
     const selectedProductForShare = ref(null)
 
-    // Enhanced cache status tracking
+    // Cache status tracking
     const cacheStatus = ref({
       isFromCache: false,
       source: 'network',
@@ -192,50 +256,178 @@ export default {
       lastRefresh: null
     })
 
-    // Performance tracking
-    const loadingMetrics = ref({
-      startTime: null,
-      endTime: null,
-      totalTime: 0,
-      cacheHits: 0,
-      networkCalls: 0
-    })
-
-    // User points from API or store
+    // Computed properties
     const userPoints = computed(() => 
       userPointsData.value?.currentBalance || authStore.userPoints || 0
     )
 
-    // Category colors mapping
-    const categoryColors = {
-      1: '#4FC3F7', // Electronics
-      2: '#FF69B4', // Fashion  
-      3: '#FF6B35', // Sports
-      4: '#4ECDC4', // Home & Living
-      5: '#FF1493', // Health & Beauty
-      6: '#32CD32'  // Automotive
+    // Pagination computed properties
+    const totalProductPages = computed(() => 
+      Math.ceil(featuredProducts.value.length / itemsPerPage)
+    )
+
+    const totalCampaignPages = computed(() => 
+      Math.ceil(activeCampaigns.value.length / campaignsPerPage)
+    )
+
+    const paginatedFeaturedProducts = computed(() => {
+      const start = (currentProductPage.value - 1) * itemsPerPage
+      const end = start + itemsPerPage
+      return featuredProducts.value.slice(start, end)
+    })
+
+    const paginatedActiveCampaigns = computed(() => {
+      const start = (currentCampaignPage.value - 1) * campaignsPerPage
+      const end = start + campaignsPerPage
+      return activeCampaigns.value.slice(start, end)
+    })
+
+    // Pagination methods
+    const changeProductPage = (page) => {
+      if (page >= 1 && page <= totalProductPages.value) {
+        currentProductPage.value = page
+        nextTick(() => {
+          const productsSection = document.querySelector('.products-grid')
+          if (productsSection) {
+            productsSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+          }
+        })
+      }
     }
 
-    // Category icons mapping
-    const categoryIcons = {
-      'Electronics': '📱',
-      'Fashion': '👗',
-      'Sports': '⚽',
-      'Sport': '⚽',
-      'Home & Living': '🏠',
-      'Health & Beauty': '💄',
-      'Automotive': '🚗'
+    const changeCampaignPage = (page) => {
+      if (page >= 1 && page <= totalCampaignPages.value) {
+        currentCampaignPage.value = page
+        nextTick(() => {
+          const campaignsSection = document.querySelector('.campaigns-container')
+          if (campaignsSection) {
+            campaignsSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+          }
+        })
+      }
     }
 
-    // Methods
-    const getCategoryColor = (categoryId) => {
-      return categoryColors[categoryId] || '#6B7280'
+    // Search functionality
+    const performLocalSearch = (query) => {
+      const localResults = featuredProducts.value.filter(product => 
+        product.title?.toLowerCase().includes(query.toLowerCase()) ||
+        product.category?.name?.toLowerCase().includes(query.toLowerCase())
+      ).slice(0, 10)
+      searchResults.value = localResults
+      isSearching.value = false
     }
 
-    const getCategoryIcon = (categoryName) => {
-      return categoryIcons[categoryName] || '📦'
+    const performOptimizedSearch = async (query) => {
+      try {
+        const localResults = featuredProducts.value.filter(product => 
+          product.title?.toLowerCase().includes(query.toLowerCase()) ||
+          product.category?.name?.toLowerCase().includes(query.toLowerCase())
+        )
+
+        if (localResults.length > 0 && query.length < 4) {
+          searchResults.value = localResults.slice(0, 10)
+          isSearching.value = false
+          return
+        }
+
+        const response = await getProducts({ 
+          search: query, 
+          limit: 20,
+          forceRefresh: false
+        }, { 
+          ttl: 2 * 60 * 1000
+        })
+
+        if (response?.success && response?.data?.length > 0) {
+          searchResults.value = response.data
+        } else {
+          searchResults.value = localResults.slice(0, 10)
+        }
+
+      } catch (err) {
+        console.error('Search error:', err)
+        performLocalSearch(query)
+      } finally {
+        isSearching.value = false
+      }
     }
 
+    const debouncedSearch = () => {
+      if (searchTimeout) {
+        clearTimeout(searchTimeout)
+      }
+
+      const query = searchQuery.value.trim()
+
+      if (!query) {
+        searchResults.value = []
+        isSearching.value = false
+        return
+      }
+
+      isSearching.value = true
+
+      if (query.length <= 2) {
+        searchTimeout = setTimeout(() => {
+          performLocalSearch(query)
+        }, 150)
+        return
+      }
+
+      searchTimeout = setTimeout(async () => {
+        await performOptimizedSearch(query)
+      }, 300)
+    }
+
+    const selectSearchResult = (product) => {
+      searchQuery.value = ''
+      searchResults.value = []
+      if (searchTimeout) {
+        clearTimeout(searchTimeout)
+      }
+      viewProductDetails(product)
+    }
+
+    const showAllSearchResults = () => {
+      const query = searchQuery.value.trim()
+      searchQuery.value = ''
+      searchResults.value = []
+      router.push({
+        name: 'Category',
+        query: { search: query }
+      })
+    }
+
+    const handleSearchEnter = () => {
+      if (searchQuery.value.trim()) {
+        showAllSearchResults()
+      }
+    }
+
+    const clearSearch = () => {
+      searchQuery.value = ''
+      searchResults.value = []
+      isSearching.value = false
+      if (searchTimeout) {
+        clearTimeout(searchTimeout)
+      }
+      if (searchInput.value) {
+        searchInput.value.focus()
+      }
+    }
+
+    // Watch search query
+    watch(searchQuery, (newQuery) => {
+      if (!newQuery.trim()) {
+        searchResults.value = []
+        isSearching.value = false
+        if (searchTimeout) {
+          clearTimeout(searchTimeout)
+        }
+      }
+    })
+
+    // Utility methods
     const getProductImageUrl = (imagePath) => {
       return apiService.constructor.getImageUrl(imagePath, 'products')
     }
@@ -262,17 +454,10 @@ export default {
 
     // Share Modal Methods
     const openShareModal = (product) => {
-      if (!product) {
-        console.warn('No product data available for sharing')
-        return
-      }
-      
-      // Validate product has required URL for material ID extraction
-      if (!product.url) {
+      if (!product?.url) {
         alert('This product cannot be shared as it does not have a valid product URL.')
         return
       }
-      
       selectedProductForShare.value = product
       showShareModal.value = true
     }
@@ -284,12 +469,7 @@ export default {
 
     const handleShareSuccess = async (shareData) => {
       console.log('Product shared successfully:', shareData)
-      
-      // Show success notification
       if (shareData.pointsEarned > 0) {
-        console.log(`Earned ${shareData.pointsEarned} points for sharing!`)
-        
-        // Force refresh points data after earning points
         try {
           const updatedPoints = await getMyPoints({ forceRefresh: true })
           if (updatedPoints.success) {
@@ -303,7 +483,6 @@ export default {
     }
 
     const handlePointsEarned = async (points) => {
-      // Force refresh user points data
       try {
         const updatedPoints = await getMyPoints({ forceRefresh: true })
         if (updatedPoints.success) {
@@ -312,205 +491,82 @@ export default {
         }
       } catch (err) {
         console.warn('Failed to refresh points:', err)
-        // Fallback to updating auth store directly
         authStore.refreshUserPoints()
       }
-      
       console.log(`Points earned: ${points}`)
     }
 
-    // Enhanced load dashboard data with consistent caching
+    // Enhanced load dashboard data
     const loadDashboardData = async (forceRefresh = false) => {
       isLoading.value = true
       error.value = ''
       
-      // Reset metrics
-      loadingMetrics.value = {
-        startTime: Date.now(),
-        endTime: null,
-        totalTime: 0,
-        cacheHits: 0,
-        networkCalls: 0
-      }
+      const startTime = Date.now()
 
       try {
         console.log('🚀 Loading dashboard data...', forceRefresh ? '(force refresh)' : '(cached)')
 
-        // Load all dashboard data in parallel using cached API
-        const [pointsResult, categoriesResult, featuredProductsResult, campaignsResult] = await Promise.allSettled([
+        const [pointsResult, featuredProductsResult, campaignsResult] = await Promise.allSettled([
           getMyPoints({ 
-            ttl: 30 * 1000, // 30 seconds for real-time points
-            forceRefresh 
-          }),
-          getCategories({ 
-            ttl: 30 * 60 * 1000, // 30 minutes for stable categories
+            ttl: 30 * 1000,
             forceRefresh 
           }),
           getFeaturedProducts({ 
-            ttl: 10 * 60 * 1000, // 10 minutes for featured products
+            ttl: 5 * 60 * 1000,
             forceRefresh 
           }),
           getCampaigns({ 
-            ttl: 20 * 60 * 1000, // 20 minutes for campaigns
+            ttl: 10 * 60 * 1000,
             forceRefresh 
           })
         ])
 
-        // Track cache performance
-        const cacheHits = []
-        const networkCalls = []
-        
-        // Handle points data
         if (pointsResult.status === 'fulfilled' && pointsResult.value.success) {
           userPointsData.value = pointsResult.value.data
-          cacheHits.push('points')
           console.log('✅ Points data loaded successfully')
-        } else {
-          console.warn('⚠️ Failed to load points:', pointsResult.reason)
-          networkCalls.push('points')
         }
 
-        // Handle categories data
-        if (categoriesResult.status === 'fulfilled' && categoriesResult.value.success) {
-          categories.value = categoriesResult.value.data.slice(0, 5) // Limit to 5 categories
-          cacheHits.push('categories')
-          console.log('✅ Categories data loaded successfully')
-        } else {
-          console.warn('⚠️ Failed to load categories:', categoriesResult.reason)
-          networkCalls.push('categories')
-        }
-
-        // Handle featured products data
         if (featuredProductsResult.status === 'fulfilled' && featuredProductsResult.value.success) {
-          featuredProducts.value = featuredProductsResult.value.data.slice(0, 6) // Limit to 6 products
-          cacheHits.push('products')
-          console.log('✅ Featured products loaded successfully')
-        } else {
-          console.warn('⚠️ Failed to load featured products:', featuredProductsResult.reason)
-          networkCalls.push('products')
+          featuredProducts.value = featuredProductsResult.value.data || []
+          console.log(`✅ Featured products loaded: ${featuredProducts.value.length} products`)
         }
 
-        // Handle campaigns data
         if (campaignsResult.status === 'fulfilled' && campaignsResult.value.success) {
-          const campaigns = campaignsResult.value.data
-          activeCampaign.value = campaigns.length > 0 ? campaigns[0] : null
-          cacheHits.push('campaigns')
-          console.log('✅ Campaigns data loaded successfully')
-        } else {
-          console.warn('⚠️ Failed to load campaigns:', campaignsResult.reason)
-          networkCalls.push('campaigns')
+          const campaigns = campaignsResult.value.data || []
+          activeCampaigns.value = campaigns.filter(campaign => 
+            campaign.status === 'active' || campaign.status === 'ongoing'
+          )
+          console.log(`✅ Active campaigns loaded: ${activeCampaigns.value.length} campaigns`)
         }
 
-        // Calculate metrics
-        loadingMetrics.value.endTime = Date.now()
-        loadingMetrics.value.totalTime = loadingMetrics.value.endTime - loadingMetrics.value.startTime
-        loadingMetrics.value.cacheHits = cacheHits.length
-        loadingMetrics.value.networkCalls = networkCalls.length
+        currentProductPage.value = 1
+        currentCampaignPage.value = 1
 
-        // Update cache status
+        const responseTime = Date.now() - startTime
         cacheStatus.value = {
-          isFromCache: cacheHits.length > 0,
-          source: cacheHits.length === 4 ? 'full-cache' : cacheHits.length > 0 ? 'partial-cache' : 'network',
-          details: cacheHits,
-          responseTime: loadingMetrics.value.totalTime,
-          lastRefresh: new Date(),
-          performance: {
-            cacheHitRate: ((cacheHits.length / 4) * 100).toFixed(1) + '%',
-            loadTime: loadingMetrics.value.totalTime + 'ms'
-          }
+          isFromCache: responseTime < 200,
+          source: responseTime < 200 ? 'cache' : 'network',
+          responseTime,
+          lastRefresh: new Date()
         }
 
-        // Log performance summary
-        console.group('📊 Dashboard Loading Performance')
-        console.log(`Total time: ${loadingMetrics.value.totalTime}ms`)
-        console.log(`Cache hits: ${cacheHits.join(', ')} (${cacheHits.length}/4)`)
-        console.log(`Cache hit rate: ${cacheStatus.value.performance.cacheHitRate}`)
-        console.log(`Data source: ${cacheStatus.value.source}`)
-        console.groupEnd()
-
-        // Check if all critical data failed to load
-        const criticalFailures = [
-          pointsResult.status === 'rejected',
-          categoriesResult.status === 'rejected',
-          featuredProductsResult.status === 'rejected'
-        ].filter(Boolean).length
-
-        if (criticalFailures >= 2) {
-          error.value = 'Unable to load dashboard data. Please check your connection.'
-        }
+        console.log(`📊 Dashboard loaded in ${responseTime}ms`)
 
       } catch (err) {
         console.error('💥 Dashboard loading error:', err)
         error.value = 'Failed to load dashboard data. Please try again.'
-        
-        // Update metrics for error case
-        loadingMetrics.value.endTime = Date.now()
-        loadingMetrics.value.totalTime = loadingMetrics.value.endTime - loadingMetrics.value.startTime
-        
-        cacheStatus.value = {
-          isFromCache: false,
-          source: 'error',
-          details: [],
-          responseTime: loadingMetrics.value.totalTime,
-          lastRefresh: new Date(),
-          performance: {
-            cacheHitRate: '0%',
-            loadTime: loadingMetrics.value.totalTime + 'ms'
-          }
-        }
       } finally {
         isLoading.value = false
       }
     }
 
-    // Force refresh dashboard data
-    const refreshDashboard = async () => {
-      console.log('🔄 Force refreshing dashboard data...')
-      await loadDashboardData(true)
-    }
-
-    // Smart refresh based on cache age
-    const smartRefresh = async () => {
-      if (cacheStatus.value.lastRefresh) {
-        const timeSinceLastRefresh = Date.now() - cacheStatus.value.lastRefresh.getTime()
-        const refreshThreshold = 5 * 60 * 1000 // 5 minutes
-        
-        if (timeSinceLastRefresh > refreshThreshold) {
-          console.log('⏰ Dashboard data is stale, refreshing...')
-          await refreshDashboard()
-        } else {
-          console.log('✨ Dashboard data is fresh, using cached data')
-          await loadDashboardData(false)
-        }
-      } else {
-        await loadDashboardData(false)
-      }
-    }
-
-    const handleSearch = () => {
-      if (searchQuery.value.trim()) {
-        router.push({
-          name: 'Category',
-          query: { search: searchQuery.value }
-        })
-      }
-    }
-
-    const selectCategory = (category) => {
-      router.push({
-        name: 'Category',
-        query: { categoryId: category.id }
-      })
-    }
-
+    // Navigation methods
     const viewProductDetails = (product) => {
-      // Store product details for next view
       sessionStorage.setItem('selectedProduct', JSON.stringify(product))
       router.push(`/product/${product.id}`)
     }
 
     const viewCampaignDetails = (campaign) => {
-      // Store campaign details for next view
       sessionStorage.setItem('selectedCampaign', JSON.stringify(campaign))
       router.push(`/campaign/${campaign.id}`)
     }
@@ -523,53 +579,70 @@ export default {
       router.push('/campaign')
     }
 
-    // Initialize dashboard data on mount with smart refresh
+    // Initialize dashboard data
     onMounted(() => {
-      smartRefresh()
+      loadDashboardData()
     })
 
     return {
+      // Search
       searchQuery,
+      searchResults,
+      isSearching,
+      searchInput,
+      debouncedSearch,
+      handleSearchEnter,
+      clearSearch,
+      selectSearchResult,
+      showAllSearchResults,
+      
+      // Data
       isLoading,
       error,
       userPoints,
-      categories,
       featuredProducts,
-      activeCampaign,
+      activeCampaigns,
+      paginatedFeaturedProducts,
+      paginatedActiveCampaigns,
+      
+      // Pagination
+      currentProductPage,
+      currentCampaignPage,
+      totalProductPages,
+      totalCampaignPages,
+      changeProductPage,
+      changeCampaignPage,
+      
+      // Share modal
       showShareModal,
       selectedProductForShare,
+      openShareModal,
+      closeShareModal,
+      handleShareSuccess,
+      handlePointsEarned,
+      
+      // Utilities
       cacheStatus,
-      loadingMetrics,
-      handleSearch,
-      selectCategory,
+      loadDashboardData,
       viewProductDetails,
       viewCampaignDetails,
       navigateToCategories,
       navigateToCampaigns,
-      loadDashboardData,
-      refreshDashboard,
-      smartRefresh,
-      getCategoryColor,
-      getCategoryIcon,
       getProductImageUrl,
       getCampaignImageUrl,
       formatPrice,
-      formatCampaignDate,
-      openShareModal,
-      closeShareModal,
-      handleShareSuccess,
-      handlePointsEarned
+      formatCampaignDate
     }
   }
 }
 </script>
 
 <style scoped>
-/* Dashboard View - Add blue background and fix scrolling */
+/* Dashboard View Complete Styling */
 .dashboard-view {
   min-height: 100vh;
   background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%);
-  padding-bottom: 120px; /* Increased to prevent bottom navigation cutoff */
+  padding-bottom: 120px;
   display: flex;
   flex-direction: column;
   overflow-y: auto;
@@ -614,61 +687,7 @@ export default {
   100% { transform: rotate(360deg); }
 }
 
-/* Error Section */
-.error-section {
-  background: #FEF2F2;
-  border: 2px solid #FECACA;
-}
-
-.error-message {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  color: #DC2626;
-  font-family: 'Baloo 2', sans-serif;
-}
-
-.error-icon {
-  font-size: 1.25rem;
-  flex-shrink: 0;
-}
-
-.error-text {
-  flex: 1;
-  font-weight: 500;
-}
-
-.retry-btn {
-  background: #DC2626;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  padding: 0.5rem 1rem;
-  font-size: 0.875rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-  font-family: 'Baloo 2', sans-serif;
-}
-
-.retry-btn:hover {
-  background: #B91C1C;
-  transform: translateY(-1px);
-}
-
-/* Empty Products */
-.empty-products {
-  text-align: center;
-  padding: 2rem 1rem;
-  color: #6B7280;
-}
-
-.empty-text {
-  font-family: 'Baloo 2', sans-serif;
-  font-weight: 500;
-}
-
-/* Dashboard Section - Clean containers with proper text handling */
+/* Dashboard Sections */
 .dashboard-section {
   background: white;
   margin: 0 1rem 1.5rem 1rem;
@@ -676,125 +695,9 @@ export default {
   border-radius: 16px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.9);
-  /* Ensure proper text wrapping */
   word-wrap: break-word;
   overflow-wrap: break-word;
   hyphens: auto;
-}
-
-.campaign-details {
-  display: flex;
-  gap: 1rem;
-  align-items: center;
-  flex-wrap: wrap;
-}
-
-.campaign-status {
-  padding: 0.375rem 0.75rem;
-  border-radius: 8px;
-  font-size: 0.75rem;
-  font-weight: 700;
-  font-family: 'Baloo 2', sans-serif;
-  text-transform: capitalize;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-}
-
-.campaign-status.active {
-  background: #10B981;
-  color: white;
-}
-
-.campaign-status.upcoming {
-  background: #F59E0B;
-  color: white;
-}
-
-.campaign-status.ended {
-  background: #EF4444;
-  color: white;
-}
-
-.campaign-validity {
-  font-size: 0.75rem;
-  opacity: 0.9;
-  font-family: 'Baloo 2', sans-serif;
-  font-weight: 500;
-}
-
-/* Responsive Styling for Tablet and Desktop */
-@media (min-width: 768px) {
-  .dashboard-view {
-    background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%) !important;
-  }
-  
-  .page-container,
-  .app-main {
-    background: transparent !important;
-  }
-
-  .categories-scroll-container {
-    scroll-snap-type: x mandatory;
-  }
-  
-  .category-card {
-    scroll-snap-align: center;
-  }
-}
-
-@media (min-width: 1024px) {
-  body {
-    background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%) !important;
-  }
-  
-  .dashboard-view {
-    background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%) !important;
-    min-height: auto !important;
-  }
-  
-  .page-container {
-    background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%) !important;
-    min-height: 100vh !important;
-    height: auto !important;
-    padding: 0 !important;
-    justify-content: flex-start !important;
-    align-items: stretch !important;
-  }
-  
-  .app-main {
-    background: transparent !important;
-    box-shadow: none !important;
-    min-height: auto !important;
-    max-height: none !important;
-    height: auto !important;
-    overflow: visible !important;
-    max-width: none !important;
-    width: 100% !important;
-    border-radius: 0 !important;
-  }
-
-  .categories-scroll-container {
-    scrollbar-width: thin;
-    scrollbar-color: rgba(79, 195, 247, 0.3) transparent;
-  }
-  
-  .categories-scroll-container::-webkit-scrollbar {
-    display: block;
-    height: 4px;
-  }
-  
-  .categories-scroll-container::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 2px;
-  }
-  
-  .categories-scroll-container::-webkit-scrollbar-thumb {
-    background: rgba(79, 195, 247, 0.5);
-    border-radius: 2px;
-  }
-  
-  .categories-scroll-container::-webkit-scrollbar-thumb:hover {
-    background: rgba(79, 195, 247, 0.7);
-  }
 }
 
 .dashboard-section:first-child {
@@ -847,6 +750,7 @@ export default {
 
 /* Search Section */
 .search-section {
+  position: relative;
   padding: 1rem 1.25rem;
   background: transparent;
   margin: 0 0 1.5rem 0;
@@ -863,6 +767,13 @@ export default {
   gap: 0.75rem;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.9);
+  position: relative;
+  transition: box-shadow 0.2s;
+}
+
+.search-container:focus-within {
+  box-shadow: 0 6px 20px rgba(79, 195, 247, 0.2);
+  border-color: #4FC3F7;
 }
 
 .search-icon {
@@ -883,6 +794,151 @@ export default {
 .search-input::placeholder {
   color: #9CA3AF;
   font-weight: 400;
+}
+
+.search-loading {
+  display: flex;
+  align-items: center;
+}
+
+.mini-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #E5E7EB;
+  border-top: 2px solid #4FC3F7;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.clear-search {
+  background: none;
+  border: none;
+  color: #9CA3AF;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
+  transition: all 0.2s;
+}
+
+.clear-search:hover {
+  background: #F3F4F6;
+  color: #6B7280;
+}
+
+/* Search Results */
+.search-results {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  margin-top: 0.5rem;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.search-result-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  border-bottom: 1px solid #F1F5F9;
+}
+
+.search-result-item:hover {
+  background: #F8FAFC;
+}
+
+.search-result-item:last-child {
+  border-bottom: none;
+}
+
+.search-result-image {
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: #F3F4F6;
+}
+
+.search-result-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.search-result-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #1F2937;
+  margin-bottom: 0.25rem;
+  font-family: 'Baloo 2', sans-serif;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.search-result-price {
+  font-size: 0.75rem;
+  color: #059669;
+  font-weight: 700;
+  font-family: 'Baloo 2', sans-serif;
+  margin-bottom: 0.125rem;
+}
+
+.search-result-category {
+  font-size: 0.6875rem;
+  color: #6B7280;
+  font-weight: 500;
+  font-family: 'Baloo 2', sans-serif;
+  background: #F3F4F6;
+  padding: 0.125rem 0.375rem;
+  border-radius: 4px;
+  display: inline-block;
+}
+
+.search-result-more {
+  padding: 0.75rem 1rem;
+  text-align: center;
+  color: #4FC3F7;
+  font-weight: 600;
+  cursor: pointer;
+  border-top: 1px solid #F1F5F9;
+  font-family: 'Baloo 2', sans-serif;
+  font-size: 0.875rem;
+  transition: background-color 0.2s;
+}
+
+.search-result-more:hover {
+  background: #F8FAFC;
+}
+
+.search-no-results {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  margin-top: 0.5rem;
+  padding: 1rem;
+  text-align: center;
+  color: #6B7280;
+  font-family: 'Baloo 2', sans-serif;
+  font-size: 0.875rem;
 }
 
 /* Section Headers */
@@ -918,84 +974,7 @@ export default {
   transform: translateY(-1px);
 }
 
-/* Categories - Enhanced scrollable with touch support */
-.categories-scroll-container {
-  overflow-x: auto;
-  overflow-y: hidden;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-  -webkit-overflow-scrolling: touch;
-  scroll-behavior: smooth;
-  cursor: grab;
-}
-
-.categories-scroll-container:active {
-  cursor: grabbing;
-}
-
-.categories-scroll-container::-webkit-scrollbar {
-  display: none;
-}
-
-.categories-grid {
-  display: flex;
-  gap: 1rem;
-  padding: 0.5rem 0;
-  width: max-content;
-  min-width: 100%;
-  touch-action: pan-x;
-}
-
-.category-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  min-width: 90px;
-  flex-shrink: 0;
-  position: relative;
-  padding: 0.5rem;
-  border-radius: 12px;
-  transition: all 0.2s;
-  cursor: pointer;
-}
-
-.category-card:hover {
-  transform: translateY(-2px);
-  background: rgba(79, 195, 247, 0.05);
-}
-
-.category-icon {
-  width: 64px;
-  height: 64px;
-  border-radius: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.75rem;
-  margin-bottom: 0.75rem;
-  color: white;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  transition: transform 0.2s;
-}
-
-.category-card:hover .category-icon {
-  transform: scale(1.05);
-}
-
-.category-name {
-  font-size: 0.8rem;
-  color: #1F2937;
-  text-align: center;
-  font-family: 'Baloo 2', sans-serif;
-  font-weight: 600;
-  line-height: 1.2;
-  /* Fixed text overflow for category names */
-  word-wrap: break-word;
-  overflow-wrap: break-word;
-  hyphens: auto;
-}
-
-/* Products Grid - 2 products per row */
+/* Products Grid */
 .products-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -1063,7 +1042,6 @@ export default {
   font-family: 'Baloo 2', sans-serif;
   line-height: 1.3;
   margin-bottom: 0.25rem;
-  /* Fixed text overflow for product names */
   word-wrap: break-word;
   overflow-wrap: break-word;
   hyphens: auto;
@@ -1112,7 +1090,63 @@ export default {
   transform: scale(1.1);
 }
 
-/* Campaign Card */
+/* Pagination */
+.pagination-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  padding: 1rem 0;
+}
+
+.pagination-btn {
+  background: white;
+  border: 2px solid #E5E7EB;
+  border-radius: 8px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #4FC3F7;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'Baloo 2', sans-serif;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background: #4FC3F7;
+  color: white;
+  transform: translateY(-1px);
+}
+
+.pagination-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  color: #9CA3AF;
+}
+
+.pagination-info {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #1F2937;
+  font-family: 'Baloo 2', sans-serif;
+  background: white;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Campaigns */
+.campaigns-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
 .campaign-card {
   border-radius: 16px;
   overflow: hidden;
@@ -1157,7 +1191,6 @@ export default {
   font-weight: 800;
   margin-bottom: 0.5rem;
   font-family: 'Baloo 2', sans-serif;
-  /* Fixed text overflow for campaign titles */
   word-wrap: break-word;
   overflow-wrap: break-word;
   hyphens: auto;
@@ -1169,7 +1202,6 @@ export default {
   opacity: 0.95;
   font-family: 'Baloo 2', sans-serif;
   line-height: 1.4;
-  /* Fixed text overflow for campaign descriptions */
   word-wrap: break-word;
   overflow-wrap: break-word;
   hyphens: auto;
@@ -1197,6 +1229,11 @@ export default {
   color: white;
 }
 
+.campaign-status.ongoing {
+  background: #10B981;
+  color: white;
+}
+
 .campaign-status.upcoming {
   background: #F59E0B;
   color: white;
@@ -1214,7 +1251,61 @@ export default {
   font-weight: 500;
 }
 
-/* Responsive Styling for Tablet and Desktop */
+/* Error States */
+.error-section {
+  background: #FEF2F2;
+  border: 2px solid #FECACA;
+}
+
+.error-message {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: #DC2626;
+  font-family: 'Baloo 2', sans-serif;
+}
+
+.error-icon {
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.error-text {
+  flex: 1;
+  font-weight: 500;
+}
+
+.retry-btn {
+  background: #DC2626;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'Baloo 2', sans-serif;
+}
+
+.retry-btn:hover {
+  background: #B91C1C;
+  transform: translateY(-1px);
+}
+
+/* Empty States */
+.empty-products {
+  text-align: center;
+  padding: 2rem 1rem;
+  color: #6B7280;
+}
+
+.empty-text {
+  font-family: 'Baloo 2', sans-serif;
+  font-weight: 500;
+}
+
+/* Responsive Design */
 @media (min-width: 768px) {
   .dashboard-view {
     background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%) !important;
@@ -1223,14 +1314,6 @@ export default {
   .page-container,
   .app-main {
     background: transparent !important;
-  }
-
-  .categories-scroll-container {
-    scroll-snap-type: x mandatory;
-  }
-  
-  .category-card {
-    scroll-snap-align: center;
   }
 }
 
@@ -1263,30 +1346,6 @@ export default {
     max-width: none !important;
     width: 100% !important;
     border-radius: 0 !important;
-  }
-
-  .categories-scroll-container {
-    scrollbar-width: thin;
-    scrollbar-color: rgba(79, 195, 247, 0.3) transparent;
-  }
-  
-  .categories-scroll-container::-webkit-scrollbar {
-    display: block;
-    height: 4px;
-  }
-  
-  .categories-scroll-container::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 2px;
-  }
-  
-  .categories-scroll-container::-webkit-scrollbar-thumb {
-    background: rgba(79, 195, 247, 0.5);
-    border-radius: 2px;
-  }
-  
-  .categories-scroll-container::-webkit-scrollbar-thumb:hover {
-    background: rgba(79, 195, 247, 0.7);
   }
 }
 </style>

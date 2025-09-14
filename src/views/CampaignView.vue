@@ -14,7 +14,7 @@
     </div>
 
     <!-- Search Section -->
-    <div class="dashboard-section search-section">
+    <div class="search-section">
       <div class="search-container">
         <span class="search-icon">🔍</span>
         <input 
@@ -99,7 +99,6 @@
       </div>
     </div>
 
-    <!-- Bottom Navigation Component -->
     <BottomNavigation />
   </div>
 </template>
@@ -176,94 +175,48 @@ export default {
       }
     }
 
-    // Enhanced campaign loading with more detailed debugging
     const loadCampaigns = async () => {
       isLoading.value = true
       error.value = ''
       
       try {
-        console.log('Loading campaigns and user points...')
-        
         const startTime = Date.now()
         
         const [campaignsResult, pointsResult] = await Promise.allSettled([
           cacheOptimization.getCachedApiCall(
             'campaigns',
             () => apiService.getActiveCampaigns(),
-            { ttl: 20 * 60 * 1000 } // 20 minutes cache
+            { ttl: 20 * 60 * 1000 }
           ),
           cacheOptimization.getCachedApiCall(
             'myPoints',
             () => apiService.getMyPoints(),
-            { ttl: 30 * 1000 } // 30 seconds cache
+            { ttl: 30 * 1000 }
           )
         ])
         
         const responseTime = Date.now() - startTime
         performanceService.notifyCacheOperation('api', 'campaigns_and_points', responseTime)
 
-        // Handle campaigns data with comprehensive debugging
         if (campaignsResult.status === 'fulfilled' && campaignsResult.value) {
           const campaignsResponse = campaignsResult.value
-          console.log('=== CAMPAIGNS API RESPONSE ===')
-          console.log('Full response:', campaignsResponse)
           
           if (campaignsResponse.success && campaignsResponse.data) {
             campaigns.value = campaignsResponse.data
-            
-            // COMPREHENSIVE DEBUG: Log campaign structure
-            console.log('=== CAMPAIGNS DATA ANALYSIS ===')
-            console.log('Campaigns loaded successfully:', campaigns.value.length)
-            console.log('Raw campaigns data:', JSON.stringify(campaigns.value, null, 2))
-            
-            // Check for ID fields in all campaigns
-            if (campaigns.value.length > 0) {
-              console.log('=== CAMPAIGN STRUCTURE ANALYSIS ===')
-              campaigns.value.forEach((campaign, index) => {
-                console.log(`Campaign ${index}:`, {
-                  id: campaign.id,
-                  campaignId: campaign.campaignId,
-                  _id: campaign._id,
-                  uuid: campaign.uuid,
-                  campaign_id: campaign.campaign_id,
-                  name: campaign.name,
-                  allKeys: Object.keys(campaign)
-                })
-              })
-              
-              // Focus on first campaign
-              const firstCampaign = campaigns.value[0]
-              console.log('=== FIRST CAMPAIGN DETAILED ANALYSIS ===')
-              console.log('Full first campaign object:', JSON.stringify(firstCampaign, null, 2))
-              console.log('Available fields:', Object.keys(firstCampaign))
-              console.log('ID-like fields check:', {
-                'id': firstCampaign.id,
-                'campaignId': firstCampaign.campaignId,
-                '_id': firstCampaign._id,
-                'uuid': firstCampaign.uuid,
-                'campaign_id': firstCampaign.campaign_id
-              })
-            }
           } else {
-            console.warn('Failed to load campaigns:', campaignsResponse.message)
             campaigns.value = []
             error.value = campaignsResponse.message || 'Failed to load campaigns'
           }
         } else {
-          console.error('Failed to load campaigns:', campaignsResult.reason)
           campaigns.value = []
           error.value = 'Failed to load campaigns'
         }
 
-        // Handle points data
         if (pointsResult.status === 'fulfilled' && pointsResult.value) {
           const pointsResponse = pointsResult.value
           if (pointsResponse.success && pointsResponse.data) {
             userPointsData.value = pointsResponse.data
-            console.log('User points loaded:', userPointsData.value.currentBalance)
           }
-        } else {
-          console.warn('Failed to load user points:', pointsResult.reason)
         }
 
       } catch (err) {
@@ -275,8 +228,6 @@ export default {
       }
     }
 
-
-    // Event handlers
     const handleSearch = () => {
       console.log('Searching for:', searchQuery.value)
     }
@@ -285,85 +236,40 @@ export default {
       searchQuery.value = ''
     }
 
-    // Enhanced campaign detail viewing with comprehensive debugging and fallback
     const viewCampaignDetails = async (campaign) => {
-      // Enhanced validation with detailed logging
-      console.log('=== CAMPAIGN CLICK DEBUG ===')
-      console.log('Campaign object received:', campaign)
-      console.log('Campaign type:', typeof campaign)
-      console.log('Campaign keys:', campaign ? Object.keys(campaign) : 'null')
-      
       if (!campaign) {
-        console.error('No campaign data provided')
         error.value = 'Invalid campaign selected'
         return
       }
 
-      // Check for various possible ID field names with detailed logging
-      console.log('Checking ID fields:')
-      console.log('campaign.id:', campaign.id)
-      console.log('campaign.campaignId:', campaign.campaignId)
-      console.log('campaign._id:', campaign._id)
-      console.log('campaign.uuid:', campaign.uuid)
-      console.log('campaign.campaign_id:', campaign.campaign_id)
-      
       const campaignId = campaign.id || campaign.campaignId || campaign._id || campaign.uuid || campaign.campaign_id
       
       if (!campaignId) {
-        console.error('=== CAMPAIGN ID MISSING ===')
-        console.error('Campaign data:', JSON.stringify(campaign, null, 2))
-        console.error('Available campaign fields:', Object.keys(campaign))
-        
-        // Show user-friendly error
         error.value = 'Campaign ID not found. Please try refreshing the page.'
-        
-        // Don't try to navigate without an ID
         return
       }
 
-      console.log('Using campaign ID:', campaignId)
-      console.log('ID type:', typeof campaignId)
-
-      // Validate that ID is not empty string or null
       if (campaignId === '' || campaignId === null || campaignId === 'undefined') {
-        console.error('Campaign ID is invalid:', campaignId)
         error.value = 'Invalid campaign ID. Please try refreshing the page.'
         return
       }
 
       try {
-        console.log('Loading campaign details for ID:', campaignId)
-        console.log('Full campaign object:', JSON.stringify(campaign, null, 2))
-        
-        const startTime = Date.now()
-        
-        // Use the found ID
         const response = await cacheOptimization.getCachedApiCall(
           `campaign_${campaignId}`,
           () => apiService.getCampaignById(campaignId),
-          { ttl: 30 * 60 * 1000 } // 30 minutes cache
+          { ttl: 30 * 60 * 1000 }
         )
         
-        const responseTime = Date.now() - startTime
-        performanceService.notifyCacheOperation('api', `campaign_${campaignId}`, responseTime)
-        
         if (response && response.success) {
-          console.log('Campaign details loaded successfully')
-          
-          // Store campaign data for detail view
           sessionStorage.setItem('selectedCampaign', JSON.stringify(response.data))
-          
-          // Navigate to campaign detail
           router.push(`/campaign/${campaignId}`)
         } else {
-          const errorMsg = response?.message || 'Failed to load campaign details'
-          console.error('API response error:', errorMsg)
-          error.value = errorMsg
+          error.value = response?.message || 'Failed to load campaign details'
         }
       } catch (err) {
         console.error('Error loading campaign details:', err)
         
-        // Enhanced error handling
         if (err.message.includes('404') || err.message.includes('not found')) {
           error.value = 'Campaign not found. It may have been removed or expired.'
         } else if (err.message.includes('400')) {
@@ -376,9 +282,7 @@ export default {
       }
     }
 
-    // Initialize data on mount
     onMounted(() => {
-      console.log('CampaignView mounted')
       loadCampaigns()
     })
 
@@ -402,43 +306,22 @@ export default {
 </script>
 
 <style scoped>
-/* All existing styles remain the same */
+/* Reset and Base Styles - SAMA DENGAN CATEGORYVIEW */
+* {
+  box-sizing: border-box;
+}
+
+/* Campaign View Main Container - SAMA DENGAN CATEGORYVIEW */
 .campaign-view {
   min-height: 100vh;
   background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%);
-  padding-bottom: 100px;
-  display: flex;
-  flex-direction: column;
-  overflow-y: auto;
+  padding-bottom: 100px; /* Increased padding to make room for fixed footer */
+  width: 100%;
+  overflow-x: hidden;
+  position: relative;
 }
 
-.campaign-view .page-container {
-  max-width: none !important;
-  width: 100% !important;
-  background: transparent !important;
-  border-radius: 0 !important;
-  box-shadow: none !important;
-  backdrop-filter: none !important;
-  border: none !important;
-  padding: 0 !important;
-  margin: 0 !important;
-}
-
-.campaign-view .app-main {
-  max-width: none !important;
-  width: 100% !important;
-  background: transparent !important;
-  border-radius: 0 !important;
-  box-shadow: none !important;
-  backdrop-filter: none !important;
-  border: none !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  min-height: auto !important;
-  height: auto !important;
-  overflow: visible !important;
-}
-
+/* Dashboard sections - SAMA DENGAN CATEGORYVIEW */
 .dashboard-section {
   background: white;
   margin: 0 1rem 1.5rem 1rem;
@@ -446,13 +329,18 @@ export default {
   border-radius: 16px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.9);
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
+  max-width: calc(100% - 2rem);
+  box-sizing: border-box;
 }
 
 .dashboard-section:first-child {
   margin-top: 1rem;
 }
 
-/* Loading Section */
+/* Loading Section - SAMA DENGAN CATEGORYVIEW */
 .loading-section {
   display: flex;
   flex-direction: column;
@@ -483,52 +371,82 @@ export default {
   100% { transform: rotate(360deg); }
 }
 
-/* Error Section */
-.error-section {
-  background: #FEF2F2;
-  border: 2px solid #FECACA;
-  margin-top: 1rem;
-  border-radius: 12px;
+/* Search Section - SAMA DENGAN CATEGORYVIEW */
+.search-section {
+  position: relative;
   padding: 1rem;
+  background: transparent;
+  margin: 0 0 1.5rem 0;
+  box-shadow: none;
+  border: none;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
-.error-message {
+.search-container {
+  background: white;
+  border-radius: 24px;
+  padding: 1rem 1.25rem;
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  color: #DC2626;
-  font-family: 'Baloo 2', sans-serif;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  position: relative;
+  transition: box-shadow 0.2s;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
-.error-icon {
-  font-size: 1.25rem;
+.search-container:focus-within {
+  box-shadow: 0 6px 20px rgba(79, 195, 247, 0.2);
+  border-color: #4FC3F7;
+}
+
+.search-icon {
+  font-size: 1.125rem;
+  color: #6B7280;
   flex-shrink: 0;
 }
 
-.error-text {
+.search-input {
   flex: 1;
-  font-weight: 500;
-}
-
-.retry-btn {
-  background: #DC2626;
-  color: white;
   border: none;
-  border-radius: 8px;
-  padding: 0.5rem 1rem;
-  font-size: 0.875rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
+  outline: none;
+  font-size: 1rem;
+  color: #1F2937;
   font-family: 'Baloo 2', sans-serif;
+  font-weight: 500;
+  min-width: 0;
 }
 
-.retry-btn:hover {
-  background: #B91C1C;
-  transform: translateY(-1px);
+.search-input::placeholder {
+  color: #9CA3AF;
+  font-weight: 400;
 }
 
-/* Points Section */
+.clear-search-btn {
+  background: #EF4444;
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: white;
+  font-size: 0.75rem;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.clear-search-btn:hover {
+  background: #DC2626;
+  transform: scale(1.1);
+}
+
+/* Points Section - KHUSUS CAMPAIGN */
 .points-section {
   padding: 1rem 1.25rem;
   background: rgba(255, 255, 255, 0.95);
@@ -572,73 +490,14 @@ export default {
   font-weight: 500;
 }
 
-/* Search Section */
-.search-section {
-  padding: 1rem 1.25rem;
-  background: transparent;
-  margin: 0 0 1.5rem 0;
-  box-shadow: none;
-  border: none;
-}
-
-.search-container {
-  background: white;
-  border-radius: 24px;
-  padding: 1rem 1.25rem;
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.9);
-  position: relative;
-}
-
-.search-icon {
-  font-size: 1.125rem;
-  color: #6B7280;
-}
-
-.search-input {
-  flex: 1;
-  border: none;
-  outline: none;
-  font-size: 1rem;
-  color: #1F2937;
-  font-family: 'Baloo 2', sans-serif;
-  font-weight: 500;
-}
-
-.search-input::placeholder {
-  color: #9CA3AF;
-  font-weight: 400;
-}
-
-.clear-search-btn {
-  background: #EF4444;
-  border: none;
-  border-radius: 50%;
-  width: 24px;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  color: white;
-  font-size: 0.75rem;
-  transition: all 0.2s;
-}
-
-.clear-search-btn:hover {
-  background: #DC2626;
-  transform: scale(1.1);
-}
-
-/* Section Headers */
+/* Section Headers - SAMA DENGAN CATEGORYVIEW */
 .section-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 .section-title {
@@ -655,7 +514,7 @@ export default {
   font-weight: 500;
 }
 
-/* Campaigns List */
+/* Campaigns List - DISESUAIKAN DARI PRODUCTS GRID */
 .campaigns-list {
   display: flex;
   flex-direction: column;
@@ -668,16 +527,17 @@ export default {
   border-radius: 16px;
   padding: 1rem;
   border: 2px solid #E2E8F0;
-  transition: all 0.2s;
   cursor: pointer;
+  transition: all 0.2s;
   align-items: center;
   gap: 1rem;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .campaign-card:hover {
-  background: #F1F5F9;
-  border-color: #4FC3F7;
   transform: translateY(-2px);
+  border-color: #4FC3F7;
   box-shadow: 0 6px 16px rgba(79, 195, 247, 0.15);
 }
 
@@ -744,23 +604,31 @@ export default {
   flex: 1;
   display: flex;
   flex-direction: column;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .campaign-title {
-  font-size: 0.95rem;
-  font-weight: 700;
+  font-size: 0.875rem;
+  font-weight: 600;
   color: #1F2937;
   font-family: 'Baloo 2', sans-serif;
-  margin-bottom: 0.375rem;
   line-height: 1.3;
+  margin-bottom: 0.25rem;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
 }
 
 .campaign-desc {
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   color: #6B7280;
   font-family: 'Baloo 2', sans-serif;
-  margin-bottom: 0.75rem;
   line-height: 1.4;
+  margin-bottom: 0.5rem;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
 }
 
 .campaign-details {
@@ -773,6 +641,7 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 0.5rem;
 }
 
 .detail-label {
@@ -780,6 +649,7 @@ export default {
   color: #6B7280;
   font-family: 'Baloo 2', sans-serif;
   font-weight: 500;
+  flex-shrink: 0;
 }
 
 .detail-value {
@@ -787,6 +657,8 @@ export default {
   color: #374151;
   font-family: 'Baloo 2', sans-serif;
   font-weight: 600;
+  text-align: right;
+  word-wrap: break-word;
 }
 
 .detail-value.status.active {
@@ -813,7 +685,7 @@ export default {
   transform: translateX(4px);
 }
 
-/* Empty State */
+/* Empty State - SAMA DENGAN CATEGORYVIEW */
 .empty-state {
   text-align: center;
   padding: 3rem 1rem;
@@ -823,7 +695,6 @@ export default {
 .empty-icon {
   font-size: 3rem;
   margin-bottom: 1rem;
-  opacity: 0.7;
 }
 
 .empty-title {
@@ -840,11 +711,111 @@ export default {
   line-height: 1.5;
 }
 
-/* Responsive Design */
+/* Error Section - SAMA DENGAN CATEGORYVIEW */
+.error-section {
+  background: #FEF2F2;
+  border: 2px solid #FECACA;
+}
+
+.error-message {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: #DC2626;
+  font-family: 'Baloo 2', sans-serif;
+}
+
+.error-icon {
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.error-text {
+  flex: 1;
+  font-weight: 500;
+}
+
+.retry-btn {
+  background: #DC2626;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'Baloo 2', sans-serif;
+}
+
+.retry-btn:hover {
+  background: #B91C1C;
+  transform: translateY(-1px);
+}
+
+/* FIXED FOOTER STYLES - SAMA PERSIS DENGAN CATEGORYVIEW */
+:deep(.bottom-navigation) {
+  position: fixed !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  z-index: 1000 !important;
+  background: white !important;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1) !important;
+}
+
+.bottom-navigation {
+  position: fixed !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  z-index: 1000 !important;
+  background: white !important;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1) !important;
+}
+
+::v-deep .bottom-navigation,
+/deep/ .bottom-navigation,
+>>> .bottom-navigation {
+  position: fixed !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  z-index: 1000 !important;
+  background: white !important;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Responsive Design - SAMA DENGAN CATEGORYVIEW */
+@media (min-width: 640px) {
+  .campaign-view {
+    padding-bottom: 100px;
+  }
+}
+
 @media (min-width: 768px) {
+  .campaign-view {
+    background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%) !important;
+    padding-bottom: 100px;
+  }
+  
+  .page-container,
+  .app-main {
+    background: transparent !important;
+  }
+
   .dashboard-section {
     margin: 0 2rem 1.5rem 2rem;
     padding: 1.5rem;
+    max-width: calc(100% - 4rem);
+  }
+
+  .search-section {
+    margin: 0 2rem 1.5rem 2rem;
+    padding: 1rem 0;
   }
 
   .campaign-image {
@@ -862,9 +833,46 @@ export default {
 }
 
 @media (min-width: 1024px) {
+  body {
+    background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%) !important;
+  }
+  
+  .campaign-view {
+    background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%) !important;
+    min-height: auto !important;
+    padding-bottom: 100px;
+  }
+  
+  .page-container {
+    background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%) !important;
+    min-height: 100vh !important;
+    height: auto !important;
+    padding: 0 !important;
+    justify-content: flex-start !important;
+    align-items: stretch !important;
+  }
+  
+  .app-main {
+    background: transparent !important;
+    box-shadow: none !important;
+    min-height: auto !important;
+    max-height: none !important;
+    height: auto !important;
+    overflow: visible !important;
+    max-width: none !important;
+    width: 100% !important;
+    border-radius: 0 !important;
+  }
+
   .dashboard-section {
     margin: 0 3rem 2rem 3rem;
     padding: 2rem;
+    max-width: calc(100% - 6rem);
+  }
+
+  .search-section {
+    margin: 0 3rem 1.5rem 3rem;
+    padding: 1.5rem 0;
   }
 
   .campaign-card {
@@ -887,9 +895,30 @@ export default {
 
 @media (min-width: 1200px) {
   .dashboard-section {
-    margin: 0 auto 2rem auto;
-    max-width: 1000px;
-    width: calc(100% - 4rem);
+    margin: 0 4rem 2rem 4rem;
+    padding: 2.5rem;
+    max-width: calc(100% - 8rem);
   }
+
+  .search-section {
+    margin: 0 4rem 2rem 4rem;
+    padding: 2rem 0;
+  }
+
+  .campaign-view {
+    padding-bottom: 100px;
+  }
+}
+
+/* Prevent content overflow on all screen sizes - SAMA DENGAN CATEGORYVIEW */
+.campaign-view,
+.campaign-view * {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Last section margin fix - SAMA DENGAN CATEGORYVIEW */
+.dashboard-section:last-of-type {
+  margin-bottom: 2rem;
 }
 </style>
