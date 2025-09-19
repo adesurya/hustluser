@@ -80,6 +80,27 @@ const routes = [
       title: 'My Wishlist'
     }
   },
+  // Affiliate Links Routes
+  {
+    path: '/profile/affiliate-links',
+    name: 'AffiliateLinks',
+    component: () => import('../views/AffiliateLinksView.vue'),
+    meta: { 
+      requiresAuth: true,
+      title: 'Affiliate Links History'
+    }
+  },
+  // Bank Account Routes - NEW
+  {
+    path: '/profile/bank-accounts',
+    name: 'BankAccounts',
+    component: () => import('../views/BankAccountView.vue'),
+    meta: { 
+      requiresAuth: true,
+      title: 'Bank Account Management'
+    }
+  },
+  // Redemption Routes
   {
     path: '/profile/redeem',
     name: 'Redeem',

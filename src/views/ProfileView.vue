@@ -1,175 +1,247 @@
 <template>
-  <div class="profile-view dashboard-page">
+  <div class="profile-view">
     <HustlHeader :isDashboard="true" />
 
-    <!-- User Info Section -->
-    <div class="dashboard-section profile-header-section">
-      <div class="profile-header">
-        <div class="profile-avatar">
-          <span class="avatar-text">{{ getInitials(authStore.userName) }}</span>
-        </div>
-        <div class="profile-info">
-          <h2 class="profile-name">{{ authStore.userName || 'User' }}</h2>
-          <p class="profile-email">{{ authStore.userEmail || 'user@example.com' }}</p>
-          <div class="profile-stats">
-            <div class="stat-item">
-              <span class="stat-icon">🪙</span>
-              <span class="stat-value">{{ authStore.userPoints || 0 }}</span>
-              <span class="stat-label">Points</span>
-            </div>
-            <div class="stat-item">
-              <span class="stat-icon">💖</span>
-              <span class="stat-value">{{ wishlistCount }}</span>
-              <span class="stat-label">Wishlist</span>
+    <div class="profile-content">
+      <!-- User Info Section -->
+      <div class="dashboard-section profile-header-section">
+        <div class="profile-header">
+          <div class="profile-avatar">
+            <span class="avatar-text">{{ getInitials(authStore.userName) }}</span>
+          </div>
+          <div class="profile-info">
+            <h2 class="profile-name">{{ authStore.userName || 'User' }}</h2>
+            <p class="profile-email">{{ authStore.userEmail || 'user@example.com' }}</p>
+            <div class="profile-stats">
+              <div class="stat-item">
+                <span class="stat-icon">🪙</span>
+                <span class="stat-value">{{ formatNumber(authStore.userPoints || 0) }}</span>
+                <span class="stat-label">Points</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-icon">💖</span>
+                <span class="stat-value">{{ wishlistCount }}</span>
+                <span class="stat-label">Wishlist</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-icon">🏦</span>
+                <span class="stat-value">{{ bankAccountsCount }}</span>
+                <span class="stat-label">Banks</span>
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- Quick Actions Section -->
-    <div class="dashboard-section quick-actions-section">
-      <h3 class="section-title">Quick Actions</h3>
-      <div class="quick-actions-grid">
-        <button class="action-card" @click="navigateToWishlist">
-          <div class="action-icon wishlist-icon">💖</div>
-          <div class="action-info">
-            <span class="action-title">My Wishlist</span>
-            <span class="action-subtitle">{{ wishlistCount }} items</span>
-          </div>
-          <div class="action-arrow">→</div>
-        </button>
-        
-        <button class="action-card" @click="navigateToTransactions">
-          <div class="action-icon transactions-icon">💰</div>
-          <div class="action-info">
-            <span class="action-title">Transactions</span>
-            <span class="action-subtitle">View history</span>
-          </div>
-          <div class="action-arrow">→</div>
-        </button>
-        
-        <button class="action-card" @click="navigateToRedemptions">
-          <div class="action-icon redemptions-icon">🎁</div>
-          <div class="action-info">
-            <span class="action-title">Redemptions</span>
-            <span class="action-subtitle">Claim rewards</span>
-          </div>
-          <div class="action-arrow">→</div>
-        </button>
-        
-        <button class="action-card" @click="showSettings = true">
-          <div class="action-icon settings-icon">⚙️</div>
-          <div class="action-info">
-            <span class="action-title">Settings</span>
-            <span class="action-subtitle">Preferences</span>
-          </div>
-          <div class="action-arrow">→</div>
-        </button>
-      </div>
-    </div>
-
-    <!-- Redemption Action Section -->
-    <div class="dashboard-section redemption-action-section">
-      <div class="redemption-card">
-        <div class="redemption-header">
-          <div class="redemption-icon">
-            <span>🏦</span>
-          </div>
-          <div class="redemption-info">
-            <h4 class="redemption-title">Request Withdrawal</h4>
-            <p class="redemption-subtitle">Convert your points to cash</p>
-          </div>
-          <div class="redemption-balance">
-            <span class="balance-amount">{{ formatNumber(authStore.userPoints || 0) }}</span>
-            <span class="balance-label">Points</span>
-          </div>
-        </div>
-        <div class="redemption-actions">
-          <button class="redemption-btn" @click="navigateToRedeem" :disabled="(authStore.userPoints || 0) < 100">
-            <span class="btn-icon">💸</span>
-            <span class="btn-text">Redeem Points</span>
+      <!-- Quick Actions Section - ENHANCED -->
+      <div class="dashboard-section quick-actions-section">
+        <h3 class="section-title">Quick Actions</h3>
+        <div class="quick-actions-grid">
+          <button class="action-card" @click="navigateToWishlist">
+            <div class="action-icon wishlist-icon">💖</div>
+            <div class="action-info">
+              <span class="action-title">My Wishlist</span>
+              <span class="action-subtitle">{{ wishlistCount }} saved items</span>
+              <span class="action-description">Manage your favorite products</span>
+            </div>
+            <div class="action-arrow">→</div>
           </button>
-          <div class="redemption-note">
-            <span class="note-text">Minimum: 100 points (Rp 100)</span>
-          </div>
+          
+          <button class="action-card" @click="navigateToAffiliateLinks">
+            <div class="action-icon affiliate-icon">🔗</div>
+            <div class="action-info">
+              <span class="action-title">Affiliate Links</span>
+              <span class="action-subtitle">Generate & share</span>
+              <span class="action-description">Earn money from referrals</span>
+            </div>
+            <div class="action-arrow">→</div>
+          </button>
+          
+          <button class="action-card" @click="navigateToBankAccounts">
+            <div class="action-icon bank-icon">🏦</div>
+            <div class="action-info">
+              <span class="action-title">Bank Accounts</span>
+              <span class="action-subtitle">{{ bankAccountsCount }} account{{ bankAccountsCount !== 1 ? 's' : '' }}</span>
+              <span class="action-description">Setup withdrawal methods</span>
+            </div>
+            <div class="action-arrow">→</div>
+          </button>
+          
+          <button class="action-card" @click="navigateToTransactions">
+            <div class="action-icon transactions-icon">💰</div>
+            <div class="action-info">
+              <span class="action-title">Transactions</span>
+              <span class="action-subtitle">View activity</span>
+              <span class="action-description">Track your earnings</span>
+            </div>
+            <div class="action-arrow">→</div>
+          </button>
+          
+          <button class="action-card" @click="navigateToRedemptions">
+            <div class="action-icon redemptions-icon">🎁</div>
+            <div class="action-info">
+              <span class="action-title">Redemptions</span>
+              <span class="action-subtitle">Claim rewards</span>
+              <span class="action-description">Convert points to cash</span>
+            </div>
+            <div class="action-arrow">→</div>
+          </button>
+          
+          <button class="action-card" @click="showSettings = true">
+            <div class="action-icon settings-icon">⚙️</div>
+            <div class="action-info">
+              <span class="action-title">Settings</span>
+              <span class="action-subtitle">Preferences</span>
+              <span class="action-description">Customize your experience</span>
+            </div>
+            <div class="action-arrow">→</div>
+          </button>
         </div>
       </div>
-    </div>
 
-    <!-- Recent Wishlist Items -->
-    <div v-if="recentWishlistItems.length > 0" class="dashboard-section recent-wishlist-section">
-      <div class="section-header">
-        <h3 class="section-title">Recent Wishlist Items</h3>
-        <button class="see-all-btn" @click="navigateToWishlist">
-          <span class="see-all-text">See All</span>
-          <span class="see-all-icon">→</span>
-        </button>
+      <!-- Bank Account Summary Section -->
+      <div v-if="primaryBankAccount || bankAccountsCount > 0" class="dashboard-section bank-summary-section">
+        <div class="section-header">
+          <h3 class="section-title">Primary Bank Account</h3>
+          <button class="manage-banks-btn" @click="navigateToBankAccounts">
+            <span class="manage-text">Manage</span>
+            <span class="manage-icon">→</span>
+          </button>
+        </div>
+        
+        <div v-if="primaryBankAccount" class="primary-bank-card">
+          <div class="bank-icon">🏦</div>
+          <div class="bank-info">
+            <h4 class="bank-name">{{ formatBankName(primaryBankAccount.bankName) }}</h4>
+            <p class="account-name">{{ primaryBankAccount.accountName }}</p>
+            <p class="account-number">{{ primaryBankAccount.maskedAccountNumber || formatAccountNumber(primaryBankAccount.accountNumber) }}</p>
+            <div class="bank-badges">
+              <span class="badge primary-badge">Primary</span>
+              <span v-if="primaryBankAccount.isVerified" class="badge verified-badge">Verified</span>
+              <span v-else class="badge unverified-badge">Unverified</span>
+            </div>
+          </div>
+        </div>
+        
+        <div v-else-if="bankAccountsCount > 0" class="no-primary-bank">
+          <div class="warning-icon">⚠️</div>
+          <div class="warning-info">
+            <p class="warning-title">No primary bank account set</p>
+            <p class="warning-message">Please set a primary account for easier redemptions</p>
+          </div>
+          <button class="set-primary-btn" @click="navigateToBankAccounts">Set Primary</button>
+        </div>
       </div>
-      
-      <div class="recent-wishlist-grid">
-        <div 
-          v-for="item in recentWishlistItems" 
-          :key="item.id" 
-          class="wishlist-preview-card"
-          @click="viewProductDetails(item)"
-        >
-          <div class="preview-image">
-            <img :src="getProductImageUrl(item.image)" :alt="item.title" />
-            <button class="remove-from-wishlist" @click.stop="removeFromWishlist(item.id)">
-              <span class="remove-icon">❌</span>
+
+      <!-- Redemption Action Section -->
+      <div class="dashboard-section redemption-action-section">
+        <div class="redemption-card">
+          <div class="redemption-header">
+            <div class="redemption-icon">
+              <span>🏦</span>
+            </div>
+            <div class="redemption-info">
+              <h4 class="redemption-title">Request Withdrawal</h4>
+              <p class="redemption-subtitle">Convert your points to cash</p>
+            </div>
+            <div class="redemption-balance">
+              <span class="balance-amount">{{ formatNumber(authStore.userPoints || 0) }}</span>
+              <span class="balance-label">Points</span>
+            </div>
+          </div>
+          <div class="redemption-actions">
+            <button class="redemption-btn" @click="navigateToRedeem" :disabled="(authStore.userPoints || 0) < 100">
+              <span class="btn-icon">💸</span>
+              <span class="btn-text">Redeem Points</span>
             </button>
-          </div>
-          <div class="preview-info">
-            <h4 class="preview-name">{{ item.title }}</h4>
-            <div class="preview-price">{{ item.price }}</div>
+            <div class="redemption-note">
+              <span class="note-text">Minimum: 100 points (Rp 100)</span>
+              <span v-if="!primaryBankAccount && bankAccountsCount === 0" class="note-warning">
+                • Add a bank account first
+              </span>
+            </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- Empty Wishlist State -->
-    <div v-else class="dashboard-section empty-wishlist-section">
-      <div class="empty-wishlist-state">
-        <div class="empty-icon">💔</div>
-        <h4 class="empty-title">Your wishlist is empty</h4>
-        <p class="empty-message">Start adding products you love!</p>
-        <button class="browse-products-btn" @click="navigateToProducts">
-          <span class="browse-icon">🛍️</span>
-          <span class="browse-text">Browse Products</span>
+      <!-- Recent Wishlist Items -->
+      <div v-if="recentWishlistItems.length > 0" class="dashboard-section recent-wishlist-section">
+        <div class="section-header">
+          <h3 class="section-title">Recent Wishlist Items</h3>
+          <button class="see-all-btn" @click="navigateToWishlist">
+            <span class="see-all-text">See All</span>
+            <span class="see-all-icon">→</span>
+          </button>
+        </div>
+        
+        <div class="recent-wishlist-grid">
+          <div 
+            v-for="item in recentWishlistItems" 
+            :key="item.id" 
+            class="wishlist-preview-card"
+            @click="viewProductDetails(item)"
+          >
+            <div class="preview-image">
+              <img :src="getProductImageUrl(item.image)" :alt="item.title" />
+              <button class="remove-from-wishlist" @click.stop="removeFromWishlist(item.id)">
+                <span class="remove-icon">❌</span>
+              </button>
+            </div>
+            <div class="preview-info">
+              <h4 class="preview-name">{{ item.title }}</h4>
+              <div class="preview-price">{{ item.price }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Empty Wishlist State -->
+      <div v-else class="dashboard-section empty-wishlist-section">
+        <div class="empty-wishlist-state">
+          <div class="empty-icon">💔</div>
+          <h4 class="empty-title">Your wishlist is empty</h4>
+          <p class="empty-message">Start adding products you love!</p>
+          <button class="browse-products-btn" @click="navigateToProducts">
+            <span class="browse-icon">🛍️</span>
+            <span class="browse-text">Browse Products</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Account Information -->
+      <div class="dashboard-section account-info-section">
+        <h3 class="section-title">Account Information</h3>
+        <div class="account-details">
+          <div class="detail-row">
+            <span class="detail-label">Username:</span>
+            <span class="detail-value">{{ authStore.userName || 'Not set' }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Email:</span>
+            <span class="detail-value">{{ authStore.userEmail || 'Not set' }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Total Points:</span>
+            <span class="detail-value points-value">🪙 {{ formatNumber(authStore.userPoints || 0) }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Bank Accounts:</span>
+            <span class="detail-value">{{ bankAccountsCount }} account{{ bankAccountsCount !== 1 ? 's' : '' }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Member Since:</span>
+            <span class="detail-value">{{ formatMemberSince(authStore.user?.created_at) }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Logout Section -->
+      <div class="dashboard-section logout-section">
+        <button class="logout-btn" @click="showLogoutConfirm = true">
+          <span class="logout-icon">🚪</span>
+          <span class="logout-text">Logout</span>
         </button>
       </div>
-    </div>
-
-    <!-- Account Information -->
-    <div class="dashboard-section account-info-section">
-      <h3 class="section-title">Account Information</h3>
-      <div class="account-details">
-        <div class="detail-row">
-          <span class="detail-label">Username:</span>
-          <span class="detail-value">{{ authStore.userName || 'Not set' }}</span>
-        </div>
-        <div class="detail-row">
-          <span class="detail-label">Email:</span>
-          <span class="detail-value">{{ authStore.userEmail || 'Not set' }}</span>
-        </div>
-        <div class="detail-row">
-          <span class="detail-label">Total Points:</span>
-          <span class="detail-value points-value">🪙 {{ authStore.userPoints || 0 }}</span>
-        </div>
-        <div class="detail-row">
-          <span class="detail-label">Member Since:</span>
-          <span class="detail-value">{{ formatMemberSince(authStore.user?.created_at) }}</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Logout Section -->
-    <div class="dashboard-section logout-section">
-      <button class="logout-btn" @click="showLogoutConfirm = true">
-        <span class="logout-icon">🚪</span>
-        <span class="logout-text">Logout</span>
-      </button>
     </div>
 
     <!-- Settings Modal -->
@@ -254,6 +326,8 @@ import { useAuthStore } from '../stores/auth'
 import BottomNavigation from '../components/BottomNavigation.vue'
 import HustlHeader from '../components/HustlHeader.vue'
 import apiService from '../services/api'
+import { useWishlist } from '../composables/useWishlist'
+import { useCachedApi } from '../composables/useCachedApi'
 
 export default {
   name: 'ProfileView',
@@ -265,24 +339,33 @@ export default {
     const router = useRouter()
     const authStore = useAuthStore()
     
-    // State management
-    const wishlistItems = ref([])
+    const { getBankAccounts } = useCachedApi()
+    
+    const { 
+      wishlistItems, 
+      wishlistCount, 
+      loadWishlist,
+      removeFromWishlist,
+      migrateLocalStorageToAPI 
+    } = useWishlist()
+    
     const showSettings = ref(false)
     const showLogoutConfirm = ref(false)
+    const bankAccounts = ref([])
+    const bankAccountsCount = ref(0)
+    const primaryBankAccount = ref(null)
+    const isBankAccountsLoading = ref(false)
+    
     const settings = ref({
       notifications: true,
       emailUpdates: false,
       darkMode: false
     })
 
-    // Computed properties
-    const wishlistCount = computed(() => wishlistItems.value.length)
-    
     const recentWishlistItems = computed(() => 
-      wishlistItems.value.slice(0, 4) // Show only first 4 items
+      wishlistItems.value.slice(0, 4)
     )
 
-    // Helper methods
     const getInitials = (username) => {
       if (!username) return '??'
       return username.substring(0, 2).toUpperCase()
@@ -307,25 +390,55 @@ export default {
       return num.toLocaleString('id-ID')
     }
 
-    // Wishlist management
-    const loadWishlist = () => {
+    const formatBankName = (bankName) => {
+      return apiService.constructor.formatBankName(bankName)
+    }
+
+    const formatAccountNumber = (accountNumber) => {
+      return apiService.constructor.formatBankAccountNumber(accountNumber)
+    }
+
+    const loadBankAccounts = async () => {
+      if (!authStore.isAuthenticated) return
+      
+      isBankAccountsLoading.value = true
+      
       try {
-        const stored = localStorage.getItem('favoriteProducts')
-        if (stored) {
-          wishlistItems.value = JSON.parse(stored)
+        const response = await getBankAccounts(
+          { limit: 50 },
+          { 
+            ttl: 10 * 60 * 1000,
+            forceRefresh: false 
+          }
+        )
+        
+        if (response.success && response.data) {
+          bankAccounts.value = response.data
+          bankAccountsCount.value = response.data.length
+          
+          primaryBankAccount.value = response.data.find(account => account.isPrimary) || null
+        } else {
+          bankAccounts.value = []
+          bankAccountsCount.value = 0
+          primaryBankAccount.value = null
         }
       } catch (error) {
-        console.error('Error loading wishlist:', error)
-        wishlistItems.value = []
+        console.warn('Failed to load bank accounts:', error)
+        bankAccounts.value = []
+        bankAccountsCount.value = 0
+        primaryBankAccount.value = null
+      } finally {
+        isBankAccountsLoading.value = false
       }
     }
 
-    const removeFromWishlist = (productId) => {
-      wishlistItems.value = wishlistItems.value.filter(item => item.id !== productId)
-      localStorage.setItem('favoriteProducts', JSON.stringify(wishlistItems.value))
+    const removeWishlistItem = async (productId) => {
+      const success = await removeFromWishlist(productId)
+      if (!success) {
+        console.error('Failed to remove item from wishlist')
+      }
     }
 
-    // Settings management
     const loadSettings = () => {
       try {
         const stored = localStorage.getItem('userSettings')
@@ -340,14 +453,19 @@ export default {
     const saveSettings = () => {
       localStorage.setItem('userSettings', JSON.stringify(settings.value))
       showSettings.value = false
-      
-      // You can add more settings logic here
       console.log('Settings saved:', settings.value)
     }
 
-    // Navigation methods
     const navigateToWishlist = () => {
       router.push('/profile/wishlist')
+    }
+
+    const navigateToAffiliateLinks = () => {
+      router.push('/profile/affiliate-links')
+    }
+
+    const navigateToBankAccounts = () => {
+      router.push('/profile/bank-accounts')
     }
 
     const navigateToTransactions = () => {
@@ -367,10 +485,9 @@ export default {
     }
 
     const viewProductDetails = (product) => {
-      router.push(`/product/${product.id}`)
+      router.push('/product/' + product.id)
     }
 
-    // Auth methods
     const handleLogout = async () => {
       try {
         authStore.logout()
@@ -380,9 +497,43 @@ export default {
       }
     }
 
-    // Initialize on mount
-    onMounted(() => {
-      loadWishlist()
+    const syncLocalWishlist = async () => {
+      if (authStore.isAuthenticated) {
+        try {
+          const result = await migrateLocalStorageToAPI()
+          if (result.success && result.migrated > 0) {
+            alert('Synced ' + result.migrated + ' items to your account!')
+            await loadWishlist()
+          } else if (result.migrated === 0) {
+            alert('No items to sync')
+          }
+        } catch (error) {
+          console.error('Sync failed:', error)
+          alert('Sync failed: ' + error.message)
+        }
+      }
+    }
+
+    const localItemsCount = computed(() => {
+      if (!authStore.isAuthenticated) return 0
+      
+      try {
+        const stored = localStorage.getItem('favoriteProducts')
+        if (stored) {
+          const items = JSON.parse(stored)
+          return items.filter(item => !item.wishlistItemId).length
+        }
+      } catch {
+        return 0
+      }
+      return 0
+    })
+
+    onMounted(async () => {
+      await Promise.all([
+        loadWishlist(),
+        loadBankAccounts()
+      ])
       loadSettings()
     })
 
@@ -390,6 +541,10 @@ export default {
       authStore,
       wishlistItems,
       wishlistCount,
+      bankAccounts,
+      bankAccountsCount,
+      primaryBankAccount,
+      isBankAccountsLoading,
       recentWishlistItems,
       showSettings,
       showLogoutConfirm,
@@ -398,37 +553,50 @@ export default {
       getProductImageUrl,
       formatMemberSince,
       formatNumber,
-      removeFromWishlist,
+      formatBankName,
+      formatAccountNumber,
+      removeFromWishlist: removeWishlistItem,
       saveSettings,
       navigateToWishlist,
+      navigateToAffiliateLinks,
+      navigateToBankAccounts,
       navigateToTransactions,
       navigateToRedemptions,
       navigateToRedeem,
       navigateToProducts,
       viewProductDetails,
-      handleLogout
+      handleLogout,
+      syncLocalWishlist,
+      localItemsCount
     }
   }
 }
 </script>
 
 <style scoped>
-/* Reset and Base Styles */
+/* ProfileView.vue Styles - Fixed for Single Scroll Container */
 * {
   box-sizing: border-box;
 }
 
-/* Profile View Main Container - FIXED: Following CategoryView pattern exactly */
 .profile-view {
   min-height: 100vh;
   background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%);
-  padding-bottom: 100px; /* Consistent with CategoryView */
-  width: 100%;
-  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
   position: relative;
+  flex: 1; /* Ambil ruang yang tersisa */
 }
 
-/* Dashboard sections - FIXED: Exact same pattern as CategoryView */
+
+.profile-content {
+  flex: 1;
+  padding-bottom: 100px; /* HANYA SATU padding-bottom yang konsisten */
+  width: 100%;
+  box-sizing: border-box;
+  overflow-y: auto; /* Pastikan konten bisa di-scroll */
+}
+
 .dashboard-section {
   background: white;
   margin: 0 1rem 1.5rem 1rem;
@@ -438,7 +606,6 @@ export default {
   border: 1px solid rgba(255, 255, 255, 0.9);
   word-wrap: break-word;
   overflow-wrap: break-word;
-  hyphens: auto;
   max-width: calc(100% - 2rem);
   box-sizing: border-box;
 }
@@ -447,7 +614,6 @@ export default {
   margin-top: 1rem;
 }
 
-/* Profile Header - Enhanced styling */
 .profile-header-section {
   padding: 1.5rem 1.25rem;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -514,8 +680,9 @@ export default {
 
 .profile-stats {
   display: flex;
-  gap: 1.5rem;
+  gap: 1rem;
   margin-top: 0.5rem;
+  flex-wrap: wrap;
 }
 
 .stat-item {
@@ -523,6 +690,7 @@ export default {
   flex-direction: column;
   align-items: center;
   text-align: center;
+  min-width: 50px;
 }
 
 .stat-icon {
@@ -544,7 +712,6 @@ export default {
   font-weight: 500;
 }
 
-/* Section Titles */
 .section-title {
   font-size: 1.125rem;
   font-weight: 700;
@@ -562,73 +729,83 @@ export default {
   gap: 0.5rem;
 }
 
-.see-all-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  color: #4FC3F7;
-  font-family: 'Baloo 2', sans-serif;
-  font-weight: 600;
-  font-size: 0.875rem;
-  padding: 0.25rem 0.5rem;
-  border-radius: 6px;
-  transition: all 0.2s;
-  flex-shrink: 0;
-}
-
-.see-all-btn:hover {
-  background: rgba(79, 195, 247, 0.1);
-}
-
-/* Quick Actions - FIXED: Improved responsive grid */
 .quick-actions-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1rem;
   margin-bottom: 1rem;
   max-width: 100%;
 }
 
 .action-card {
-  background: #F8FAFC;
+  background: linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 100%);
   border: 2px solid #E2E8F0;
-  border-radius: 12px;
-  padding: 0.875rem;
+  border-radius: 16px;
+  padding: 1.25rem;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.3s ease;
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 1rem;
   text-align: left;
   font-family: 'Baloo 2', sans-serif;
   width: 100%;
   box-sizing: border-box;
   min-width: 0;
+  position: relative;
+  overflow: hidden;
 }
 
 .action-card:hover {
-  background: #F1F5F9;
+  background: linear-gradient(135deg, #FFFFFF 0%, #F8FAFC 100%);
   border-color: #4FC3F7;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(79, 195, 247, 0.15);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px rgba(79, 195, 247, 0.25);
+}
+
+.action-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #4FC3F7, #29B6F6);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.action-card:hover::before {
+  opacity: 1;
 }
 
 .action-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.125rem;
+  font-size: 1.25rem;
   flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease;
+}
+
+.action-card:hover .action-icon {
+  transform: scale(1.1);
 }
 
 .action-icon.wishlist-icon {
   background: linear-gradient(135deg, #FF6B9D, #FF8E8E);
+}
+
+.action-icon.affiliate-icon {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+}
+
+.action-icon.bank-icon {
+  background: linear-gradient(135deg, #10B981, #059669);
 }
 
 .action-icon.transactions-icon {
@@ -647,41 +824,238 @@ export default {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 0.125rem;
+  gap: 0.25rem;
   min-width: 0;
 }
 
 .action-title {
-  font-size: 0.875rem;
-  font-weight: 600;
+  font-size: 1rem;
+  font-weight: 700;
   color: #1F2937;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  margin-bottom: 0.125rem;
 }
 
 .action-subtitle {
-  font-size: 0.75rem;
-  color: #6B7280;
-  font-weight: 500;
+  font-size: 0.875rem;
+  color: #4FC3F7;
+  font-weight: 600;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
+.action-description {
+  font-size: 0.75rem;
+  color: #6B7280;
+  font-weight: 500;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-style: italic;
+}
+
 .action-arrow {
-  font-size: 1rem;
+  font-size: 1.125rem;
   color: #9CA3AF;
-  transition: all 0.2s;
+  transition: all 0.3s ease;
   flex-shrink: 0;
+  font-weight: bold;
 }
 
 .action-card:hover .action-arrow {
   color: #4FC3F7;
-  transform: translateX(2px);
+  transform: translateX(4px);
 }
 
-/* Redemption Action Section */
+.see-all-btn, .manage-banks-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: #4FC3F7;
+  font-family: 'Baloo 2', sans-serif;
+  font-weight: 600;
+  font-size: 0.875rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.see-all-btn:hover, .manage-banks-btn:hover {
+  background: rgba(79, 195, 247, 0.1);
+}
+
+.manage-banks-btn {
+  color: #10B981;
+}
+
+.manage-banks-btn:hover {
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.bank-summary-section {
+  padding: 1.25rem;
+  background: linear-gradient(135deg, #F0FDF4 0%, #ECFDF5 100%);
+  border: 2px solid #BBF7D0;
+}
+
+.primary-bank-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.25rem;
+  background: white;
+  border-radius: 12px;
+  border: 2px solid #10B981;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
+}
+
+.bank-icon {
+  width: 50px;
+  height: 50px;
+  background: linear-gradient(135deg, #10B981, #059669);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+}
+
+.bank-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.bank-name {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1F2937;
+  font-family: 'Baloo 2', sans-serif;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account-name {
+  font-size: 0.875rem;
+  color: #374151;
+  font-family: 'Baloo 2', sans-serif;
+  font-weight: 600;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account-number {
+  font-size: 0.8rem;
+  color: #6B7280;
+  font-family: 'Courier New', monospace;
+  font-weight: 500;
+  margin: 0;
+  letter-spacing: 0.5px;
+}
+
+.bank-badges {
+  display: flex;
+  gap: 0.375rem;
+  margin-top: 0.375rem;
+  flex-wrap: wrap;
+}
+
+.badge {
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  font-family: 'Baloo 2', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.primary-badge {
+  background: #FEF3C7;
+  color: #92400E;
+}
+
+.verified-badge {
+  background: #D1FAE5;
+  color: #065F46;
+}
+
+.unverified-badge {
+  background: #FEE2E2;
+  color: #991B1B;
+}
+
+.no-primary-bank {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: #FEF3C7;
+  border-radius: 12px;
+  border: 1px solid #FDE68A;
+}
+
+.warning-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.warning-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.warning-title {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #92400E;
+  font-family: 'Baloo 2', sans-serif;
+  margin: 0 0 0.25rem 0;
+}
+
+.warning-message {
+  font-size: 0.8rem;
+  color: #A16207;
+  font-family: 'Baloo 2', sans-serif;
+  font-weight: 500;
+  margin: 0;
+}
+
+.set-primary-btn {
+  background: #F59E0B;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  font-family: 'Baloo 2', sans-serif;
+  font-weight: 600;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.set-primary-btn:hover {
+  background: #D97706;
+  transform: translateY(-1px);
+}
+
 .redemption-action-section {
   padding: 1.25rem;
   background: linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 100%);
@@ -819,9 +1193,16 @@ export default {
   font-family: 'Baloo 2', sans-serif;
   font-weight: 500;
   font-style: italic;
+  display: block;
 }
 
-/* Recent Wishlist - FIXED: Consistent with CategoryView pattern */
+.note-warning {
+  color: #DC2626;
+  font-weight: 600;
+  display: block;
+  margin-top: 0.25rem;
+}
+
 .recent-wishlist-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
@@ -913,7 +1294,6 @@ export default {
   font-weight: 700;
 }
 
-/* Empty Wishlist */
 .empty-wishlist-state {
   display: flex;
   flex-direction: column;
@@ -966,7 +1346,6 @@ export default {
   transform: translateY(-2px);
 }
 
-/* Account Information */
 .account-details {
   display: flex;
   flex-direction: column;
@@ -1009,7 +1388,6 @@ export default {
   font-weight: 700;
 }
 
-/* Logout */
 .logout-section {
   padding: 1rem 1.25rem;
 }
@@ -1044,20 +1422,8 @@ export default {
   font-size: 1.25rem;
 }
 
-/* Modal Styles */
 .modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: 1rem;
-  box-sizing: border-box;
+  z-index: 1000 !important; /* Lebih rendah dari footer */
 }
 
 .modal-content {
@@ -1099,6 +1465,49 @@ export default {
   padding: 1.5rem;
 }
 
+body {
+  margin: 0 !important;
+  padding: 0 !important;
+  position: relative !important;
+}
+
+html {
+  scroll-behavior: smooth !important;
+}
+
+html, body {
+  margin: 0 !important;
+  padding: 0 !important;
+  height: 100% !important;
+  overflow-x: hidden !important;
+}
+
+#app {
+  min-height: 100vh !important;
+  display: flex !important;
+  flex-direction: column !important;
+  position: relative !important;
+}
+
+
+.router-view,
+.page-container,
+.app-container {
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+footer,
+[role="navigation"],
+.app-footer,
+.page-footer {
+  position: fixed !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  z-index: 1001 !important;
+}
+
 .modal-text {
   font-size: 0.875rem;
   color: #374151;
@@ -1115,9 +1524,7 @@ export default {
   box-sizing: border-box;
 }
 
-.cancel-btn,
-.confirm-logout-btn,
-.save-settings-btn {
+.cancel-btn, .confirm-logout-btn, .save-settings-btn {
   flex: 1;
   padding: 0.75rem;
   border-radius: 8px;
@@ -1163,7 +1570,6 @@ export default {
   border-color: #29B6F6;
 }
 
-/* Settings */
 .settings-options {
   display: flex;
   flex-direction: column;
@@ -1252,67 +1658,117 @@ input:checked + .toggle-slider:before {
   transform: translateX(20px);
 }
 
-/* FIXED FOOTER STYLES - Following CategoryView exact pattern */
-:deep(.bottom-navigation) {
-  position: fixed !important;
-  bottom: 0 !important;
-  left: 0 !important;
-  right: 0 !important;
-  width: 100% !important;
-  z-index: 1000 !important;
-  background: white !important;
-  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1) !important;
-}
+/* Responsive Design */
+@media (max-width: 480px) {
+  .profile-content {
+    padding-bottom: 85px !important; /* Lebih kecil untuk mobile */
+  }
 
-.bottom-navigation {
-  position: fixed !important;
-  bottom: 0 !important;
-  left: 0 !important;
-  right: 0 !important;
-  width: 100% !important;
-  z-index: 1000 !important;
-  background: white !important;
-  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1) !important;
-}
-
-::v-deep .bottom-navigation,
-.bottom-navigation {
-  position: fixed !important;
-  bottom: 0 !important;
-  left: 0 !important;
-  right: 0 !important;
-  width: 100% !important;
-  z-index: 1000 !important;
-  background: white !important;
-  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1) !important;
-}
-
-/* Responsive Design - FIXED: Matching CategoryView exactly */
-@media (min-width: 640px) {
   .quick-actions-grid {
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+  
+  .action-card {
+    padding: 1rem;
+  }
+  
+  .action-icon {
+    width: 40px;
+    height: 40px;
   }
   
   .recent-wishlist-grid {
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    grid-template-columns: repeat(2, 1fr);
   }
 
-  .profile-view {
-    padding-bottom: 100px;
+  .primary-bank-card, .no-primary-bank {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
   }
-}
+  
+  .profile-stats {
+    gap: 0.75rem;
+  }
 
-@media (min-width: 768px) {
-  .profile-view {
-    background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%) !important;
+  .redemption-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .redemption-balance {
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  .profile-content {
     padding-bottom: 100px;
   }
   
-  .page-container,
-  .app-main {
-    background: transparent !important;
+  .bottom-navigation,
+  .bottom-nav,
+  .footer-nav,
+  .navigation-footer,
+  [class*="bottom"][class*="nav"],
+  [class*="footer"][class*="nav"] {
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    z-index: 1001 !important; /* Lebih tinggi dari modal (1000) */
+    background: white !important;
+    border-top: 1px solid #E5E7EB !important;
+    box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.1) !important;
+    padding: 0.75rem 0 !important;
+    box-sizing: border-box !important;
+    
+    /* Reset properties yang bisa mengganggu */
+    transform: none !important;
+    margin: 0 !important;
+    position: fixed !important; /* Pastikan tetap fixed */
   }
+  
+  .bottom-navigation .nav-item,
+  .bottom-nav .nav-item,
+  .footer-nav .nav-item {
+    font-size: 0.7rem !important;
+    padding: 0.375rem !important;
+    min-height: 45px !important;
+  }
+  
+  .bottom-navigation .nav-item .nav-icon,
+  .bottom-nav .nav-item .nav-icon,
+  .footer-nav .nav-item .nav-icon {
+    font-size: 1.125rem !important;
+    width: 20px !important;
+    height: 20px !important;
+  }
+}
 
+@media (min-width: 481px) and (max-width: 640px) {
+  .quick-actions-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .recent-wishlist-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 641px) and (max-width: 768px) {
+  .quick-actions-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .recent-wishlist-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (min-width: 769px) {
   .dashboard-section {
     margin: 0 2rem 1.5rem 2rem;
     padding: 1.5rem;
@@ -1320,7 +1776,7 @@ input:checked + .toggle-slider:before {
   }
 
   .quick-actions-grid {
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    grid-template-columns: repeat(3, 1fr);
     gap: 1rem;
   }
 
@@ -1328,40 +1784,23 @@ input:checked + .toggle-slider:before {
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     gap: 1rem;
   }
+  
+  .profile-content {
+    padding-bottom: 140px;
+  }
+
+  .profile-content {
+    padding-bottom: 140px !important;
+  }
+  
+  .bottom-navigation,
+  .bottom-nav,
+  .footer-nav {
+    padding: 1rem 0 !important;
+  }
 }
 
 @media (min-width: 1024px) {
-  body {
-    background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%) !important;
-  }
-  
-  .profile-view {
-    background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%) !important;
-    min-height: auto !important;
-    padding-bottom: 100px;
-  }
-  
-  .page-container {
-    background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%) !important;
-    min-height: 100vh !important;
-    height: auto !important;
-    padding: 0 !important;
-    justify-content: flex-start !important;
-    align-items: stretch !important;
-  }
-  
-  .app-main {
-    background: transparent !important;
-    box-shadow: none !important;
-    min-height: auto !important;
-    max-height: none !important;
-    height: auto !important;
-    overflow: visible !important;
-    max-width: none !important;
-    width: 100% !important;
-    border-radius: 0 !important;
-  }
-
   .dashboard-section {
     margin: 0 3rem 2rem 3rem;
     padding: 2rem;
@@ -1369,7 +1808,7 @@ input:checked + .toggle-slider:before {
   }
 
   .quick-actions-grid {
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-columns: repeat(3, 1fr);
     gap: 1.25rem;
   }
 
@@ -1379,27 +1818,103 @@ input:checked + .toggle-slider:before {
   }
 }
 
-@media (min-width: 1200px) {
-  .dashboard-section {
-    margin: 0 4rem 2rem 4rem;
-    padding: 2.5rem;
-    max-width: calc(100% - 8rem);
-  }
-
-  .profile-view {
-    padding-bottom: 100px;
-  }
+/* Pastikan bottom navigation selalu sticky */
+.bottom-navigation, 
+.bottom-nav,
+.footer-nav,
+.navigation-footer,
+[class*="bottom"][class*="nav"],
+[class*="footer"][class*="nav"],
+[class*="nav"][class*="bottom"] {
+  position: fixed !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  z-index: 1001 !important; /* Lebih tinggi dari modal */
+  background: white !important;
+  border-top: 1px solid #E5E7EB !important;
+  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.1) !important;
+  padding: 0.75rem 0 !important;
+  box-sizing: border-box !important;
+  /* Pastikan tidak ada transform atau positioning lain */
+  transform: none !important;
+  margin: 0 !important;
 }
 
-/* Prevent content overflow on all screen sizes */
-.profile-view,
-.profile-view * {
-  max-width: 100%;
-  box-sizing: border-box;
+/* Alternatif jika menggunakan class yang berbeda */
+[class*="bottom"][class*="nav"],
+[class*="footer"][class*="nav"],
+[class*="nav"][class*="bottom"] {
+  position: fixed !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  z-index: 999 !important;
 }
 
-/* Last section margin fix */
-.dashboard-section:last-of-type {
-  margin-bottom: 2rem;
+
+/* Jika navigation menggunakan flexbox layout */
+.bottom-navigation .nav-items,
+.bottom-nav .nav-items,
+.footer-nav .nav-items,
+.bottom-navigation > div,
+.bottom-nav > div,
+.footer-nav > div {
+  display: flex !important;
+  justify-content: space-around !important;
+  align-items: center !important;
+  max-width: 100% !important;
+  margin: 0 auto !important;
+  padding: 0 1rem !important;
+  height: auto !important;
 }
+
+.bottom-navigation .nav-item,
+.bottom-nav .nav-item,
+.footer-nav .nav-item,
+.bottom-navigation a,
+.bottom-nav a,
+.footer-nav a {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  text-align: center !important;
+  flex: 1 !important;
+  padding: 0.5rem !important;
+  color: #6B7280 !important;
+  text-decoration: none !important;
+  transition: color 0.2s !important;
+  font-size: 0.75rem !important;
+  font-family: 'Baloo 2', sans-serif !important;
+  font-weight: 500 !important;
+  min-height: 50px !important;
+  justify-content: center !important;
+}
+
+.bottom-navigation .nav-item.active,
+.bottom-nav .nav-item.active,
+.footer-nav .nav-item.active,
+.bottom-navigation a.active,
+.bottom-nav a.active,
+.footer-nav a.active {
+  color: #4FC3F7 !important;
+  font-weight: 600 !important;
+}
+
+.bottom-navigation .nav-item .nav-icon,
+.bottom-nav .nav-item .nav-icon,
+.footer-nav .nav-item .nav-icon,
+.bottom-navigation .nav-item img,
+.bottom-nav .nav-item img,
+.footer-nav .nav-item img {
+  font-size: 1.25rem !important;
+  margin-bottom: 0.25rem !important;
+  width: 24px !important;
+  height: 24px !important;
+}
+
+
+
 </style>

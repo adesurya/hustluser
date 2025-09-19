@@ -1,4 +1,4 @@
-// src/utils/deepLinkUtils.js - Enhanced Deep Linking Utilities
+// src/utils/deepLinkUtils.js - Fixed ESLint errors
 
 export class DeepLinkUtils {
   
@@ -93,23 +93,29 @@ export class DeepLinkUtils {
       // Construct deep link URL based on platform
       let deepLinkUrl
       switch (platform) {
-        case 'whatsapp':
+        case 'whatsapp': {
           deepLinkUrl = `${appLinks.deepLink}${encodeURIComponent(message.fullText)}`
           break
-        case 'facebook':
+        }
+        case 'facebook': {
           deepLinkUrl = `${appLinks.deepLink}${encodeURIComponent(message.url)}`
           break
-        case 'twitter':
+        }
+        case 'twitter': {
           deepLinkUrl = `${appLinks.deepLink}${encodeURIComponent(message.fullText)}`
           break
-        case 'telegram':
+        }
+        case 'telegram': {
           deepLinkUrl = `${appLinks.deepLink}${encodeURIComponent(message.fullText)}`
           break
-        case 'instagram':
+        }
+        case 'instagram': {
           deepLinkUrl = appLinks.deepLink // Instagram opens to camera
           break
-        default:
+        }
+        default: {
           deepLinkUrl = `${appLinks.deepLink}${encodeURIComponent(message.fullText)}`
+        }
       }
 
       // Create invisible iframe for iOS (better app detection)
@@ -267,21 +273,21 @@ export class DeepLinkUtils {
     const url = shareUrl
     
     switch (platform) {
-      case 'whatsapp':
+      case 'whatsapp': {
         return {
           text: baseText,
           url: url,
           fullText: `${baseText}\n\n${url}`
         }
-      
-      case 'facebook':
+      }
+      case 'facebook': {
         return {
           text: baseText,
           url: url,
           fullText: `${baseText}\n\n${url}`
         }
-      
-      case 'twitter':
+      }
+      case 'twitter': {
         // Twitter has character limit, so optimize
         const twitterText = baseText.length > 200 ? baseText.substring(0, 200) + '...' : baseText
         return {
@@ -289,27 +295,28 @@ export class DeepLinkUtils {
           url: url,
           fullText: `${twitterText} ${url}`
         }
-      
-      case 'telegram':
+      }
+      case 'telegram': {
         return {
           text: baseText,
           url: url,
           fullText: `${baseText}\n\n${url}`
         }
-      
-      case 'instagram':
+      }
+      case 'instagram': {
         return {
           text: baseText,
           url: url,
           fullText: `${baseText}\n\n${url}\n\n#hazel #shopping #deals ${productData.category ? `#${productData.category.toLowerCase()}` : ''}`
         }
-      
-      default:
+      }
+      default: {
         return {
           text: baseText,
           url: url,
           fullText: `${baseText}\n\n${url}`
         }
+      }
     }
   }
 
@@ -359,21 +366,21 @@ export class DeepLinkUtils {
       const message = this.formatMessage(platform, shareText, shareUrl, productData)
       
       switch (platform) {
-        case 'copyurl':
+        case 'copyurl': {
           const clipboardResult = await this.copyToClipboard(shareUrl)
           return {
             ...clipboardResult,
             platform: 'copyurl',
             message: clipboardResult.success ? 'Link copied to clipboard!' : 'Failed to copy link'
           }
-        
-        case 'instagram':
+        }
+        case 'instagram': {
           return await this.handleInstagramShare(message, options)
-        
+        }
         case 'whatsapp':
         case 'facebook':
         case 'twitter':
-        case 'telegram':
+        case 'telegram': {
           const appResult = await this.openAppWithFallback(platform, message, options)
           return {
             ...appResult,
@@ -381,9 +388,10 @@ export class DeepLinkUtils {
               ? `${platform.charAt(0).toUpperCase() + platform.slice(1)} opened successfully!`
               : `Redirected to ${platform.charAt(0).toUpperCase() + platform.slice(1)}`
           }
-        
-        default:
+        }
+        default: {
           throw new Error(`Unsupported platform: ${platform}`)
+        }
       }
     } catch (error) {
       return {

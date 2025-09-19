@@ -322,15 +322,15 @@ export default {
 
     const getCategoryIcon = (categoryName) => {
       const icons = {
-        'Electronics': '📱',
-        'Fashion': '👗', 
-        'Sports': '⚽',
+        'Electronics': '📺',
+        'Gadget': '📱',
+        'Health': '💊',
+        'Beauty': '💄',
+        'Fashion': '👔', 
         'Sport': '⚽',
-        'Home & Living': '🏠',
-        'Home & Garden': '🏡',
-        'Health & Beauty': '💄',
-        'Automotive': '🚗',
-        'Books': '📚'
+        'Home & Living': '🏡',
+        'Baby Maturnity': '🚼',
+        'Automotive': '🚙'
       }
       return icons[categoryName] || '📦'
     }

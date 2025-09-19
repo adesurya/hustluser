@@ -333,23 +333,16 @@ export default {
 
     // Handle favorite toggle with proper error handling
     const handleToggleFavorite = async () => {
-      if (!product.value || wishlistLoading.value) {
-        console.warn('Product not loaded or wishlist operation in progress')
-        return
-      }
+      if (!product.value || wishlistLoading.value) return
 
       try {
-        const success = toggleWishlist(product.value)
-        
-        if (success) {
-          console.log('Wishlist toggled successfully for:', product.value.title)
-        } else {
-          console.error('Failed to toggle wishlist for:', product.value.title)
-        }
+        const success = await toggleWishlist(product.value)
+        console.log('Wishlist updated:', success)
       } catch (error) {
         console.error('Error toggling favorite:', error)
       }
     }
+
 
     // Navigation methods
     const goBack = () => {

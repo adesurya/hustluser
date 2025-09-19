@@ -79,47 +79,153 @@
           </div>
         </div>
 
-        <!-- Bank Details (for cash redemption) -->
-        <div v-if="redeemData.redemptionType === 'cash'" class="bank-details">
+        <!-- Bank Account Selection (for cash redemption) - NEW FEATURE -->
+        <div v-if="redeemData.redemptionType === 'cash'" class="bank-account-selection">
+          <!-- Bank Account Options -->
           <div class="form-group">
-            <label class="form-label">Bank Name</label>
-            <div class="input-wrapper">
-              <span class="input-icon">🏦</span>
-              <input 
-                type="text" 
-                v-model="redeemData.redemptionDetails.bankName"
-                class="form-input"
-                placeholder="e.g., Bank BCA"
-                required
-              />
+            <label class="form-label">Select Bank Account</label>
+            
+            <!-- Show saved bank accounts if any -->
+            <div v-if="bankAccounts.length > 0" class="bank-accounts-list">
+              <div 
+                v-for="account in bankAccounts" 
+                :key="account.id"
+                class="bank-account-option"
+                :class="{ 'selected': selectedBankAccountId === account.id }"
+                @click="selectBankAccount(account.id)"
+              >
+                <input 
+                  type="radio" 
+                  :value="account.id"
+                  v-model="selectedBankAccountId"
+                  class="account-radio"
+                />
+                <div class="account-info">
+                  <div class="account-bank-name">{{ formatBankName(account.bankName) }}</div>
+                  <div class="account-holder-name">{{ account.accountName }}</div>
+                  <div class="account-number">{{ account.maskedAccountNumber || formatAccountNumber(account.accountNumber) }}</div>
+                  <div class="account-badges">
+                    <span v-if="account.isPrimary" class="badge primary-badge">Primary</span>
+                    <span v-if="account.isVerified" class="badge verified-badge">Verified</span>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Option to add new account -->
+              <div 
+                class="bank-account-option new-account-option"
+                :class="{ 'selected': selectedBankAccountId === 'new' }"
+                @click="selectBankAccount('new')"
+              >
+                <input 
+                  type="radio" 
+                  value="new"
+                  v-model="selectedBankAccountId"
+                  class="account-radio"
+                />
+                <div class="account-info">
+                  <div class="new-account-text">
+                    <span class="new-account-icon">+</span>
+                    <span class="new-account-label">Use different bank account</span>
+                  </div>
+                  <div class="new-account-desc">Enter new bank account details</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- If no saved accounts, show message and force manual input -->
+            <div v-else class="no-accounts-message">
+              <div class="message-icon">🏦</div>
+              <div class="message-content">
+                <h4 class="message-title">No saved bank accounts</h4>
+                <p class="message-text">Add your bank account details below or <a href="/profile/bank-accounts" class="add-account-link">manage your accounts</a> first.</p>
+              </div>
             </div>
           </div>
 
-          <div class="form-group">
-            <label class="form-label">Account Name</label>
-            <div class="input-wrapper">
-              <span class="input-icon">👤</span>
-              <input 
-                type="text" 
-                v-model="redeemData.redemptionDetails.accountName"
-                class="form-input"
-                placeholder="Full name as per bank account"
-                required
-              />
+          <!-- Manual Bank Details Input (when "new" is selected or no saved accounts) -->
+          <div v-if="selectedBankAccountId === 'new' || bankAccounts.length === 0" class="manual-bank-details">
+            <div class="manual-input-header">
+              <h4 class="manual-title">Bank Account Details</h4>
+              <div class="save-account-toggle">
+                <label class="toggle-container">
+                  <input 
+                    type="checkbox" 
+                    v-model="saveNewAccount"
+                    class="toggle-input"
+                  />
+                  <span class="toggle-slider"></span>
+                  <span class="toggle-label">Save for future use</span>
+                </label>
+              </div>
             </div>
-          </div>
+            
+            <div class="form-group">
+              <label class="form-label">Bank Name</label>
+              <div class="input-wrapper">
+                <span class="input-icon">🏦</span>
+                <select 
+                  v-model="redeemData.redemptionDetails.bankName"
+                  class="form-input"
+                  required
+                >
+                  <option value="">Select Bank</option>
+                  <option value="Bank Central Asia">Bank Central Asia (BCA)</option>
+                  <option value="Bank Rakyat Indonesia">Bank Rakyat Indonesia (BRI)</option>
+                  <option value="Bank Negara Indonesia">Bank Negara Indonesia (BNI)</option>
+                  <option value="Bank Mandiri">Bank Mandiri</option>
+                  <option value="CIMB Niaga">CIMB Niaga</option>
+                  <option value="Bank Danamon">Bank Danamon</option>
+                  <option value="Bank Permata">Bank Permata</option>
+                  <option value="OCBC NISP">OCBC NISP</option>
+                  <option value="Other">Other Bank</option>
+                </select>
+              </div>
+              <!-- Custom bank name input if "Other" is selected -->
+              <div v-if="redeemData.redemptionDetails.bankName === 'Other'" class="custom-bank-input">
+                <div class="input-wrapper">
+                  <span class="input-icon">🏛️</span>
+                  <input 
+                    type="text" 
+                    v-model="redeemData.redemptionDetails.customBankName"
+                    class="form-input"
+                    placeholder="Enter bank name"
+                    required
+                  />
+                </div>
+              </div>
+            </div>
 
-          <div class="form-group">
-            <label class="form-label">Account Number</label>
-            <div class="input-wrapper">
-              <span class="input-icon">💳</span>
-              <input 
-                type="text" 
-                v-model="redeemData.redemptionDetails.bankAccount"
-                class="form-input"
-                placeholder="Enter account number"
-                required
-              />
+            <div class="form-group">
+              <label class="form-label">Account Name</label>
+              <div class="input-wrapper">
+                <span class="input-icon">👤</span>
+                <input 
+                  type="text" 
+                  v-model="redeemData.redemptionDetails.accountName"
+                  class="form-input"
+                  placeholder="Full name as per bank account"
+                  required
+                />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Account Number</label>
+              <div class="input-wrapper">
+                <span class="input-icon">💳</span>
+                <input 
+                  type="text" 
+                  v-model="redeemData.redemptionDetails.bankAccount"
+                  class="form-input"
+                  placeholder="Enter account number"
+                  required
+                  pattern="[0-9]{8,20}"
+                  maxlength="20"
+                  @input="formatBankAccountInput"
+                />
+              </div>
+              <div class="field-hint">Account number should be 8-20 digits</div>
             </div>
           </div>
         </div>
@@ -166,6 +272,7 @@
           <li>1 point = Rp 1.00</li>
           <li>Bank transfer fees may apply</li>
           <li>Redemptions are subject to verification</li>
+          <li>Saved bank accounts can be managed in your profile</li>
         </ul>
       </div>
     </div>
@@ -176,7 +283,7 @@
 </template>
 
 <script>
-// RedeemView.vue <script> section with caching implementation
+// RedeemView.vue <script> section - FIXED VERSION
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
@@ -195,8 +302,8 @@ export default {
     const router = useRouter()
     const authStore = useAuthStore()
     
-    // Use cached API composable for points data
-    const { getMyPoints } = useCachedApi()
+    // Use cached API composable for points and bank accounts data
+    const { getMyPoints, getBankAccounts, addBankAccount } = useCachedApi()
 
     // State
     const currentPoints = ref(authStore.userPoints || 0)
@@ -204,12 +311,19 @@ export default {
     const error = ref('')
     const success = ref('')
     const isLoadingPoints = ref(false)
+    const isLoadingBankAccounts = ref(false)
+    
+    // Bank accounts state
+    const bankAccounts = ref([])
+    const selectedBankAccountId = ref(null)
+    const saveNewAccount = ref(true)
 
     const redeemData = reactive({
       pointsToRedeem: 100,
       redemptionType: 'cash',
       redemptionDetails: {
         bankName: '',
+        customBankName: '',
         accountName: '',
         bankAccount: ''
       }
@@ -222,9 +336,22 @@ export default {
       }
 
       if (redeemData.redemptionType === 'cash') {
-        return redeemData.redemptionDetails.bankName &&
-               redeemData.redemptionDetails.accountName &&
-               redeemData.redemptionDetails.bankAccount
+        // If using saved account
+        if (selectedBankAccountId.value && selectedBankAccountId.value !== 'new') {
+          return true
+        }
+        
+        // If using new account details
+        if (selectedBankAccountId.value === 'new' || bankAccounts.value.length === 0) {
+          const bankName = redeemData.redemptionDetails.bankName === 'Other' 
+            ? redeemData.redemptionDetails.customBankName 
+            : redeemData.redemptionDetails.bankName
+            
+          return bankName &&
+                 redeemData.redemptionDetails.accountName &&
+                 redeemData.redemptionDetails.bankAccount &&
+                 redeemData.redemptionDetails.bankAccount.length >= 8
+        }
       }
 
       return true
@@ -245,6 +372,19 @@ export default {
       }).format(points)
     }
 
+    const formatBankName = (bankName) => {
+      return apiService.constructor.formatBankName(bankName)
+    }
+
+    const formatAccountNumber = (accountNumber) => {
+      return apiService.constructor.formatBankAccountNumber(accountNumber)
+    }
+
+    const formatBankAccountInput = (event) => {
+      // Remove non-numeric characters
+      redeemData.redemptionDetails.bankAccount = event.target.value.replace(/\D/g, '')
+    }
+
     const goBack = () => {
       router.go(-1)
     }
@@ -254,7 +394,6 @@ export default {
       isLoadingPoints.value = true
       
       try {
-        // Use cached API call with short TTL for points
         const response = await getMyPoints({ 
           ttl: 30 * 1000, // 30 seconds TTL for real-time points
           forceRefresh: false 
@@ -262,19 +401,66 @@ export default {
         
         if (response.success) {
           currentPoints.value = response.data.currentBalance || 0
-          // Update auth store for consistency
           authStore.setUserPoints(currentPoints.value)
         } else {
           console.warn('Failed to load points from cached API:', response.message)
-          // Fallback to auth store value
           currentPoints.value = authStore.userPoints || 0
         }
       } catch (err) {
         console.warn('Failed to load current points:', err)
-        // Fallback to auth store value
         currentPoints.value = authStore.userPoints || 0
       } finally {
-        isLoadingPoints.value = false
+        isLoadingPoints.value = false // FIXED: was setting wrong loading state
+      }
+    }
+
+    // FIXED: Added the missing loadBankAccounts function
+    const loadBankAccounts = async () => {
+      isLoadingBankAccounts.value = true
+      
+      try {
+        const response = await getBankAccounts({ 
+          ttl: 10 * 60 * 1000, // 10 minutes TTL for bank accounts
+          forceRefresh: false 
+        })
+        
+        if (response.success && response.data) {
+          // Handle different response structures from API
+          const accounts = Array.isArray(response.data) ? response.data : response.data.items || []
+          bankAccounts.value = accounts
+          
+          // Auto-select primary account if exists and no account is already selected
+          if (accounts.length > 0 && !selectedBankAccountId.value) {
+            const primaryAccount = accounts.find(account => account.isPrimary)
+            if (primaryAccount) {
+              selectedBankAccountId.value = primaryAccount.id
+            }
+          }
+          
+          console.log('Bank accounts loaded:', accounts.length, 'accounts')
+        } else {
+          console.warn('Failed to load bank accounts from cached API:', response.message)
+          bankAccounts.value = []
+        }
+      } catch (err) {
+        console.warn('Failed to load bank accounts:', err)
+        bankAccounts.value = []
+      } finally {
+        isLoadingBankAccounts.value = false
+      }
+    }
+
+    const selectBankAccount = (accountId) => {
+      selectedBankAccountId.value = accountId
+      
+      if (accountId === 'new') {
+        // Clear manual input fields when selecting new account option
+        redeemData.redemptionDetails = {
+          bankName: '',
+          customBankName: '',
+          accountName: '',
+          bankAccount: ''
+        }
       }
     }
 
@@ -284,7 +470,67 @@ export default {
       isSubmitting.value = true
 
       try {
-        const response = await apiService.createRedemption(redeemData)
+        // Prepare redemption data
+        const redemptionPayload = {
+          pointsToRedeem: redeemData.pointsToRedeem,
+          redemptionType: redeemData.redemptionType,
+          redemptionValue: redeemData.pointsToRedeem, // 1:1 ratio
+          redemptionDetails: {}
+        }
+
+        // Handle bank account details
+        if (redeemData.redemptionType === 'cash') {
+          if (selectedBankAccountId.value && selectedBankAccountId.value !== 'new') {
+            // Use selected saved account
+            const selectedAccount = bankAccounts.value.find(acc => acc.id === selectedBankAccountId.value)
+            if (selectedAccount) {
+              redemptionPayload.bankAccountId = selectedAccount.id
+              redemptionPayload.redemptionDetails = {
+                bankName: selectedAccount.bankName,
+                accountName: selectedAccount.accountName,
+                bankAccount: selectedAccount.accountNumber
+              }
+            }
+          } else {
+            // Use manual input details
+            const bankName = redeemData.redemptionDetails.bankName === 'Other' 
+              ? redeemData.redemptionDetails.customBankName 
+              : redeemData.redemptionDetails.bankName
+
+            redemptionPayload.redemptionDetails = {
+              bankName: bankName,
+              accountName: redeemData.redemptionDetails.accountName,
+              bankAccount: redeemData.redemptionDetails.bankAccount
+            }
+
+            // Save new account if requested
+            if (saveNewAccount.value && bankName && redeemData.redemptionDetails.accountName && redeemData.redemptionDetails.bankAccount) {
+              try {
+                const newAccountData = {
+                  bankName: bankName,
+                  accountName: redeemData.redemptionDetails.accountName,
+                  accountNumber: redeemData.redemptionDetails.bankAccount,
+                  isPrimary: bankAccounts.value.length === 0, // Set as primary if it's the first account
+                  notes: 'Added during redemption process'
+                }
+                
+                const addAccountResponse = await addBankAccount(newAccountData)
+                if (addAccountResponse.success) {
+                  console.log('New bank account saved successfully')
+                  // Refresh bank accounts list
+                  await loadBankAccounts()
+                } else {
+                  console.warn('Failed to save new bank account:', addAccountResponse.message)
+                }
+              } catch (saveError) {
+                console.warn('Failed to save new bank account:', saveError)
+                // Don't fail the redemption if saving account fails
+              }
+            }
+          }
+        }
+
+        const response = await apiService.createRedemption(redemptionPayload)
 
         if (response.success) {
           success.value = 'Redemption request submitted successfully! Please wait for processing.'
@@ -303,16 +549,24 @@ export default {
           
           // Reset form
           redeemData.pointsToRedeem = 100
+          selectedBankAccountId.value = null
           redeemData.redemptionDetails = {
             bankName: '',
+            customBankName: '',
             accountName: '',
             bankAccount: ''
+          }
+
+          // Auto-select primary account again if exists
+          const primaryAccount = bankAccounts.value.find(account => account.isPrimary)
+          if (primaryAccount) {
+            selectedBankAccountId.value = primaryAccount.id
           }
 
           // Redirect after success
           setTimeout(() => {
             router.push('/profile')
-          }, 2000)
+          }, 3000)
 
         } else {
           error.value = response.message || 'Failed to submit redemption'
@@ -328,22 +582,36 @@ export default {
 
     // Initialize on mount
     onMounted(async () => {
-      await loadCurrentPoints()
+      console.log('RedeemView mounted, loading data...')
+      await Promise.all([
+        loadCurrentPoints(),
+        loadBankAccounts()
+      ])
+      console.log('Data loading completed')
     })
 
     return {
       currentPoints,
       redeemData,
+      bankAccounts,
+      selectedBankAccountId,
+      saveNewAccount,
       isSubmitting,
       isLoadingPoints,
+      isLoadingBankAccounts,
       error,
       success,
       isFormValid,
       formatNumber,
       formatCurrency,
+      formatBankName,
+      formatAccountNumber,
+      formatBankAccountInput,
       goBack,
-      handleRedeem,
-      loadCurrentPoints
+      loadCurrentPoints,
+      loadBankAccounts, // NOW PROPERLY DEFINED AND RETURNED
+      selectBankAccount,
+      handleRedeem
     }
   }
 }
@@ -564,15 +832,281 @@ export default {
   font-family: 'Baloo 2', sans-serif;
 }
 
-/* Bank Details */
-.bank-details {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  padding: 1rem;
+/* Bank Account Selection - NEW STYLES */
+.bank-account-selection {
   background: #F8FAFC;
   border-radius: 12px;
+  padding: 1.25rem;
   border: 1px solid #E2E8F0;
+  margin-top: 1rem;
+}
+
+.bank-accounts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.bank-account-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1rem;
+  background: white;
+  border: 2px solid #E5E7EB;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.bank-account-option:hover {
+  border-color: #4FC3F7;
+  background: rgba(79, 195, 247, 0.02);
+}
+
+.bank-account-option.selected {
+  border-color: #4FC3F7;
+  background: rgba(79, 195, 247, 0.05);
+  box-shadow: 0 0 0 3px rgba(79, 195, 247, 0.1);
+}
+
+.account-radio {
+  margin-top: 0.25rem;
+  flex-shrink: 0;
+}
+
+.account-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.account-bank-name {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #1F2937;
+  font-family: 'Baloo 2', sans-serif;
+  margin-bottom: 0.25rem;
+}
+
+.account-holder-name {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #374151;
+  font-family: 'Baloo 2', sans-serif;
+  margin-bottom: 0.25rem;
+}
+
+.account-number {
+  font-size: 0.75rem;
+  color: #6B7280;
+  font-family: 'Courier New', monospace;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.5rem;
+}
+
+.account-badges {
+  display: flex;
+  gap: 0.375rem;
+  flex-wrap: wrap;
+}
+
+.badge {
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 0.25rem 0.5rem;
+  border-radius: 8px;
+  font-family: 'Baloo 2', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.primary-badge {
+  background: #FEF3C7;
+  color: #92400E;
+}
+
+.verified-badge {
+  background: #D1FAE5;
+  color: #065F46;
+}
+
+.new-account-option {
+  border-style: dashed;
+  border-color: #9CA3AF;
+}
+
+.new-account-option:hover {
+  border-color: #4FC3F7;
+  border-style: solid;
+}
+
+.new-account-option.selected {
+  border-style: solid;
+}
+
+.new-account-text {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.new-account-icon {
+  font-size: 1rem;
+  font-weight: bold;
+  color: #4FC3F7;
+}
+
+.new-account-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #374151;
+  font-family: 'Baloo 2', sans-serif;
+}
+
+.new-account-desc {
+  font-size: 0.75rem;
+  color: #6B7280;
+  font-family: 'Baloo 2', sans-serif;
+  font-style: italic;
+}
+
+.no-accounts-message {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1.25rem;
+  background: #FEF3C7;
+  border-radius: 12px;
+  border: 1px solid #FDE68A;
+  margin-bottom: 1rem;
+}
+
+.message-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.message-content {
+  flex: 1;
+}
+
+.message-title {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #92400E;
+  font-family: 'Baloo 2', sans-serif;
+  margin: 0 0 0.25rem 0;
+}
+
+.message-text {
+  font-size: 0.8rem;
+  color: #A16207;
+  font-family: 'Baloo 2', sans-serif;
+  line-height: 1.4;
+  margin: 0;
+}
+
+.add-account-link {
+  color: #4FC3F7;
+  text-decoration: underline;
+  font-weight: 600;
+}
+
+.add-account-link:hover {
+  color: #29B6F6;
+}
+
+.manual-bank-details {
+  background: white;
+  border-radius: 12px;
+  padding: 1.25rem;
+  border: 2px solid #E2E8F0;
+  margin-top: 1rem;
+}
+
+.manual-input-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.manual-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1F2937;
+  font-family: 'Baloo 2', sans-serif;
+  margin: 0;
+}
+
+.save-account-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.toggle-container {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.toggle-input {
+  display: none;
+}
+
+.toggle-slider {
+  width: 44px;
+  height: 24px;
+  background: #E5E7EB;
+  border-radius: 24px;
+  position: relative;
+  transition: all 0.3s;
+}
+
+.toggle-slider::before {
+  content: '';
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  background: white;
+  border-radius: 50%;
+  top: 3px;
+  left: 3px;
+  transition: all 0.3s;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.toggle-input:checked + .toggle-slider {
+  background: #4FC3F7;
+}
+
+.toggle-input:checked + .toggle-slider::before {
+  transform: translateX(20px);
+}
+
+.toggle-label {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #374151;
+  font-family: 'Baloo 2', sans-serif;
+}
+
+.custom-bank-input {
+  margin-top: 0.75rem;
+}
+
+.field-hint {
+  font-size: 0.75rem;
+  color: #6B7280;
+  font-family: 'Baloo 2', sans-serif;
+  margin-top: 0.375rem;
+  font-style: italic;
 }
 
 /* Form Actions */
@@ -677,5 +1211,73 @@ export default {
   font-weight: bold;
   position: absolute;
   left: 0;
+}
+
+/* Responsive Design */
+@media (max-width: 640px) {
+  .bank-account-option {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  
+  .account-radio {
+    align-self: flex-start;
+  }
+  
+  .manual-input-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .no-accounts-message {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  
+  .balance-info {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  
+  .radio-group {
+    flex-direction: column;
+  }
+  
+  .radio-option {
+    min-width: auto;
+  }
+}
+
+/* Additional responsive styles for existing elements */
+@media (min-width: 768px) {
+  .dashboard-section {
+    margin: 0 2rem 1.5rem 2rem;
+    padding: 1.5rem;
+  }
+  
+  .bank-accounts-list {
+    gap: 1rem;
+  }
+  
+  .bank-account-option {
+    padding: 1.25rem;
+  }
+  
+  .manual-bank-details {
+    padding: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .dashboard-section {
+    margin: 0 3rem 2rem 3rem;
+    padding: 2rem;
+  }
+  
+  .redeem-form {
+    max-width: 600px;
+    margin: 0 auto;
+  }
 }
 </style>

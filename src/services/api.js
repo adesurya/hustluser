@@ -1,4 +1,4 @@
-// src/services/api.js - Enhanced version with better cache integration hooks
+// src/services/api.js - Enhanced version with bank account API endpoints
 import axios from 'axios'
 
 class ApiService {
@@ -265,6 +265,176 @@ class ApiService {
     return response
   }
 
+  // BANK ACCOUNT APIs - NEW IMPLEMENTATION
+  async getBankAccounts(params = {}) {
+    const {
+      page = 1,
+      limit = 20,
+      sortBy = 'created_at',
+      sortOrder = 'DESC'
+    } = params
+    
+    const queryParams = {
+      page,
+      limit,
+      sortBy,
+      sortOrder
+    }
+    
+    const response = await this.client.get('/bank-accounts', { params: queryParams })
+    return response
+  }
+
+  async getBankAccountById(accountId) {
+    const response = await this.client.get(`/bank-accounts/${accountId}`)
+    return response
+  }
+
+  async addBankAccount(bankAccountData) {
+    const response = await this.client.post('/bank-accounts', {
+      bankName: bankAccountData.bankName,
+      accountNumber: bankAccountData.accountNumber,
+      accountName: bankAccountData.accountName,
+      isPrimary: bankAccountData.isPrimary || false,
+      notes: bankAccountData.notes || ''
+    })
+    
+    // Notify cache to invalidate bank account related data
+    this.notifyCacheInvalidation('bankAccountUpdate', response)
+    return response
+  }
+
+  async updateBankAccount(accountId, bankAccountData) {
+    const response = await this.client.put(`/bank-accounts/${accountId}`, {
+      bankName: bankAccountData.bankName,
+      accountName: bankAccountData.accountName,
+      notes: bankAccountData.notes
+    })
+    
+    // Notify cache to invalidate bank account related data
+    this.notifyCacheInvalidation('bankAccountUpdate', response)
+    return response
+  }
+
+  async setPrimaryBankAccount(accountId) {
+    const response = await this.client.patch(`/bank-accounts/${accountId}/set-primary`)
+    
+    // Notify cache to invalidate bank account related data
+    this.notifyCacheInvalidation('bankAccountUpdate', response)
+    return response
+  }
+
+  async deleteBankAccount(accountId) {
+    const response = await this.client.delete(`/bank-accounts/${accountId}`)
+    
+    // Notify cache to invalidate bank account related data
+    this.notifyCacheInvalidation('bankAccountUpdate', response)
+    return response
+  }
+
+  // WISHLIST APIs - EXISTING IMPLEMENTATION
+  async getWishlist(params = {}) {
+    const {
+      page = 1,
+      limit = 10,
+      includeProduct = true,
+      sortBy = 'created_at',
+      sortOrder = 'DESC'
+    } = params
+    
+    const queryParams = {
+      page,
+      limit,
+      includeProduct,
+      sortBy,
+      sortOrder
+    }
+    
+    const response = await this.client.get('/wishlist', { params: queryParams })
+    return response
+  }
+
+  async getWishlistCount() {
+    const response = await this.client.get('/wishlist/count')
+    return response
+  }
+
+  async addToWishlist(productId) {
+    const response = await this.client.post('/wishlist', {
+      productId: productId
+    })
+    
+    // Notify cache to invalidate wishlist related data
+    this.notifyCacheInvalidation('wishlistUpdate', response)
+    return response
+  }
+
+  async removeFromWishlist(wishlistItemId) {
+    const response = await this.client.delete(`/wishlist/${wishlistItemId}`)
+    
+    // Notify cache to invalidate wishlist related data
+    this.notifyCacheInvalidation('wishlistUpdate', response)
+    return response
+  }
+
+  async toggleWishlist(productId) {
+    const response = await this.client.post('/wishlist/toggle', {
+      productId: productId
+    })
+    
+    // Notify cache to invalidate wishlist related data
+    this.notifyCacheInvalidation('wishlistUpdate', response)
+    return response
+  }
+
+  async isInWishlist(productId) {
+    try {
+      // Get wishlist and check if product exists
+      const wishlistResponse = await this.getWishlist({ limit: 100 })
+      
+      if (wishlistResponse.success && wishlistResponse.data) {
+        return wishlistResponse.data.some(item => 
+          item.productId === productId || item.product?.id === productId
+        )
+      }
+      
+      return false
+    } catch (error) {
+      console.warn('Error checking wishlist status:', error)
+      return false
+    }
+  }
+
+  // AFFILIATE LINKS APIs - EXISTING IMPLEMENTATION
+  async getAffiliateLinks(params = {}) {
+    const {
+      page = 1,
+      limit = 20,
+      status = null,
+      sortBy = 'created_at',
+      sortOrder = 'DESC'
+    } = params
+    
+    const queryParams = {
+      page,
+      limit,
+      sortBy,
+      sortOrder
+    }
+    
+    if (status) {
+      queryParams.status = status
+    }
+    
+    const response = await this.client.get('/affiliate-links', { params: queryParams })
+    return response
+  }
+
+  async getAffiliateLinkById(linkId) {
+    const response = await this.client.get(`/affiliate-links/${linkId}`)
+    return response
+  }
+
   // Generate Affiliate Link API
   async generateAffiliateLink(productData) {
     const response = await this.client.post('/tiktok/affiliate-links', {
@@ -275,8 +445,9 @@ class ApiService {
       materialType: productData.materialType || 1
     })
     
-    // Notify cache about potential points change
+    // Notify cache about potential points change and affiliate links update
     this.notifyCacheInvalidation('productPurchase', response)
+    this.notifyCacheInvalidation('affiliateLinksUpdate', response)
     return response
   }
 
@@ -406,6 +577,93 @@ class ApiService {
     if (!imagePath) return '/api/placeholder/120/120'
     if (imagePath.startsWith('http')) return imagePath
     return `https://apihustl.sijago.ai/uploads/${type}/${imagePath}`
+  }
+
+  // Utility method to format earnings
+  static formatEarnings(earnings) {
+    if (!earnings || earnings === '0') return 'Rp 0'
+    
+    const numEarnings = parseFloat(earnings)
+    if (isNaN(numEarnings)) return 'Rp 0'
+    
+    return new Intl.NumberFormat('id-ID', {
+      style: 'currency',
+      currency: 'IDR',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2
+    }).format(numEarnings)
+  }
+
+  // Utility method to format date
+  static formatDate(dateString) {
+    if (!dateString) return 'Unknown'
+    
+    const date = new Date(dateString)
+    return date.toLocaleDateString('id-ID', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    })
+  }
+
+  // Bank account utility methods
+  static formatBankAccountNumber(accountNumber) {
+    if (!accountNumber) return ''
+    
+    // Mask account number (show first 4 and last 4 digits)
+    if (accountNumber.length <= 8) return accountNumber
+    
+    const firstPart = accountNumber.substring(0, 4)
+    const lastPart = accountNumber.substring(accountNumber.length - 4)
+    const middleMask = '*'.repeat(Math.min(6, accountNumber.length - 8))
+    
+    return `${firstPart}${middleMask}${lastPart}`
+  }
+
+  static formatBankName(bankName) {
+    if (!bankName) return 'Unknown Bank'
+    
+    // Common bank name mappings for Indonesia
+    const bankMappings = {
+      'BCA': 'Bank Central Asia',
+      'BRI': 'Bank Rakyat Indonesia',
+      'BNI': 'Bank Negara Indonesia',
+      'MANDIRI': 'Bank Mandiri',
+      'CIMB': 'CIMB Niaga',
+      'DANAMON': 'Bank Danamon',
+      'PERMATA': 'Bank Permata',
+      'OCBC': 'OCBC NISP'
+    }
+    
+    const upperName = bankName.toUpperCase()
+    return bankMappings[upperName] || bankName
+  }
+
+  static validateBankAccount(bankAccountData) {
+    const errors = []
+    
+    if (!bankAccountData.bankName || bankAccountData.bankName.trim() === '') {
+      errors.push('Bank name is required')
+    }
+    
+    if (!bankAccountData.accountNumber || bankAccountData.accountNumber.trim() === '') {
+      errors.push('Account number is required')
+    } else if (!/^\d{8,20}$/.test(bankAccountData.accountNumber.replace(/\s/g, ''))) {
+      errors.push('Account number must be 8-20 digits')
+    }
+    
+    if (!bankAccountData.accountName || bankAccountData.accountName.trim() === '') {
+      errors.push('Account name is required')
+    } else if (bankAccountData.accountName.length < 3) {
+      errors.push('Account name must be at least 3 characters')
+    }
+    
+    return {
+      isValid: errors.length === 0,
+      errors
+    }
   }
 }
 

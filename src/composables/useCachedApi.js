@@ -1,4 +1,4 @@
-// src/composables/useCachedApi.js - Enhanced with all missing endpoints
+// src/composables/useCachedApi.js - Enhanced with bank accounts endpoints
 import { ref } from 'vue'
 import cacheOptimization from '../utils/cacheOptimization'
 import apiCacheService from '../services/apiCacheService'
@@ -119,6 +119,211 @@ export function useCachedApi() {
     }, { ttl: 15 * 60 * 1000, params, ...options }) // 15 minutes
   }
 
+  // WISHLIST API METHODS
+  const getWishlist = async (params = {}, options = {}) => {
+    const cacheKey = `wishlist_${JSON.stringify(params)}`
+    return await cachedCall(cacheKey, async () => {
+      const { default: apiService } = await import('../services/api')
+      return await apiService.getWishlist(params)
+    }, { ttl: 2 * 60 * 1000, params, ...options }) // 2 minutes for fresh wishlist data
+  }
+
+  const getWishlistCount = async (options = {}) => {
+    return await cachedCall('wishlistCount', async () => {
+      const { default: apiService } = await import('../services/api')
+      return await apiService.getWishlistCount()
+    }, { ttl: 1 * 60 * 1000, ...options }) // 1 minute for count
+  }
+
+  const addToWishlist = async (productId) => {
+    try {
+      const { default: apiService } = await import('../services/api')
+      const result = await apiService.addToWishlist(productId)
+      
+      // Invalidate wishlist-related caches after successful addition
+      await invalidateRelated('wishlistUpdate', { productId, action: 'added' })
+      
+      return result
+    } catch (err) {
+      error.value = err.message || 'Failed to add to wishlist'
+      console.error('Failed to add to wishlist:', err)
+      throw err
+    }
+  }
+
+  const removeFromWishlist = async (wishlistItemId) => {
+    try {
+      const { default: apiService } = await import('../services/api')
+      const result = await apiService.removeFromWishlist(wishlistItemId)
+      
+      // Invalidate wishlist-related caches after successful removal
+      await invalidateRelated('wishlistUpdate', { wishlistItemId, action: 'removed' })
+      
+      return result
+    } catch (err) {
+      error.value = err.message || 'Failed to remove from wishlist'
+      console.error('Failed to remove from wishlist:', err)
+      throw err
+    }
+  }
+
+  const toggleWishlist = async (productId) => {
+    try {
+      const { default: apiService } = await import('../services/api')
+      const result = await apiService.toggleWishlist(productId)
+      
+      // Invalidate wishlist-related caches after successful toggle
+      await invalidateRelated('wishlistUpdate', { 
+        productId, 
+        action: result.data?.action || 'toggled' 
+      })
+      
+      return result
+    } catch (err) {
+      error.value = err.message || 'Failed to toggle wishlist'
+      console.error('Failed to toggle wishlist:', err)
+      throw err
+    }
+  }
+
+  const isInWishlist = async (productId) => {
+    try {
+      const { default: apiService } = await import('../services/api')
+      return await apiService.isInWishlist(productId)
+    } catch (err) {
+      console.warn('Failed to check wishlist status:', err)
+      return false
+    }
+  }
+
+  // BANK ACCOUNTS API METHODS - NEW IMPLEMENTATION
+  const getBankAccounts = async (params = {}, options = {}) => {
+    const cacheKey = `bankAccounts_${JSON.stringify(params)}`
+    return await cachedCall(cacheKey, async () => {
+      const { default: apiService } = await import('../services/api')
+      return await apiService.getBankAccounts(params)
+    }, { ttl: 10 * 60 * 1000, params, ...options }) // 10 minutes for bank accounts
+  }
+
+  const getBankAccountById = async (accountId, options = {}) => {
+    return await cachedCall(`bankAccount_${accountId}`, async () => {
+      const { default: apiService } = await import('../services/api')
+      return await apiService.getBankAccountById(accountId)
+    }, { ttl: 15 * 60 * 1000, params: { accountId }, ...options }) // 15 minutes
+  }
+
+  const addBankAccount = async (bankAccountData) => {
+    try {
+      const { default: apiService } = await import('../services/api')
+      const result = await apiService.addBankAccount(bankAccountData)
+      
+      // Invalidate bank account related caches after successful addition
+      await invalidateRelated('bankAccountUpdate', { bankAccountData, action: 'added' })
+      
+      return result
+    } catch (err) {
+      error.value = err.message || 'Failed to add bank account'
+      console.error('Failed to add bank account:', err)
+      throw err
+    }
+  }
+
+  const updateBankAccount = async (accountId, bankAccountData) => {
+    try {
+      const { default: apiService } = await import('../services/api')
+      const result = await apiService.updateBankAccount(accountId, bankAccountData)
+      
+      // Invalidate bank account related caches after successful update
+      await invalidateRelated('bankAccountUpdate', { accountId, bankAccountData, action: 'updated' })
+      
+      return result
+    } catch (err) {
+      error.value = err.message || 'Failed to update bank account'
+      console.error('Failed to update bank account:', err)
+      throw err
+    }
+  }
+
+  const setPrimaryBankAccount = async (accountId) => {
+    try {
+      const { default: apiService } = await import('../services/api')
+      const result = await apiService.setPrimaryBankAccount(accountId)
+      
+      // Invalidate bank account related caches after setting primary
+      await invalidateRelated('bankAccountUpdate', { accountId, action: 'setPrimary' })
+      
+      return result
+    } catch (err) {
+      error.value = err.message || 'Failed to set primary bank account'
+      console.error('Failed to set primary bank account:', err)
+      throw err
+    }
+  }
+
+  const deleteBankAccount = async (accountId) => {
+    try {
+      const { default: apiService } = await import('../services/api')
+      const result = await apiService.deleteBankAccount(accountId)
+      
+      // Invalidate bank account related caches after successful deletion
+      await invalidateRelated('bankAccountUpdate', { accountId, action: 'deleted' })
+      
+      return result
+    } catch (err) {
+      error.value = err.message || 'Failed to delete bank account'
+      console.error('Failed to delete bank account:', err)
+      throw err
+    }
+  }
+
+  // AFFILIATE LINKS API METHODS - EXISTING IMPLEMENTATION
+  const getAffiliateLinks = async (params = {}, options = {}) => {
+    const cacheKey = `affiliateLinks_${JSON.stringify(params)}`
+    return await cachedCall(cacheKey, async () => {
+      const { default: apiService } = await import('../services/api')
+      return await apiService.getAffiliateLinks(params)
+    }, { ttl: 5 * 60 * 1000, params, ...options }) // 5 minutes for fresh affiliate data
+  }
+
+  const getAffiliateLinkById = async (linkId, options = {}) => {
+    return await cachedCall(`affiliateLink_${linkId}`, async () => {
+      const { default: apiService } = await import('../services/api')
+      return await apiService.getAffiliateLinkById(linkId)
+    }, { ttl: 10 * 60 * 1000, params: { linkId }, ...options }) // 10 minutes
+  }
+
+  const generateAffiliateLink = async (productData) => {
+    try {
+      const { default: apiService } = await import('../services/api')
+      const result = await apiService.generateAffiliateLink(productData)
+      
+      // Invalidate affiliate links caches after successful generation
+      await invalidateRelated('affiliateLinksUpdate', { productData, action: 'generated' })
+      
+      return result
+    } catch (err) {
+      error.value = err.message || 'Failed to generate affiliate link'
+      console.error('Failed to generate affiliate link:', err)
+      throw err
+    }
+  }
+
+  const shareAffiliateLink = async (shareData) => {
+    try {
+      const { default: apiService } = await import('../services/api')
+      const result = await apiService.shareAffiliateLink(shareData)
+      
+      // Invalidate affiliate links caches after successful share
+      await invalidateRelated('affiliateLinksUpdate', { shareData, action: 'shared' })
+      
+      return result
+    } catch (err) {
+      error.value = err.message || 'Failed to share affiliate link'
+      console.error('Failed to share affiliate link:', err)
+      throw err
+    }
+  }
+
   // Utility methods for cache management
   const invalidateCache = async (endpoint, params = {}) => {
     try {
@@ -178,6 +383,26 @@ export function useCachedApi() {
     getCategories,
     getFeaturedProducts,
     getProducts,
+    // Wishlist methods
+    getWishlist,
+    getWishlistCount,
+    addToWishlist,
+    removeFromWishlist,
+    toggleWishlist,
+    isInWishlist,
+    // Bank Account methods - NEW
+    getBankAccounts,
+    getBankAccountById,
+    addBankAccount,
+    updateBankAccount,
+    setPrimaryBankAccount,
+    deleteBankAccount,
+    // Affiliate Links methods
+    getAffiliateLinks,
+    getAffiliateLinkById,
+    generateAffiliateLink,
+    shareAffiliateLink,
+    // Cache management
     invalidateCache,
     invalidateRelated,
     refreshCache,

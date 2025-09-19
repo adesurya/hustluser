@@ -9,3 +9,5 @@ Penambahan fitur pada Backend
 5. Tambahkan endpoint wishlist untuk product disimpan kedalam database
 6. Rate limiting dihilangkan atau dinaika jumlahnya
 7. Nambah API untuk lihat link generated
+
+https://claude.ai/chat/43ddf19a-d657-4aea-9f4a-c4c7591dd0d7
