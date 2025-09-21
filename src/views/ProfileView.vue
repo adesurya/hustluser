@@ -78,7 +78,7 @@
           </button>
           
           <button class="action-card" @click="navigateToRedemptions">
-            <div class="action-icon redemptions-icon">🎁</div>
+            <div class="action-icon redemptions-icon">📜</div>
             <div class="action-info">
               <span class="action-title">Redemptions</span>
               <span class="action-subtitle">Claim rewards</span>
@@ -237,7 +237,9 @@
 
       <!-- Logout Section -->
       <div class="dashboard-section logout-section">
-        <button class="logout-btn" @click="showLogoutConfirm = true">
+        <!-- <button class="logout-btn" @click="showLogoutConfirm = true"> -->
+        <button class="logout-btn" @click="handleLogout">
+
           <span class="logout-icon">🚪</span>
           <span class="logout-text">Logout</span>
         </button>
@@ -296,7 +298,7 @@
     </div>
 
     <!-- Logout Confirmation Modal -->
-    <div v-if="showLogoutConfirm" class="modal-overlay" @click="showLogoutConfirm = false">
+    <!-- <div v-if="showLogoutConfirm" class="modal-overlay" @click="showLogoutConfirm = false">
       <div class="modal-content" @click.stop>
         <div class="modal-header">
           <h3 class="modal-title">Confirm Logout</h3>
@@ -312,7 +314,7 @@
           <button class="confirm-logout-btn" @click="handleLogout">Logout</button>
         </div>
       </div>
-    </div>
+    </div> -->
 
     <!-- Bottom Navigation -->
     <BottomNavigation />
@@ -350,7 +352,7 @@ export default {
     } = useWishlist()
     
     const showSettings = ref(false)
-    const showLogoutConfirm = ref(false)
+    // const showLogoutConfirm = ref(false)
     const bankAccounts = ref([])
     const bankAccountsCount = ref(0)
     const primaryBankAccount = ref(null)
@@ -547,7 +549,7 @@ export default {
       isBankAccountsLoading,
       recentWishlistItems,
       showSettings,
-      showLogoutConfirm,
+      // showLogoutConfirm,
       settings,
       getInitials,
       getProductImageUrl,
@@ -574,46 +576,48 @@ export default {
 </script>
 
 <style scoped>
-/* ProfileView.vue Styles - Fixed for Single Scroll Container */
+/* Reset and Base Styles - Following BankAccountView pattern */
 * {
   box-sizing: border-box;
 }
 
+/* Profile View Main Container - Same pattern as BankAccountView */
 .profile-view {
   min-height: 100vh;
   background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%);
-  display: flex;
-  flex-direction: column;
-  position: relative;
-  flex: 1; /* Ambil ruang yang tersisa */
-}
-
-
-.profile-content {
-  flex: 1;
-  padding-bottom: 100px; /* HANYA SATU padding-bottom yang konsisten */
+  padding-bottom: 100px;
   width: 100%;
-  box-sizing: border-box;
-  overflow-y: auto; /* Pastikan konten bisa di-scroll */
+  overflow-x: hidden;
+  position: relative;
 }
 
+/* Container wrapper to control all sections */
+.profile-content {
+  width: 100%;
+  max-width: 100%;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Dashboard sections - Updated to match Dashboard margin approach */
 .dashboard-section {
   background: white;
   margin: 0 1rem 1.5rem 1rem;
-  padding: 1.25rem;
+  padding: 1rem;
   border-radius: 16px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.9);
-  word-wrap: break-word;
-  overflow-wrap: break-word;
+  width: calc(100% - 2rem);
   max-width: calc(100% - 2rem);
   box-sizing: border-box;
+  overflow: hidden;
 }
 
 .dashboard-section:first-child {
   margin-top: 1rem;
 }
 
+/* Profile Header Section */
 .profile-header-section {
   padding: 1.5rem 1.25rem;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -729,71 +733,56 @@ export default {
   gap: 0.5rem;
 }
 
+/* Quick Actions - Single column on mobile */
 .quick-actions-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1rem;
-  margin-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
   max-width: 100%;
+  box-sizing: border-box;
 }
 
 .action-card {
-  background: linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 100%);
-  border: 2px solid #E2E8F0;
-  border-radius: 16px;
-  padding: 1.25rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
   display: flex;
-  align-items: center;
-  gap: 1rem;
-  text-align: left;
-  font-family: 'Baloo 2', sans-serif;
+  flex-direction: row;
+  background: #F8FAFC;
+  border-radius: 12px;
+  padding: 0.75rem;
+  border: 2px solid #E2E8F0;
+  cursor: pointer;
+  transition: all 0.2s;
   width: 100%;
+  max-width: 100%;
   box-sizing: border-box;
-  min-width: 0;
-  position: relative;
+  align-items: center;
   overflow: hidden;
 }
 
 .action-card:hover {
-  background: linear-gradient(135deg, #FFFFFF 0%, #F8FAFC 100%);
+  transform: translateY(-2px);
   border-color: #4FC3F7;
-  transform: translateY(-4px);
-  box-shadow: 0 8px 25px rgba(79, 195, 247, 0.25);
-}
-
-.action-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: linear-gradient(90deg, #4FC3F7, #29B6F6);
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.action-card:hover::before {
-  opacity: 1;
+  box-shadow: 0 6px 16px rgba(79, 195, 247, 0.15);
 }
 
 .action-icon {
-  width: 48px;
-  height: 48px;
+  width: 50px;
+  height: 50px;
   border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.25rem;
+  font-size: 1.5rem;
   flex-shrink: 0;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s ease;
+  color: white;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+  margin-right: 0.5rem;
+  transition: all 0.2s;
 }
 
 .action-card:hover .action-icon {
-  transform: scale(1.1);
+  transform: scale(1.05);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
 }
 
 .action-icon.wishlist-icon {
@@ -824,34 +813,40 @@ export default {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.125rem;
   min-width: 0;
+  width: 100%;
+  max-width: 100%;
 }
 
 .action-title {
-  font-size: 1rem;
-  font-weight: 700;
+  font-size: 0.875rem;
   color: #1F2937;
+  font-family: 'Baloo 2', sans-serif;
+  font-weight: 600;
+  margin-bottom: 0.0625rem;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  margin-bottom: 0.125rem;
 }
 
 .action-subtitle {
-  font-size: 0.875rem;
+  font-size: 0.75rem;
   color: #4FC3F7;
+  font-family: 'Baloo 2', sans-serif;
   font-weight: 600;
+  margin-bottom: 0.125rem;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .action-description {
-  font-size: 0.75rem;
+  font-size: 0.65rem;
   color: #6B7280;
+  font-family: 'Baloo 2', sans-serif;
   font-weight: 500;
-  line-height: 1.3;
+  line-height: 1.2;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -859,16 +854,10 @@ export default {
 }
 
 .action-arrow {
-  font-size: 1.125rem;
-  color: #9CA3AF;
-  transition: all 0.3s ease;
-  flex-shrink: 0;
-  font-weight: bold;
-}
-
-.action-card:hover .action-arrow {
-  color: #4FC3F7;
-  transform: translateX(4px);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.25rem;
 }
 
 .see-all-btn, .manage-banks-btn {
@@ -900,6 +889,7 @@ export default {
   background: rgba(16, 185, 129, 0.1);
 }
 
+/* Bank Summary */
 .bank-summary-section {
   padding: 1.25rem;
   background: linear-gradient(135deg, #F0FDF4 0%, #ECFDF5 100%);
@@ -1056,6 +1046,7 @@ export default {
   transform: translateY(-1px);
 }
 
+/* Redemption Section */
 .redemption-action-section {
   padding: 1.25rem;
   background: linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 100%);
@@ -1203,41 +1194,47 @@ export default {
   margin-top: 0.25rem;
 }
 
+/* Recent Wishlist - Similar to accounts list */
 .recent-wishlist-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 0.75rem;
-  margin-bottom: 1rem;
-  max-width: 100%;
-}
-
-.wishlist-preview-card {
   display: flex;
   flex-direction: column;
-  background: #F8FAFC;
-  border-radius: 12px;
-  padding: 0.875rem;
-  border: 1px solid #E2E8F0;
-  cursor: pointer;
-  transition: all 0.2s;
+  gap: 0.75rem;
+  width: 100%;
   max-width: 100%;
   box-sizing: border-box;
 }
 
+.wishlist-preview-card {
+  display: flex;
+  flex-direction: row;
+  background: #F8FAFC;
+  border-radius: 12px;
+  padding: 0.75rem;
+  border: 2px solid #E2E8F0;
+  cursor: pointer;
+  transition: all 0.2s;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  align-items: center;
+  overflow: hidden;
+}
+
 .wishlist-preview-card:hover {
-  background: #F1F5F9;
-  border-color: #CBD5E1;
   transform: translateY(-2px);
+  border-color: #4FC3F7;
+  box-shadow: 0 6px 16px rgba(79, 195, 247, 0.15);
 }
 
 .preview-image {
   position: relative;
-  width: 100%;
-  height: 80px;
+  width: 50px;
+  height: 50px;
   border-radius: 8px;
   overflow: hidden;
   background: #E5E7EB;
-  margin-bottom: 0.625rem;
+  margin-right: 0.5rem;
+  flex-shrink: 0;
 }
 
 .preview-image img {
@@ -1248,35 +1245,38 @@ export default {
 
 .remove-from-wishlist {
   position: absolute;
-  top: 4px;
-  right: 4px;
+  top: 1px;
+  right: 1px;
   background: rgba(255, 255, 255, 0.9);
   border: none;
   border-radius: 50%;
-  width: 24px;
-  height: 24px;
+  width: 16px;
+  height: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  font-size: 0.7rem;
+  font-size: 0.625rem;
   transition: all 0.2s;
 }
 
 .remove-from-wishlist:hover {
-  background: rgba(239, 68, 68, 0.9);
+  background: rgba(255, 255, 255, 1);
   transform: scale(1.1);
 }
 
 .preview-info {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.125rem;
+  min-width: 0;
+  width: 100%;
   max-width: 100%;
 }
 
 .preview-name {
-  font-size: 0.875rem;
+  font-size: 0.75rem;
   font-weight: 600;
   color: #1F2937;
   font-family: 'Baloo 2', sans-serif;
@@ -1292,8 +1292,10 @@ export default {
   color: #059669;
   font-family: 'Baloo 2', sans-serif;
   font-weight: 700;
+  margin-bottom: 0.125rem;
 }
 
+/* Empty States */
 .empty-wishlist-state {
   display: flex;
   flex-direction: column;
@@ -1346,6 +1348,7 @@ export default {
   transform: translateY(-2px);
 }
 
+/* Account Details */
 .account-details {
   display: flex;
   flex-direction: column;
@@ -1422,18 +1425,33 @@ export default {
   font-size: 1.25rem;
 }
 
+/* Modal Styles - Single container approach */
 .modal-overlay {
-  z-index: 1000 !important; /* Lebih rendah dari footer */
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  z-index: 1000;
+  padding: 2rem 1rem;
+  box-sizing: border-box;
+  backdrop-filter: blur(4px);
+  overflow-y: auto;
 }
 
 .modal-content {
   background: white;
   border-radius: 16px;
   width: 100%;
-  max-width: 400px;
-  overflow: hidden;
+  max-width: 520px;
+  min-height: auto;
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
   box-sizing: border-box;
+  margin: auto 0;
 }
 
 .modal-header {
@@ -1463,49 +1481,7 @@ export default {
 
 .modal-body {
   padding: 1.5rem;
-}
-
-body {
-  margin: 0 !important;
-  padding: 0 !important;
-  position: relative !important;
-}
-
-html {
-  scroll-behavior: smooth !important;
-}
-
-html, body {
-  margin: 0 !important;
-  padding: 0 !important;
-  height: 100% !important;
-  overflow-x: hidden !important;
-}
-
-#app {
-  min-height: 100vh !important;
-  display: flex !important;
-  flex-direction: column !important;
-  position: relative !important;
-}
-
-
-.router-view,
-.page-container,
-.app-container {
-  position: relative !important;
-  z-index: 1 !important;
-}
-
-footer,
-[role="navigation"],
-.app-footer,
-.page-footer {
-  position: fixed !important;
-  bottom: 0 !important;
-  left: 0 !important;
-  right: 0 !important;
-  z-index: 1001 !important;
+  overflow: visible;
 }
 
 .modal-text {
@@ -1658,153 +1634,120 @@ input:checked + .toggle-slider:before {
   transform: translateX(20px);
 }
 
-/* Responsive Design */
-@media (max-width: 480px) {
-  .profile-content {
-    padding-bottom: 85px !important; /* Lebih kecil untuk mobile */
-  }
+/* Fixed Footer Styles - EXACT COPY from category and bank account view */
+:deep(.bottom-navigation) {
+  position: fixed !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  z-index: 1000 !important;
+  background: white !important;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1) !important;
+}
 
-  .quick-actions-grid {
-    grid-template-columns: 1fr;
-    gap: 0.75rem;
-  }
-  
-  .action-card {
+.bottom-navigation {
+  position: fixed !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  z-index: 1000 !important;
+  background: white !important;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1) !important;
+}
+
+::v-deep .bottom-navigation,
+/deep/ .bottom-navigation,
+>>> .bottom-navigation {
+  position: fixed !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  z-index: 1000 !important;
+  background: white !important;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Responsive Design */
+@media (min-width: 640px) {
+  .dashboard-section {
+    margin: 0 1.5rem 1.5rem 1.5rem;
+    width: calc(100% - 3rem);
+    max-width: calc(100% - 3rem);
     padding: 1rem;
   }
-  
-  .action-icon {
-    width: 40px;
-    height: 40px;
-  }
-  
-  .recent-wishlist-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
+}
 
-  .primary-bank-card, .no-primary-bank {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.75rem;
-  }
-  
-  .profile-stats {
-    gap: 0.75rem;
-  }
-
-  .redemption-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.75rem;
-  }
-
-  .redemption-balance {
-    align-items: flex-start;
-    text-align: left;
-  }
-
-  .profile-content {
+@media (min-width: 768px) {
+  .profile-view {
+    background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%) !important;
     padding-bottom: 100px;
   }
   
-  .bottom-navigation,
-  .bottom-nav,
-  .footer-nav,
-  .navigation-footer,
-  [class*="bottom"][class*="nav"],
-  [class*="footer"][class*="nav"] {
-    position: fixed !important;
-    bottom: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    width: 100% !important;
-    z-index: 1001 !important; /* Lebih tinggi dari modal (1000) */
-    background: white !important;
-    border-top: 1px solid #E5E7EB !important;
-    box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.1) !important;
-    padding: 0.75rem 0 !important;
-    box-sizing: border-box !important;
-    
-    /* Reset properties yang bisa mengganggu */
-    transform: none !important;
-    margin: 0 !important;
-    position: fixed !important; /* Pastikan tetap fixed */
+  .page-container,
+  .app-main {
+    background: transparent !important;
   }
   
-  .bottom-navigation .nav-item,
-  .bottom-nav .nav-item,
-  .footer-nav .nav-item {
-    font-size: 0.7rem !important;
-    padding: 0.375rem !important;
-    min-height: 45px !important;
-  }
-  
-  .bottom-navigation .nav-item .nav-icon,
-  .bottom-nav .nav-item .nav-icon,
-  .footer-nav .nav-item .nav-icon {
-    font-size: 1.125rem !important;
-    width: 20px !important;
-    height: 20px !important;
-  }
-}
-
-@media (min-width: 481px) and (max-width: 640px) {
-  .quick-actions-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  
-  .recent-wishlist-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-
-@media (min-width: 641px) and (max-width: 768px) {
-  .quick-actions-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  
-  .recent-wishlist-grid {
-    grid-template-columns: repeat(4, 1fr);
-  }
-}
-
-@media (min-width: 769px) {
   .dashboard-section {
     margin: 0 2rem 1.5rem 2rem;
-    padding: 1.5rem;
+    width: calc(100% - 4rem);
     max-width: calc(100% - 4rem);
+    padding: 1.25rem;
   }
 
   .quick-actions-grid {
-    grid-template-columns: repeat(3, 1fr);
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
     gap: 1rem;
   }
 
   .recent-wishlist-grid {
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
     gap: 1rem;
-  }
-  
-  .profile-content {
-    padding-bottom: 140px;
-  }
-
-  .profile-content {
-    padding-bottom: 140px !important;
-  }
-  
-  .bottom-navigation,
-  .bottom-nav,
-  .footer-nav {
-    padding: 1rem 0 !important;
   }
 }
 
 @media (min-width: 1024px) {
+  body {
+    background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%) !important;
+  }
+  
+  .profile-view {
+    background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%) !important;
+    min-height: auto !important;
+    padding-bottom: 100px;
+  }
+  
+  .page-container {
+    background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%) !important;
+    min-height: 100vh !important;
+    height: auto !important;
+    padding: 0 !important;
+    justify-content: flex-start !important;
+    align-items: stretch !important;
+  }
+  
+  .app-main {
+    background: transparent !important;
+    box-shadow: none !important;
+    min-height: auto !important;
+    max-height: none !important;
+    height: auto !important;
+    overflow: visible !important;
+    max-width: none !important;
+    width: 100% !important;
+    border-radius: 0 !important;
+  }
+
   .dashboard-section {
-    margin: 0 3rem 2rem 3rem;
-    padding: 2rem;
-    max-width: calc(100% - 6rem);
+    margin: 0 4rem 2rem 4rem;
+    width: calc(100% - 8rem);
+    max-width: calc(100% - 8rem);
+    padding: 1.75rem;
   }
 
   .quick-actions-grid {
@@ -1813,108 +1756,63 @@ input:checked + .toggle-slider:before {
   }
 
   .recent-wishlist-grid {
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-columns: repeat(4, 1fr);
     gap: 1.25rem;
   }
 }
 
-/* Pastikan bottom navigation selalu sticky */
-.bottom-navigation, 
-.bottom-nav,
-.footer-nav,
-.navigation-footer,
-[class*="bottom"][class*="nav"],
-[class*="footer"][class*="nav"],
-[class*="nav"][class*="bottom"] {
-  position: fixed !important;
-  bottom: 0 !important;
-  left: 0 !important;
-  right: 0 !important;
-  width: 100% !important;
-  z-index: 1001 !important; /* Lebih tinggi dari modal */
-  background: white !important;
-  border-top: 1px solid #E5E7EB !important;
-  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.1) !important;
-  padding: 0.75rem 0 !important;
-  box-sizing: border-box !important;
-  /* Pastikan tidak ada transform atau positioning lain */
-  transform: none !important;
-  margin: 0 !important;
+@media (min-width: 1200px) {
+  .dashboard-section {
+    margin: 0 5rem 2.5rem 5rem;
+    width: calc(100% - 10rem);
+    max-width: calc(100% - 10rem);
+    padding: 2rem;
+  }
+
+  .profile-view {
+    padding-bottom: 100px;
+  }
+
+  .quick-actions-grid {
+    gap: 1.5rem;
+  }
+
+  .recent-wishlist-grid {
+    gap: 1.5rem;
+  }
+
+  /* Desktop modal improvements */
+  .modal-content {
+    max-width: 600px;
+  }
+
+  .modal-body {
+    padding: 2rem;
+  }
+
+  .modal-header {
+    padding: 2rem 2rem 1rem 2rem;
+  }
 }
 
-/* Alternatif jika menggunakan class yang berbeda */
-[class*="bottom"][class*="nav"],
-[class*="footer"][class*="nav"],
-[class*="nav"][class*="bottom"] {
-  position: fixed !important;
-  bottom: 0 !important;
-  left: 0 !important;
-  right: 0 !important;
-  width: 100% !important;
-  z-index: 999 !important;
+@media (min-width: 1400px) {
+  .dashboard-section {
+    margin: 0 6rem 2.5rem 6rem;
+    width: calc(100% - 12rem);
+    max-width: calc(100% - 12rem);
+    padding: 2rem;
+  }
 }
 
-
-/* Jika navigation menggunakan flexbox layout */
-.bottom-navigation .nav-items,
-.bottom-nav .nav-items,
-.footer-nav .nav-items,
-.bottom-navigation > div,
-.bottom-nav > div,
-.footer-nav > div {
-  display: flex !important;
-  justify-content: space-around !important;
-  align-items: center !important;
-  max-width: 100% !important;
-  margin: 0 auto !important;
-  padding: 0 1rem !important;
-  height: auto !important;
+/* Prevent content overflow on all screen sizes */
+.profile-view,
+.profile-view * {
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
-.bottom-navigation .nav-item,
-.bottom-nav .nav-item,
-.footer-nav .nav-item,
-.bottom-navigation a,
-.bottom-nav a,
-.footer-nav a {
-  display: flex !important;
-  flex-direction: column !important;
-  align-items: center !important;
-  text-align: center !important;
-  flex: 1 !important;
-  padding: 0.5rem !important;
-  color: #6B7280 !important;
-  text-decoration: none !important;
-  transition: color 0.2s !important;
-  font-size: 0.75rem !important;
-  font-family: 'Baloo 2', sans-serif !important;
-  font-weight: 500 !important;
-  min-height: 50px !important;
-  justify-content: center !important;
+/* Last section margin fix */
+.dashboard-section:last-of-type {
+  margin-bottom: 2rem;
 }
-
-.bottom-navigation .nav-item.active,
-.bottom-nav .nav-item.active,
-.footer-nav .nav-item.active,
-.bottom-navigation a.active,
-.bottom-nav a.active,
-.footer-nav a.active {
-  color: #4FC3F7 !important;
-  font-weight: 600 !important;
-}
-
-.bottom-navigation .nav-item .nav-icon,
-.bottom-nav .nav-item .nav-icon,
-.footer-nav .nav-item .nav-icon,
-.bottom-navigation .nav-item img,
-.bottom-nav .nav-item img,
-.footer-nav .nav-item img {
-  font-size: 1.25rem !important;
-  margin-bottom: 0.25rem !important;
-  width: 24px !important;
-  height: 24px !important;
-}
-
-
-
 </style>

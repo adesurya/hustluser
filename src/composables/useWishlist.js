@@ -99,12 +99,35 @@ export function useWishlist() {
       }, { forceRefresh })
 
       if (response && response.success) {
-        wishlistItems.value = response.data.map(transformWishlistItem)
+        // PROBLEM: Data dari API langsung di-transform tanpa validasi
+        // SOLUTION: Validasi dan filter data yang valid
         
-        // Sync with localStorage for offline access
-        syncToLocalStorage()
+        const validatedItems = response.data
+          .filter(item => {
+            // Filter out items yang mungkin corrupt atau invalid
+            if (!item.id || !item.productId) {
+              console.warn('Invalid wishlist item found:', item)
+              return false
+            }
+            
+            // Pastikan product data exists
+            if (!item.product || !item.product.id) {
+              console.warn('Wishlist item missing product data:', item)
+              return false
+            }
+            
+            return true
+          })
+          .map(transformWishlistItem)
+
+        wishlistItems.value = validatedItems
         
-        console.log('Wishlist loaded from API: ' + wishlistItems.value.length + ' items')
+        // Hanya sync ke localStorage jika data valid
+        if (validatedItems.length > 0 || response.data.length === 0) {
+          syncToLocalStorage()
+        }
+        
+        console.log(`Wishlist loaded from API: ${validatedItems.length} valid items (${response.data.length - validatedItems.length} invalid items filtered out)`)
       } else {
         throw new Error(response?.message || 'Failed to load wishlist')
       }
@@ -112,8 +135,9 @@ export function useWishlist() {
       console.error('Error loading wishlist from API:', err)
       error.value = err.message
       
-      // Fallback to localStorage
-      loadWishlistFromLocalStorage()
+      // PROBLEM: Fallback ke localStorage tanpa validasi
+      // SOLUTION: Hanya fallback jika memang diperlukan
+      console.log('API failed, keeping current state without localStorage fallback to prevent bad data')
     } finally {
       isLoading.value = false
     }
@@ -261,42 +285,51 @@ export function useWishlist() {
       isLoading.value = true
 
       if (authStore.isAuthenticated && item.wishlistItemId) {
-        // Use API for authenticated users
-        const response = await apiRemoveFromWishlist(item.wishlistItemId)
-        
-        if (response && response.success) {
-          wishlistItems.value = wishlistItems.value.filter(item => 
-            item.productId !== productId && item.id !== productId
-          )
-          syncToLocalStorage()
+        try {
+          const response = await apiRemoveFromWishlist(item.wishlistItemId)
+          
+          if (response && response.success) {
+            // Success: remove from local state
+            await handleSuccessfulRemoval(productId, 'Removed from wishlist')
+            return true
+          } else {
+            throw new Error(response?.message || 'Failed to remove from wishlist')
+          }
+        } catch (apiError) {
+          console.warn('API removal failed:', apiError)
+          
+          // Check if it's a 404 error (item doesn't exist in database)
+          if (apiError.message?.includes('not found') || apiError.message?.includes('404')) {
+            console.log('Item already deleted from database, cleaning local state')
+            
+            // Treat 404 as success since item is already gone
+            await handleSuccessfulRemoval(productId, 'Item was already removed from database')
+            
+            // Force a full resync to clean up any other phantom items
+            setTimeout(() => {
+              console.log('Triggering full resync due to 404 error...')
+              forceResyncWithDatabase()
+            }, 1000)
+            
+            return true
+          }
+          
+          // For other API errors, still remove locally and suggest resync
+          console.log('API failed with non-404 error, removing locally')
+          await handleSuccessfulRemoval(productId, 'Removed locally, will sync when possible')
           
           showToast({
-            type: 'info',
-            title: 'Removed from Wishlist',
-            message: 'Product has been removed from your wishlist',
-            duration: 2000
+            type: 'warning',
+            title: 'Sync Warning',
+            message: 'Item removed locally. Consider refreshing to sync with database.',
+            duration: 4000
           })
           
-          notifyListeners()
           return true
-        } else {
-          throw new Error(response?.message || 'Failed to remove from wishlist')
         }
       } else {
-        // Use localStorage for non-authenticated users or items without wishlistItemId
-        wishlistItems.value = wishlistItems.value.filter(item => 
-          item.productId !== productId && item.id !== productId
-        )
-        syncToLocalStorage()
-        
-        showToast({
-          type: 'info',
-          title: 'Removed from Wishlist',
-          message: 'Product has been removed from your wishlist',
-          duration: 2000
-        })
-        
-        notifyListeners()
+        // Non-authenticated or localStorage-only items
+        await handleSuccessfulRemoval(productId, 'Removed from local wishlist')
         return true
       }
     } catch (err) {
@@ -306,7 +339,7 @@ export function useWishlist() {
       showToast({
         type: 'error',
         title: 'Error',
-        message: err.message || 'Failed to remove from wishlist',
+        message: 'Failed to remove from wishlist. Try refreshing the page.',
         duration: 3000
       })
       return false
@@ -561,6 +594,278 @@ export function useWishlist() {
     }
   }
 
+  //Sync Frontend with backend
+  const syncWishlistWithAPI = async () => {
+    if (!authStore.isAuthenticated) {
+      console.log('User not authenticated, skipping API sync')
+      return { success: false, message: 'User not authenticated' }
+    }
+
+    try {
+      isLoading.value = true
+      
+      // Get fresh data from API
+      const response = await getWishlist({
+        page: 1,
+        limit: 1000, // Get all items
+        includeProduct: true
+      }, { forceRefresh: true })
+
+      if (response && response.success) {
+        // Transform API items to local format
+        const apiItems = response.data.map(transformWishlistItem)
+        
+        // Update local state with API data
+        wishlistItems.value = apiItems
+        syncToLocalStorage()
+        notifyListeners()
+        
+        console.log(`Wishlist synced: ${apiItems.length} items from API`)
+        
+        return {
+          success: true,
+          message: 'Wishlist synced successfully',
+          itemCount: apiItems.length
+        }
+      } else {
+        throw new Error(response?.message || 'Failed to sync wishlist')
+      }
+    } catch (error) {
+      console.error('Failed to sync wishlist with API:', error)
+      return {
+        success: false,
+        message: 'Failed to sync wishlist',
+        error: error.message
+      }
+    } finally {
+      isLoading.value = false
+    }
+  }
+
+  // Add this method to detect and clean phantom wishlist items
+  const cleanPhantomWishlistItems = async () => {
+    console.log('Cleaning phantom wishlist items...')
+    
+    const localItems = wishlistItems.value
+    const validItems = []
+    let removedCount = 0
+    
+    for (const item of localItems) {
+      // Check if item has a wishlistItemId (API item) vs localStorage-only item
+      if (item.wishlistItemId) {
+        // This is an API item, but we can't verify individually due to the endpoint limitation
+        // We'll keep it for now and let the sync method handle cleanup
+        validItems.push(item)
+      } else {
+        // This is a localStorage-only item, keep it
+        validItems.push(item)
+      }
+    }
+    
+    // For API items, we need to do a full sync to clean phantom items
+    if (authStore.isAuthenticated) {
+      const syncResult = await syncWishlistWithAPI()
+      if (syncResult.success) {
+        removedCount = localItems.length - wishlistItems.value.length
+      }
+    } else {
+      // For non-authenticated users, just update with valid items
+      if (validItems.length !== localItems.length) {
+        wishlistItems.value = validItems
+        syncToLocalStorage()
+        notifyListeners()
+        removedCount = localItems.length - validItems.length
+      }
+    }
+    
+    console.log(`Cleaned ${removedCount} phantom items`)
+    return { removed: removedCount, remaining: wishlistItems.value.length }
+  }
+
+  const forceRefreshWishlist = async () => {
+    try {
+      isLoading.value = true
+      
+      // Clear all wishlist-related cache first
+      await invalidateAllWishlistCache()
+      
+      // Force fresh load from API
+      await loadWishlist(true) // forceRefresh = true
+      
+      console.log('Wishlist force refreshed successfully')
+      return true
+    } catch (error) {
+      console.error('Failed to force refresh wishlist:', error)
+      return false
+    } finally {
+      isLoading.value = false
+    }
+  }
+
+  const invalidateAllWishlistCache = async () => {
+    try {
+      // Clear memory cache
+      const { invalidateCache } = useCachedApi()
+      
+      // Invalidate all wishlist patterns
+      await invalidateCache('wishlist')
+      await invalidateCache('wishlistCount')
+      
+      // Clear localStorage
+      localStorage.removeItem('favoriteProducts')
+      
+      // Clear any other wishlist-related cache keys
+      const cacheKeys = [
+        'wishlist_',
+        'wishlistCount',
+        'favoriteProducts'
+      ]
+      
+      // Clear from all storage types
+      cacheKeys.forEach(key => {
+        // Clear from localStorage
+        Object.keys(localStorage).forEach(storageKey => {
+          if (storageKey.includes(key)) {
+            localStorage.removeItem(storageKey)
+          }
+        })
+        
+        // Clear from sessionStorage
+        Object.keys(sessionStorage).forEach(storageKey => {
+          if (storageKey.includes(key)) {
+            sessionStorage.removeItem(storageKey)
+          }
+        })
+      })
+      
+      console.log('All wishlist cache invalidated')
+    } catch (error) {
+      console.error('Failed to invalidate wishlist cache:', error)
+    }
+  }
+
+  const handleSuccessfulRemoval = async (productId, message) => {
+    // Remove from local state
+    const originalLength = wishlistItems.value.length
+    wishlistItems.value = wishlistItems.value.filter(item => 
+      item.productId !== productId && item.id !== productId
+    )
+    
+    // Only proceed if we actually removed something
+    if (wishlistItems.value.length < originalLength) {
+      // Update localStorage
+      syncToLocalStorage()
+      
+      // Clear cache to ensure consistency
+      const { invalidateCache } = useCachedApi()
+      await invalidateCache('wishlist')
+      await invalidateCache('wishlistCount')
+      
+      // Show success message
+      showToast({
+        type: 'info',
+        title: 'Removed from Wishlist',
+        message: message,
+        duration: 2000
+      })
+      
+      // Notify listeners
+      notifyListeners()
+    }
+  }
+
+  const forceResyncWithDatabase = async () => {
+    try {
+      console.log('🔄 Force resyncing wishlist with database...')
+      isLoading.value = true
+      
+      if (!authStore.isAuthenticated) {
+        console.log('User not authenticated, clearing local wishlist only')
+        wishlistItems.value = []
+        localStorage.removeItem('favoriteProducts')
+        return { success: true, message: 'Local wishlist cleared' }
+      }
+
+      // Step 1: Clear ALL local wishlist data
+      console.log('Step 1: Clearing all local wishlist data...')
+      wishlistItems.value = []
+      localStorage.removeItem('favoriteProducts')
+      
+      // Clear all wishlist-related cache
+      Object.keys(localStorage).forEach(key => {
+        if (key.includes('wishlist') || key.includes('cache:api:wishlist')) {
+          localStorage.removeItem(key)
+          console.log('Cleared cache key:', key)
+        }
+      })
+
+      // Step 2: Force fresh API call
+      console.log('Step 2: Fetching fresh data from API...')
+      const { invalidateCache } = useCachedApi()
+      await invalidateCache('wishlist')
+      await invalidateCache('wishlistCount')
+      
+      // Get fresh data with maximum items to ensure we get everything
+      const response = await getWishlist({
+        page: 1,
+        limit: 1000, // Get all items
+        includeProduct: true,
+        sortBy: 'created_at',
+        sortOrder: 'DESC'
+      }, { forceRefresh: true })
+
+      if (response && response.success) {
+        // Step 3: Transform and set fresh data
+        const freshItems = response.data.map(transformWishlistItem)
+        wishlistItems.value = freshItems
+        
+        // Step 4: Save clean data to localStorage
+        syncToLocalStorage()
+        
+        console.log(`✅ Resync completed: ${freshItems.length} items from database`)
+        
+        showToast({
+          type: 'success',
+          title: 'Wishlist Synced',
+          message: `Successfully synced ${freshItems.length} items from database`,
+          duration: 3000
+        })
+        
+        notifyListeners()
+        
+        return {
+          success: true,
+          itemCount: freshItems.length,
+          message: 'Wishlist resynced successfully'
+        }
+      } else {
+        throw new Error('Failed to fetch wishlist from API')
+      }
+
+    } catch (error) {
+      console.error('Force resync failed:', error)
+      
+      // If API fails, at least clear the bad local data
+      wishlistItems.value = []
+      localStorage.removeItem('favoriteProducts')
+      
+      showToast({
+        type: 'error',
+        title: 'Sync Failed',
+        message: 'Could not sync with database, cleared local data',
+        duration: 4000
+      })
+      
+      return {
+        success: false,
+        error: error.message,
+        message: 'Sync failed but cleared bad local data'
+      }
+    } finally {
+      isLoading.value = false
+    }
+  }
+
   // Initialize on mount
   onMounted(async () => {
     await loadWishlist()
@@ -603,7 +908,11 @@ export function useWishlist() {
     removeListener,
     
     // Migration
-    migrateLocalStorageToAPI
+    migrateLocalStorageToAPI,
+    forceRefreshWishlist,
+    syncWishlistWithAPI,
+    cleanPhantomWishlistItems,
+    invalidateAllWishlistCache
   }
 }
 

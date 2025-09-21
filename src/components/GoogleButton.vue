@@ -10,8 +10,8 @@ export default {
   name: 'GoogleButton',
   methods: {
     handleGoogleLogin() {
-      // Implement Google OAuth login here
-      console.log('Google login clicked')
+      // Redirect ke endpoint Google OAuth API
+      window.location.href = 'https://apihustl.sijago.ai/api/v1/auth/google'
     }
   }
 }

@@ -160,6 +160,8 @@
       @close="closeShareModal"
       @shared="handleShareSuccess"
       @points-earned="handlePointsEarned"
+      @mission-completed="handleMissionCompleted"
+      @mission-completed-closed="handleMissionCompletedClosed"
     />
 
     <!-- Bottom Navigation -->
@@ -178,6 +180,7 @@ import { useWishlist } from '../composables/useWishlist'
 import apiService from '../services/api'
 import cacheOptimization from '../utils/cacheOptimization'
 import performanceService from '../services/performanceService'
+import { useCachedApi } from '../composables/useCachedApi'
 
 export default {
   name: 'ProductDetailView',
@@ -204,6 +207,11 @@ export default {
       isInWishlist,
       toggleWishlist
     } = useWishlist()
+
+    const {
+      getGamificationStatus,
+      invalidateCache
+    } = useCachedApi()
 
     // Utility methods
     const getProductImageUrl = (imagePath) => {
@@ -381,11 +389,35 @@ export default {
       showShareModal.value = false
     }
 
-    const handleShareSuccess = (shareData) => {
+    const handleShareSuccess = async (shareData) => {
       console.log('Product shared successfully:', shareData)
       
       if (shareData.pointsEarned > 0) {
         console.log(`Earned ${shareData.pointsEarned} points for sharing!`)
+      }
+
+      // If mission was completed, refresh gamification data
+      if (shareData.missionCompleted) {
+        console.log('Mission completed during share, refreshing data...')
+        
+        try {
+          // Invalidate and refresh gamification cache
+          await invalidateCache('gamificationStatus')
+          await invalidateCache('missionHistory')
+          
+          // Small delay to ensure server has processed the completion
+          setTimeout(async () => {
+            try {
+              await getGamificationStatus({ forceRefresh: true })
+              console.log('Gamification data refreshed after mission completion')
+            } catch (error) {
+              console.warn('Failed to refresh gamification data:', error)
+            }
+          }, 1000)
+          
+        } catch (error) {
+          console.warn('Failed to invalidate gamification cache:', error)
+        }
       }
     }
 
@@ -393,6 +425,59 @@ export default {
       // Refresh user points in auth store
       authStore.refreshUserPoints()
       console.log(`Points earned: ${points}`)
+      
+      // Also refresh gamification data in case it affects missions
+      setTimeout(async () => {
+        try {
+          await invalidateCache('gamificationStatus')
+          await getGamificationStatus({ forceRefresh: true })
+        } catch (error) {
+          console.warn('Failed to refresh gamification after points earned:', error)
+        }
+      }, 1000)
+    }
+
+    const handleMissionCompleted = (missionData) => {
+      console.log('Mission completed!', missionData)
+      
+      // Update auth store points immediately
+      authStore.refreshUserPoints()
+      
+      // Show console celebration for debugging
+      console.log(`🎉 MISSION COMPLETED! 
+        Share Points: ${missionData.sharePoints}
+        Bonus Points: ${missionData.bonusPoints} 
+        Total Earned: ${missionData.totalPoints}
+        New Balance: ${missionData.newBalance}
+        Progress: ${missionData.progress.current}/${missionData.progress.target} (${missionData.progress.percentage.toFixed(1)}%)
+      `)
+    }
+
+    const handleMissionCompletedClosed = async () => {
+      console.log('Mission completed popup closed, refreshing all data...')
+      
+      try {
+        // Refresh all relevant data after mission completion
+        await Promise.all([
+          invalidateCache('gamificationStatus'),
+          invalidateCache('missionHistory'),
+          invalidateCache('myPoints'),
+          invalidateCache('leaderboard')
+        ])
+        
+        // Force refresh gamification status
+        setTimeout(async () => {
+          try {
+            await getGamificationStatus({ forceRefresh: true })
+            console.log('All data refreshed after mission completion')
+          } catch (error) {
+            console.warn('Failed to refresh data after mission completion:', error)
+          }
+        }, 500)
+        
+      } catch (error) {
+        console.warn('Failed to refresh data after mission completion:', error)
+      }
     }
 
     // Purchase handling
@@ -470,7 +555,10 @@ export default {
       viewRelatedProduct,
       loadProductData,
       getProductImageUrl,
-      formatPrice
+      formatPrice,
+      handleMissionCompleted,
+      handleMissionCompletedClosed
+      
     }
   }
 }

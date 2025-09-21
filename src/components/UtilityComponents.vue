@@ -75,10 +75,10 @@ export default {
 <!-- GoogleButton.vue -->
 <!-- Create as separate file: src/components/GoogleButton.vue -->
 <template>
-  <button class="google-btn" @click="handleGoogleLogin">
+  <!-- <button class="google-btn" @click="handleGoogleLogin">
     <span class="google-icon">🌐</span>
     Continue with Google
-  </button>
+  </button> -->
 </template>
 
 <script>

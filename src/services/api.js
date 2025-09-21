@@ -270,15 +270,11 @@ class ApiService {
     const {
       page = 1,
       limit = 20,
-      sortBy = 'created_at',
-      sortOrder = 'DESC'
     } = params
     
     const queryParams = {
       page,
       limit,
-      sortBy,
-      sortOrder
     }
     
     const response = await this.client.get('/bank-accounts', { params: queryParams })
@@ -370,11 +366,39 @@ class ApiService {
   }
 
   async removeFromWishlist(wishlistItemId) {
-    const response = await this.client.delete(`/wishlist/${wishlistItemId}`)
-    
-    // Notify cache to invalidate wishlist related data
-    this.notifyCacheInvalidation('wishlistUpdate', response)
-    return response
+    // Validate the wishlistItemId
+    if (!wishlistItemId || wishlistItemId === null || wishlistItemId === undefined) {
+      throw new Error('Invalid wishlist item ID')
+    }
+
+    try {
+      const response = await this.client.delete(`/wishlist/${wishlistItemId}`)
+      
+      // Notify cache to invalidate wishlist related data
+      this.notifyCacheInvalidation('wishlistUpdate', response)
+      return response
+    } catch (error) {
+      // Handle specific 404 error for wishlist items
+      if (error.response && error.response.status === 404) {
+        // Item might already be deleted, treat as success
+        console.warn(`Wishlist item ${wishlistItemId} not found, might already be deleted`)
+        
+        // Still invalidate cache to sync state
+        this.notifyCacheInvalidation('wishlistUpdate', { 
+          wishlistItemId, 
+          alreadyDeleted: true 
+        })
+        
+        return {
+          success: true,
+          message: 'Item already removed from wishlist',
+          data: { wishlistItemId, alreadyDeleted: true }
+        }
+      }
+      
+      // Re-throw other errors
+      throw error
+    }
   }
 
   async toggleWishlist(productId) {
@@ -410,24 +434,103 @@ class ApiService {
     const {
       page = 1,
       limit = 20,
-      status = null,
-      sortBy = 'created_at',
-      sortOrder = 'DESC'
+      status = null
     } = params
     
+    // Only send parameters that the API actually supports
     const queryParams = {
       page,
-      limit,
-      sortBy,
-      sortOrder
+      limit
     }
     
-    if (status) {
+    // Only add status if it's provided and not empty
+    if (status && status.trim() !== '') {
       queryParams.status = status
     }
     
-    const response = await this.client.get('/affiliate-links', { params: queryParams })
-    return response
+    try {
+      console.log('Making affiliate links request with params:', queryParams)
+      
+      const response = await this.client.get('/affiliate-links', { 
+        params: queryParams,
+        headers: {
+          'Content-Type': 'application/json'
+          // Authorization header will be added by interceptor
+        }
+      })
+      
+      console.log('Affiliate links response:', response)
+      
+      // Apply client-side sorting if needed
+      if (response && response.success && response.data && Array.isArray(response.data)) {
+        const data = [...response.data]
+        
+        // Apply client-side sorting based on original params
+        const { sortBy, sortOrder } = params
+        if (sortBy && sortBy !== 'id') {
+          data.sort((a, b) => {
+            let aVal, bVal
+            
+            switch (sortBy) {
+              case 'created_at':
+              case 'createdAt':
+                aVal = new Date(a.created_at || a.createdAt || 0)
+                bVal = new Date(b.created_at || b.createdAt || 0)
+                break
+              case 'earnings':
+                aVal = parseFloat(a.earnings || 0)
+                bVal = parseFloat(b.earnings || 0)
+                break
+              case 'clicksCount':
+                aVal = parseInt(a.clicksCount || a.clicks || 0)
+                bVal = parseInt(b.clicksCount || b.clicks || 0)
+                break
+              case 'conversionsCount':
+                aVal = parseInt(a.conversionsCount || a.conversions || 0)
+                bVal = parseInt(b.conversionsCount || b.conversions || 0)
+                break
+              default:
+                aVal = a.id || 0
+                bVal = b.id || 0
+            }
+            
+            if (sortOrder === 'ASC') {
+              return aVal > bVal ? 1 : aVal < bVal ? -1 : 0
+            } else {
+              return aVal < bVal ? 1 : aVal > bVal ? -1 : 0
+            }
+          })
+        }
+        
+        return {
+          ...response,
+          data
+        }
+      }
+      
+      return response
+      
+    } catch (error) {
+      console.error('Affiliate links API error:', error)
+      
+      // Enhanced error handling for 500 errors
+      if (error.response?.status === 500) {
+        console.warn('Server error, trying minimal request...')
+        
+        // Try with absolute minimal parameters
+        try {
+          const minimalResponse = await this.client.get('/affiliate-links')
+          console.log('Minimal request succeeded:', minimalResponse)
+          return minimalResponse
+        } catch (minimalError) {
+          console.error('Even minimal request failed:', minimalError)
+          throw new Error('Server is currently unavailable. Please try again later.')
+        }
+      }
+      
+      // Re-throw other errors
+      throw error
+    }
   }
 
   async getAffiliateLinkById(linkId) {
@@ -465,16 +568,40 @@ class ApiService {
     return response
   }
 
-  // Cache invalidation notification helper
-  async notifyCacheInvalidation(action, responseData = {}) {
-    try {
-      // Dynamically import to avoid circular dependencies
-      const { default: apiCacheService } = await import('./apiCacheService')
-      await apiCacheService.invalidateRelated(action, responseData)
-    } catch (error) {
-      console.warn('Cache invalidation notification failed:', error)
+  async performCheckin() {
+  const response = await this.client.post('/gamification/checkin')
+  
+  // Notify cache to invalidate points and user related data
+  this.notifyCacheInvalidation('checkinUpdate', response)
+  return response
     }
-  }
+
+    async getGamificationStatus() {
+      const response = await this.client.get('/gamification/status')
+      return response
+    }
+
+    async getMissionHistory(params = {}) {
+      const {
+        page = 1,
+        limit = 20
+      } = params
+      
+      const queryParams = { page, limit }
+      const response = await this.client.get('/gamification/missions/history', { params: queryParams })
+      return response
+    }
+
+    // Add to cache invalidation notification helper
+    async notifyCacheInvalidation(action, responseData = {}) {
+      try {
+        // Dynamically import to avoid circular dependencies
+        const { default: apiCacheService } = await import('./apiCacheService')
+        await apiCacheService.invalidateRelated(action, responseData)
+      } catch (error) {
+        console.warn('Cache invalidation notification failed:', error)
+      }
+    }
 
   // Utility method to extract material ID from product URL
   static extractMaterialId(productUrl) {

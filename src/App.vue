@@ -11,6 +11,7 @@
 </template>
 
 <script>
+import { onMounted, onUnmounted, watch } from 'vue'
 import { useAuthStore } from './stores/auth'
 import LoadingOverlay from './components/LoadingOverlay.vue'
 
@@ -22,6 +23,73 @@ export default {
   setup() {
     const authStore = useAuthStore()
     
+    // Watch for authentication state changes
+    let unsubscribeAuthWatcher = null
+    let pageVisibilityHandler = null
+    
+    // Function to handle page visibility changes (when user comes back to tab)
+    const handleVisibilityChange = async () => {
+      if (!document.hidden && authStore.isAuthenticated) {
+        try {
+          // User came back to the tab and is authenticated
+          console.log('Page became visible, checking cache health...')
+          
+          // Check if we need to refresh cache (older than 5 minutes)
+          const lastCacheTime = localStorage.getItem('wishlist_last_cache_time')
+          const now = Date.now()
+          const fiveMinutes = 5 * 60 * 1000
+          
+          if (!lastCacheTime || (now - parseInt(lastCacheTime)) > fiveMinutes) {
+            await authStore.checkCacheHealth()
+            localStorage.setItem('wishlist_last_cache_time', now.toString())
+            console.log('Cache health check completed due to page visibility')
+          }
+        } catch (error) {
+          console.warn('Failed to handle visibility change cache refresh:', error)
+        }
+      }
+    }
+    
+    onMounted(() => {
+      // Watch for authentication state changes using Vue's watch
+      unsubscribeAuthWatcher = watch(
+        () => authStore.isAuthenticated,
+        async (newIsAuthenticated, oldIsAuthenticated) => {
+          if (newIsAuthenticated && !oldIsAuthenticated) {
+            // User just logged in
+            console.log('User authenticated, initializing cache...')
+            // Cache initialization is already handled in the auth store login method
+          } else if (!newIsAuthenticated && oldIsAuthenticated) {
+            // User just logged out
+            console.log('User logged out, cache already cleared by auth store')
+            // Cache cleanup is already handled in the auth store logout method
+          }
+        },
+        { immediate: false }
+      )
+      
+      // Listen for page visibility changes
+      pageVisibilityHandler = handleVisibilityChange
+      document.addEventListener('visibilitychange', pageVisibilityHandler)
+      
+      // Initial cache check if already authenticated
+      if (authStore.isAuthenticated) {
+        setTimeout(() => {
+          authStore.checkCacheHealth()
+        }, 2000) // Wait 2 seconds after app mount
+      }
+    })
+    
+    onUnmounted(() => {
+      // Cleanup watchers and listeners
+      if (unsubscribeAuthWatcher) {
+        unsubscribeAuthWatcher()
+      }
+      if (pageVisibilityHandler) {
+        document.removeEventListener('visibilitychange', pageVisibilityHandler)
+      }
+    })
+    
     return {
       authStore
     }
@@ -30,7 +98,7 @@ export default {
 </script>
 
 <style>
-/* Base app styling - consistent across all devices */
+/* Your existing styles remain the same */
 #app {
   min-height: 100vh;
   width: 100%;
@@ -43,7 +111,6 @@ export default {
   margin: 0;
 }
 
-/* Mobile First - Full width layout */
 .page-container {
   min-height: 100vh;
   width: 100%;

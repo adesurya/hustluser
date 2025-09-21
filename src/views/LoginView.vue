@@ -10,7 +10,7 @@
     <div class="form-container">
       <ErrorMessage v-if="errorMessage" :message="errorMessage" />
 
-      <GoogleButton />
+      <!-- <GoogleButton /> -->
 
       <LoginForm 
         @submit="handleLogin"
@@ -24,8 +24,8 @@
       <p>Don't have an account? 
         <router-link to="/signup" class="auth-link">Sign Up</router-link>
       </p>
-      <p>Didn't receive the activation link?</p>
-      <a href="#" class="resend-link">Resend Verification Link</a>
+      <!-- <p>Didn't receive the activation link?</p>
+      <a href="#" class="resend-link">Resend Verification Link</a> -->
     </div>
   </div>
 </template>
@@ -36,7 +36,7 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import AppHeader from '../components/AppHeader.vue'
 import ErrorMessage from '../components/ErrorMessage.vue'
-import GoogleButton from '../components/GoogleButton.vue'
+// import GoogleButton from '../components/GoogleButton.vue'
 import LoginForm from '../components/LoginForm.vue'
 
 export default {
@@ -44,7 +44,7 @@ export default {
   components: {
     AppHeader,
     ErrorMessage,
-    GoogleButton,
+    // GoogleButton,
     LoginForm
   },
   setup() {

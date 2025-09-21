@@ -2,6 +2,31 @@
   <div class="leaderboard-view dashboard-page">
     <HustlHeader :isDashboard="true" />
 
+    <!-- Mission Popup -->
+    <MissionPopup 
+      :isVisible="showMissionPopup"
+      @close="showMissionPopup = false"
+      @viewMissions="handleViewMissions"
+      @checkinComplete="handleCheckinComplete"
+    />
+
+    <!-- Mission History Modal -->
+    <MissionHistory
+      :isVisible="showMissionHistory"
+      @close="showMissionHistory = false"
+    />
+
+    <!-- Mission Banner -->
+    <SimpleMissionBanner 
+      :key="gamificationData?.checkin?.lastCheckinDate || 'default'"
+      :gamificationData="gamificationData"
+      :isProcessing="isProcessingCheckin"
+      @quickCheckin="performQuickCheckin"
+      @openMissions="showMissionPopup = true"
+    />
+
+
+
     <!-- Filter Section -->
     <div class="dashboard-section filter-section">
       <div class="section-header">
@@ -179,176 +204,548 @@
 </template>
 
 <script>
-// LeaderboardView.vue <script> section
-import { ref, computed, onMounted } from 'vue'
+// Enhanced LeaderboardView.vue - Script section LENGKAP dengan perbaikan ESLint
+import { ref, computed, onMounted, nextTick } from 'vue'
 import BottomNavigation from '../components/BottomNavigation.vue'
 import HustlHeader from '../components/HustlHeader.vue'
+import MissionPopup from '../components/MissionPopup.vue'
+import MissionHistory from '../components/MissionHistory.vue'
+import SimpleMissionBanner from '../components/SimpleMissionBanner.vue'
 import { useCachedApi } from '../composables/useCachedApi'
+import { useToast } from '../composables/useToast'
 
 export default {
   name: 'LeaderboardView',
   components: {
     BottomNavigation,
-    HustlHeader
+    HustlHeader,
+    MissionPopup,
+    MissionHistory,
+    SimpleMissionBanner
   },
-  setup() {
-    // Use cached API composable
-    const { loading: isLoading, error, getLeaderboard } = useCachedApi()
+  // LeaderboardView.vue - setup() method yang sudah diperbaiki
+setup() {
+  const { showToast } = useToast()
+  
+  // Use cached API composable - ONLY required APIs
+  const { 
+    loading: isLoading, 
+    error, 
+    getLeaderboard,           // ✅ Required for leaderboard
+    performCheckin,           // ✅ Required for check-in
+    getGamificationStatus,    // ✅ Required for mission data
+    getMissionHistory,        // ✅ Required for mission history
+    invalidateCache
+  } = useCachedApi()
+  
+  const activeFilter = ref('daily')
+  const currentPage = ref(1)
+  const usersPerPage = 7
+  
+  // Mission-related state
+  const showMissionPopup = ref(false)
+  const showMissionHistory = ref(false)
+  const gamificationData = ref(null)
+  const isProcessingCheckin = ref(false)
+  
+  // API response data
+  const leaderboardData = ref(null)
+  const allUsers = ref([])
+  const totalParticipants = ref(0)
+
+  // Filter options
+  const filters = ref([
+    { id: 'daily', label: 'Daily', icon: '📅' },
+    { id: 'monthly', label: 'Monthly', icon: '📈' }
+  ])
+
+  // Computed properties remain the same...
+  const topUsers = computed(() => {
+    return allUsers.value.slice(0, 3)
+  })
+  
+  const otherUsers = computed(() => {
+    return allUsers.value.slice(3)
+  })
+
+  const totalPages = computed(() => Math.ceil(otherUsers.value.length / usersPerPage))
+
+  const paginatedUsers = computed(() => {
+    const start = (currentPage.value - 1) * usersPerPage
+    const end = start + usersPerPage
+    return otherUsers.value.slice(start, end)
+  })
+
+  const visiblePages = computed(() => {
+    const pages = []
+    const maxVisible = 5
+    const half = Math.floor(maxVisible / 2)
     
-    const activeFilter = ref('daily')
-    const currentPage = ref(1)
-    const usersPerPage = 7 // Show 7 users per page (ranks 4-10 on first page)
+    let start = Math.max(1, currentPage.value - half)
+    let end = Math.min(totalPages.value, start + maxVisible - 1)
     
-    // API response data
-    const leaderboardData = ref(null)
-    const allUsers = ref([])
-    const totalParticipants = ref(0)
-
-    // Filter options
-    const filters = ref([
-      { id: 'daily', label: 'Daily', icon: '📅' },
-      { id: 'monthly', label: 'Monthly', icon: '📈' }
-    ])
-
-    // Computed properties
-    const topUsers = computed(() => {
-      return allUsers.value.slice(0, 3)
-    })
+    if (end - start + 1 < maxVisible) {
+      start = Math.max(1, end - maxVisible + 1)
+    }
     
-    const otherUsers = computed(() => {
-      return allUsers.value.slice(3)
-    })
+    for (let i = start; i <= end; i++) {
+      pages.push(i)
+    }
+    
+    return pages
+  })
 
-    const totalPages = computed(() => Math.ceil(otherUsers.value.length / usersPerPage))
+  // Helper methods remain the same...
+  const maskUsername = (username) => {
+    if (!username || username.length <= 3) return username
+    const firstTwo = username.substring(0, 2)
+    const lastOne = username.substring(username.length - 1)
+    const masked = '*'.repeat(Math.max(1, username.length - 3))
+    return firstTwo + masked + lastOne
+  }
 
-    const paginatedUsers = computed(() => {
-      const start = (currentPage.value - 1) * usersPerPage
-      const end = start + usersPerPage
-      return otherUsers.value.slice(start, end)
-    })
+  const getInitials = (username) => {
+    if (!username) return '??'
+    return username.substring(0, 2).toUpperCase()
+  }
 
-    const visiblePages = computed(() => {
-      const pages = []
-      const maxVisible = 5
-      const half = Math.floor(maxVisible / 2)
+  const formatNumber = (num) => {
+    return num.toLocaleString('id-ID')
+  }
+
+  const getCurrentPeriodLabel = () => {
+    const labels = {
+      daily: 'Today',
+      monthly: 'This Month'
+    }
+    return labels[activeFilter.value] || 'This Period'
+  }
+
+  // FIXED: loadGamificationData - ensure proper API call
+  const loadGamificationData = async (forceRefresh = false) => {
+    try {
+      console.log('=== LOADING GAMIFICATION DATA ===')
+      console.log('Force refresh:', forceRefresh)
       
-      let start = Math.max(1, currentPage.value - half)
-      let end = Math.min(totalPages.value, start + maxVisible - 1)
-      
-      if (end - start + 1 < maxVisible) {
-        start = Math.max(1, end - maxVisible + 1)
+      if (forceRefresh) {
+        await invalidateCache('gamificationStatus')
+        console.log('Cache invalidated')
       }
       
-      for (let i = start; i <= end; i++) {
-        pages.push(i)
-      }
+      // Call the correct gamification API
+      const timestamp = Date.now()
+      const response = await getGamificationStatus({ 
+        forceRefresh: true,
+        _t: timestamp
+      })
       
-      return pages
-    })
-
-    // Helper methods
-    const maskUsername = (username) => {
-      if (!username || username.length <= 3) return username
-      const firstTwo = username.substring(0, 2)
-      const lastOne = username.substring(username.length - 1)
-      const masked = '*'.repeat(Math.max(1, username.length - 3))
-      return firstTwo + masked + lastOne
-    }
-
-    const getInitials = (username) => {
-      if (!username) return '??'
-      return username.substring(0, 2).toUpperCase()
-    }
-
-    const formatNumber = (num) => {
-      return num.toLocaleString('id-ID')
-    }
-
-    const getCurrentPeriodLabel = () => {
-      const labels = {
-        daily: 'Today',
-        monthly: 'This Month'
-      }
-      return labels[activeFilter.value] || 'This Period'
-    }
-
-    // API integration methods
-    const loadLeaderboard = async () => {
-      try {
-        let params = {}
+      console.log('Gamification API Response:', response)
+      
+      if (response && response.success) {
+        let validData = response.data
         
-        switch (activeFilter.value) {
-          case 'daily': {
-            params = { date: new Date().toISOString().split('T')[0] }
-            break
-          }
-          case 'monthly': {
-            const now = new Date()
-            params = { year: now.getFullYear(), month: now.getMonth() + 1 }
-            break
+        // Handle unexpected array response
+        if (Array.isArray(response.data)) {
+          console.error('❌ Received array data - this should not happen with gamification API!')
+          validData = {
+            checkin: {
+              hasCheckedInToday: false,
+              currentStreak: 0,
+              nextBonusIn: 7,
+              lastCheckinDate: null,
+              todayCheckinId: null,
+              streakHistory: {
+                streakCount: 0,
+                isBonusDay: false,
+                bonusPoints: 0
+              }
+            },
+            missions: [],
+            configs: {
+              checkin: {
+                streak_days: 7,
+                bonus_points: 100,
+                reset_on_miss: true
+              }
+            },
+            totalPoints: 0
           }
         }
-
-        const response = await getLeaderboard(activeFilter.value, params)
-
-        if (response.success) {
-          leaderboardData.value = response.data
-          allUsers.value = response.data.leaderboard || []
-          totalParticipants.value = response.data.total_participants || 0
-          currentPage.value = 1
-        } else {
-          throw new Error(response.message || 'Failed to load leaderboard')
+        
+        // Ensure checkin structure
+        if (!validData.checkin) {
+          validData.checkin = {
+            hasCheckedInToday: false,
+            currentStreak: 0,
+            nextBonusIn: 7,
+            lastCheckinDate: null,
+            todayCheckinId: null,
+            streakHistory: {
+              streakCount: 0,
+              isBonusDay: false,
+              bonusPoints: 0
+            }
+          }
         }
         
-      } catch (err) {
-        console.error('Error loading leaderboard:', err)
-        allUsers.value = []
-        totalParticipants.value = 0
+        // Validate critical fields
+        if (typeof validData.checkin.hasCheckedInToday !== 'boolean') {
+          validData.checkin.hasCheckedInToday = false
+        }
+        
+        if (typeof validData.checkin.currentStreak !== 'number') {
+          validData.checkin.currentStreak = 0
+        }
+        
+        if (typeof validData.checkin.nextBonusIn !== 'number') {
+          const streakDays = validData.configs?.checkin?.streak_days || 7
+          validData.checkin.nextBonusIn = streakDays - (validData.checkin.currentStreak % streakDays)
+          if (validData.checkin.nextBonusIn === 0) {
+            validData.checkin.nextBonusIn = 7
+          }
+        }
+        
+        // Force reactivity update
+        gamificationData.value = null
+        await nextTick()
+        gamificationData.value = validData
+        
+        console.log('✅ Gamification data updated:', {
+          hasCheckedInToday: validData.checkin?.hasCheckedInToday,
+          currentStreak: validData.checkin?.currentStreak,
+          nextBonusIn: validData.checkin?.nextBonusIn,
+          progressPercentage: Math.min((validData.checkin?.currentStreak / 7) * 100, 100),
+          fullData: validData
+        })
+      } else {
+        throw new Error(response?.message || 'Invalid response structure')
       }
-    }
-
-    // Event handlers
-    const setActiveFilter = async (filterId) => {
-      if (activeFilter.value !== filterId) {
-        activeFilter.value = filterId
-        currentPage.value = 1
-        await loadLeaderboard()
+    } catch (error) {
+      console.error('Failed to load gamification data:', error)
+      
+      // Set safe default structure on error
+      gamificationData.value = {
+        checkin: {
+          hasCheckedInToday: false,
+          currentStreak: 0,
+          nextBonusIn: 7,
+          lastCheckinDate: null,
+          todayCheckinId: null,
+          streakHistory: {
+            streakCount: 0,
+            isBonusDay: false,
+            bonusPoints: 0
+          }
+        },
+        missions: [],
+        configs: {
+          checkin: {
+            streak_days: 7,
+            bonus_points: 100,
+            reset_on_miss: true
+          }
+        },
+        totalPoints: 0
       }
-    }
-
-    const goToPage = (page) => {
-      if (page >= 1 && page <= totalPages.value) {
-        currentPage.value = page
-      }
-    }
-
-    // Initialize on mount
-    onMounted(() => {
-      loadLeaderboard()
-    })
-
-    return {
-      activeFilter,
-      currentPage,
-      filters,
-      isLoading,
-      error,
-      topUsers,
-      otherUsers,
-      paginatedUsers,
-      totalPages,
-      totalParticipants,
-      visiblePages,
-      allUsers,
-      maskUsername,
-      getInitials,
-      formatNumber,
-      setActiveFilter,
-      getCurrentPeriodLabel,
-      goToPage,
-      loadLeaderboard
     }
   }
+
+  const performQuickCheckin = async () => {
+    if (isProcessingCheckin.value) return
+
+    isProcessingCheckin.value = true
+    
+    console.log('=== BEFORE CHECK-IN ===')
+    console.log('Current gamification data:', gamificationData.value?.checkin)
+    
+    try {
+      // 1. Check current status first
+      try {
+        await loadGamificationData(true)
+        console.log('=== AFTER STATUS CHECK ===')
+        console.log('Updated gamification data:', gamificationData.value?.checkin)
+      } catch (statusError) {
+        console.warn('Status check failed, continuing with current data:', statusError)
+      }
+      
+      // 2. Validate check-in status
+      const hasCheckedIn = gamificationData.value?.checkin?.hasCheckedInToday
+      if (hasCheckedIn === true) {
+        showToast({
+          type: 'info',
+          title: 'Already Checked In',
+          message: 'You have already completed today\'s check-in!',
+          duration: 3000
+        })
+        return
+      }
+
+      // 3. Perform check-in
+      console.log('=== ATTEMPTING CHECK-IN ===')
+      const response = await performCheckin()
+      
+      if (response && response.success) {
+        console.log('=== CHECK-IN SUCCESS ===')
+        console.log('Check-in response:', response.data)
+        
+        // Extract streak data from response
+        const newStreak = response.data?.streak || 
+          response.data?.currentStreak || 
+          response.data?.streakHistory?.streakCount || 
+          (gamificationData.value?.checkin?.currentStreak || 0) + 1
+        
+        // Update local data immediately for UI responsiveness
+        if (gamificationData.value?.checkin) {
+          gamificationData.value.checkin.hasCheckedInToday = true
+          gamificationData.value.checkin.currentStreak = newStreak
+          gamificationData.value.checkin.lastCheckinDate = new Date().toISOString().split('T')[0]
+          
+          // Calculate nextBonusIn (days until next bonus)
+          const streakDays = gamificationData.value.configs?.checkin?.streak_days || 7
+          gamificationData.value.checkin.nextBonusIn = streakDays - (newStreak % streakDays)
+          
+          // If completed full cycle, nextBonusIn should be 7
+          if (gamificationData.value.checkin.nextBonusIn === 0) {
+            gamificationData.value.checkin.nextBonusIn = 7
+          }
+        }
+        
+        // Force Vue reactivity update
+        const tempData = { ...gamificationData.value }
+        gamificationData.value = null
+        await nextTick()
+        gamificationData.value = tempData
+        
+        // Show success message with bonus info
+        const bonusMessage = response.data?.bonusAwarded ? 
+          ` | Bonus: +${response.data.bonusPoints} pts!` : ''
+        
+        showToast({
+          type: 'success',
+          title: 'Check-in Successful!',
+          message: `Streak: ${newStreak} days${bonusMessage}`,
+          duration: 5000
+        })
+
+        // 4. Refresh data after a short delay for backend sync
+        setTimeout(async () => {
+          try {
+            await Promise.all([
+              loadGamificationData(true),
+              loadLeaderboard() // Also refresh leaderboard
+            ])
+            console.log('=== FINAL SYNC DATA ===')
+            console.log('Final gamification data:', gamificationData.value?.checkin)
+          } catch (syncError) {
+            console.warn('Final sync failed:', syncError)
+          }
+        }, 1500)
+        
+      } else {
+        throw new Error(response?.message || 'Check-in failed - invalid response')
+      }
+    } catch (error) {
+      console.error('Check-in error:', error)
+      
+      // Enhanced error handling
+      const errorMessage = error.message || error.toString()
+      
+      if (errorMessage.includes('Already checked in') || 
+          errorMessage.includes('already completed') ||
+          error.response?.status === 400) {
+        
+        // Update local state if server says already checked in
+        if (gamificationData.value?.checkin) {
+          gamificationData.value.checkin.hasCheckedInToday = true
+        }
+        
+        showToast({
+          type: 'info',
+          title: 'Already Checked In',
+          message: 'You have already completed today\'s check-in!',
+          duration: 3000
+        })
+      } else {
+        showToast({
+          type: 'error',
+          title: 'Check-in Failed',
+          message: errorMessage.includes('Network') ? 
+            'Network error. Please check your connection.' : 
+            'Please try again later',
+          duration: 3000
+        })
+      }
+      
+      // Always refresh to sync data
+      try {
+        await loadGamificationData(true)
+      } catch (refreshError) {
+        console.warn('Refresh after error failed:', refreshError)
+      }
+    } finally {
+      isProcessingCheckin.value = false
+    }
+  }
+
+  const handleViewMissions = () => {
+    showMissionPopup.value = false
+    showMissionHistory.value = true
+  }
+
+  const handleCheckinComplete = async (checkinData) => {
+    console.log('Handle checkin complete:', checkinData)
+    
+    try {
+      // Refresh both gamification and leaderboard data
+      await Promise.all([
+        loadGamificationData(true),
+        loadLeaderboard()
+      ])
+      
+      console.log('Data refreshed after checkin complete')
+    } catch (error) {
+      console.error('Failed to refresh data after checkin:', error)
+    }
+  }
+
+  // FIXED: loadLeaderboard - only call leaderboard API
+  const loadLeaderboard = async () => {
+    try {
+      console.log('🏆 Loading leaderboard data...')
+      
+      let params = {}
+      
+      switch (activeFilter.value) {
+        case 'daily': {
+          params = { date: new Date().toISOString().split('T')[0] }
+          break
+        }
+        case 'monthly': {
+          const now = new Date()
+          params = { year: now.getFullYear(), month: now.getMonth() + 1 }
+          break
+        }
+      }
+
+      console.log(`Calling leaderboard API - type: ${activeFilter.value}, params:`, params)
+      
+      const response = await getLeaderboard(activeFilter.value, params)
+
+      console.log('Leaderboard API response:', response)
+
+      if (response.success) {
+        leaderboardData.value = response.data
+        allUsers.value = response.data.leaderboard || []
+        totalParticipants.value = response.data.total_participants || 0
+        currentPage.value = 1
+        
+        console.log('✅ Leaderboard loaded:', {
+          totalUsers: allUsers.value.length,
+          totalParticipants: totalParticipants.value
+        })
+      } else {
+        throw new Error(response.message || 'Failed to load leaderboard')
+      }
+      
+    } catch (err) {
+      console.error('Error loading leaderboard:', err)
+      allUsers.value = []
+      totalParticipants.value = 0
+    }
+  }
+
+  // Event handlers
+  const setActiveFilter = async (filterId) => {
+    if (activeFilter.value !== filterId) {
+      activeFilter.value = filterId
+      currentPage.value = 1
+      await loadLeaderboard()
+    }
+  }
+
+  const goToPage = (page) => {
+    if (page >= 1 && page <= totalPages.value) {
+      currentPage.value = page
+    }
+  }
+
+  // Debug method untuk troubleshooting
+  const debugGamificationAPI = async () => {
+    console.log('=== GAMIFICATION API DEBUG ===')
+    
+    try {
+      // Debug API call
+      const response = await getGamificationStatus({ forceRefresh: true })
+      console.log('Debug gamification response:', response)
+      
+      return response
+    } catch (error) {
+      console.error('Debug failed:', error)
+      return null
+    }
+  }
+
+  // FIXED: Initialize on mount - only call required APIs
+  onMounted(async () => {
+    console.log('=== LEADERBOARD VIEW MOUNTED ===')
+    
+    // Debug untuk memastikan API methods tersedia
+    console.log('Available cached API methods:', {
+      hasGetGamificationStatus: typeof getGamificationStatus === 'function',
+      hasPerformCheckin: typeof performCheckin === 'function',
+      hasGetLeaderboard: typeof getLeaderboard === 'function',
+      hasGetMissionHistory: typeof getMissionHistory === 'function',
+      hasInvalidateCache: typeof invalidateCache === 'function'
+    })
+
+    // Load only required data for leaderboard page
+    try {
+      await Promise.all([
+        loadLeaderboard(),        // ✅ Required - leaderboard data
+        loadGamificationData()    // ✅ Required - mission banner data
+      ])
+      
+      console.log('✅ Leaderboard page initialization complete')
+    } catch (error) {
+      console.error('❌ Failed to initialize leaderboard page:', error)
+    }
+  })
+
+  return {
+    // Leaderboard state
+    activeFilter,
+    currentPage,
+    filters,
+    isLoading,
+    error,
+    topUsers,
+    otherUsers,
+    paginatedUsers,
+    totalPages,
+    totalParticipants,
+    visiblePages,
+    allUsers,
+    
+    // Mission state
+    showMissionPopup,
+    showMissionHistory,
+    gamificationData,
+    isProcessingCheckin,
+    
+    // Methods
+    maskUsername,
+    getInitials,
+    formatNumber,
+    setActiveFilter,
+    getCurrentPeriodLabel,
+    goToPage,
+    loadLeaderboard,
+    performQuickCheckin,
+    handleViewMissions,
+    handleCheckinComplete,
+    debugGamificationAPI
+  }
+}
 }
 </script>
 
@@ -361,6 +758,9 @@ export default {
   display: flex;
   flex-direction: column;
   overflow-y: auto;
+  width: 100%;
+  overflow-x: hidden;
+  position: relative;
 }
 
 /* Force full width and transparent background on ALL screen sizes */
@@ -391,6 +791,7 @@ export default {
   overflow: visible !important;
 }
 
+/* Dashboard sections - Updated to match CategoryView margin system */
 .dashboard-section {
   background: white;
   margin: 0 1rem 1.5rem 1rem;
@@ -398,6 +799,9 @@ export default {
   border-radius: 16px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.9);
+  width: calc(100% - 2rem);
+  max-width: calc(100% - 2rem);
+  box-sizing: border-box;
 }
 
 .dashboard-section:first-child {
@@ -913,7 +1317,52 @@ export default {
   font-size: 0.875rem;
 }
 
-/* Responsive Design - FIXED for 770px - 1023px range */
+/* Fixed Footer Styles */
+:deep(.bottom-navigation) {
+  position: fixed !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  z-index: 1000 !important;
+  background: white !important;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1) !important;
+}
+
+.bottom-navigation {
+  position: fixed !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  z-index: 1000 !important;
+  background: white !important;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1) !important;
+}
+
+::v-deep .bottom-navigation,
+/deep/ .bottom-navigation,
+>>> .bottom-navigation {
+  position: fixed !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  z-index: 1000 !important;
+  background: white !important;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Responsive Design - Updated to match CategoryView margin system */
+@media (min-width: 640px) {
+  .dashboard-section {
+    margin: 0 1.5rem 1.5rem 1.5rem;
+    width: calc(100% - 3rem);
+    max-width: calc(100% - 3rem);
+    padding: 1.25rem;
+  }
+}
+
 @media (min-width: 768px) {
   .leaderboard-view {
     background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%) !important;
@@ -949,9 +1398,15 @@ export default {
     height: auto !important;
     overflow: visible !important;
   }
+
+  .dashboard-section {
+    margin: 0 2rem 1.5rem 2rem;
+    width: calc(100% - 4rem);
+    max-width: calc(100% - 4rem);
+    padding: 1.5rem;
+  }
 }
 
-/* Desktop Responsive */
 @media (min-width: 1024px) {
   body {
     background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%) !important;
@@ -992,5 +1447,47 @@ export default {
     height: auto !important;
     overflow: visible !important;
   }
+
+  .dashboard-section {
+    margin: 0 3rem 2rem 3rem;
+    width: calc(100% - 6rem);
+    max-width: calc(100% - 6rem);
+    padding: 2rem;
+  }
 }
+
+@media (min-width: 1200px) {
+  .dashboard-section {
+    margin: 0 4rem 2rem 4rem;
+    width: calc(100% - 8rem);
+    max-width: calc(100% - 8rem);
+    padding: 2.5rem;
+  }
+
+  .leaderboard-view {
+    padding-bottom: 100px;
+  }
+}
+
+@media (min-width: 1400px) {
+  .dashboard-section {
+    margin: 0 6rem 2.5rem 6rem;
+    width: calc(100% - 12rem);
+    max-width: calc(100% - 12rem);
+    padding: 2.5rem;
+  }
+}
+
+/* Prevent content overflow on all screen sizes */
+.leaderboard-view,
+.leaderboard-view * {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Last section margin fix */
+.dashboard-section:last-of-type {
+  margin-bottom: 2rem;
+}
+
 </style>

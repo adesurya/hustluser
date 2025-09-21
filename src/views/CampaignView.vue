@@ -306,22 +306,22 @@ export default {
 </script>
 
 <style scoped>
-/* Reset and Base Styles - SAMA DENGAN CATEGORYVIEW */
+/* Reset and Base Styles */
 * {
   box-sizing: border-box;
 }
 
-/* Campaign View Main Container - SAMA DENGAN CATEGORYVIEW */
+/* Campaign View Main Container */
 .campaign-view {
   min-height: 100vh;
   background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%);
-  padding-bottom: 100px; /* Increased padding to make room for fixed footer */
+  padding-bottom: 100px;
   width: 100%;
   overflow-x: hidden;
   position: relative;
 }
 
-/* Dashboard sections - SAMA DENGAN CATEGORYVIEW */
+/* Dashboard sections - Updated to match CategoryView margin system */
 .dashboard-section {
   background: white;
   margin: 0 1rem 1.5rem 1rem;
@@ -332,6 +332,7 @@ export default {
   word-wrap: break-word;
   overflow-wrap: break-word;
   hyphens: auto;
+  width: calc(100% - 2rem);
   max-width: calc(100% - 2rem);
   box-sizing: border-box;
 }
@@ -340,7 +341,7 @@ export default {
   margin-top: 1rem;
 }
 
-/* Loading Section - SAMA DENGAN CATEGORYVIEW */
+/* Loading Section */
 .loading-section {
   display: flex;
   flex-direction: column;
@@ -371,16 +372,21 @@ export default {
   100% { transform: rotate(360deg); }
 }
 
-/* Search Section - SAMA DENGAN CATEGORYVIEW */
+/* Search Section - Updated to match CategoryView margin system */
 .search-section {
   position: relative;
   padding: 1rem;
   background: transparent;
-  margin: 0 0 1.5rem 0;
+  margin: 0 1rem 1.5rem 1rem;
   box-shadow: none;
   border: none;
-  max-width: 100%;
+  width: calc(100% - 2rem);
+  max-width: calc(100% - 2rem);
   box-sizing: border-box;
+}
+
+.search-section:first-child {
+  margin-top: 1rem;
 }
 
 .search-container {
@@ -394,6 +400,7 @@ export default {
   border: 1px solid rgba(255, 255, 255, 0.9);
   position: relative;
   transition: box-shadow 0.2s;
+  width: 100%;
   max-width: 100%;
   box-sizing: border-box;
 }
@@ -446,7 +453,7 @@ export default {
   transform: scale(1.1);
 }
 
-/* Points Section - KHUSUS CAMPAIGN */
+/* Points Section */
 .points-section {
   padding: 1rem 1.25rem;
   background: rgba(255, 255, 255, 0.95);
@@ -490,7 +497,7 @@ export default {
   font-weight: 500;
 }
 
-/* Section Headers - SAMA DENGAN CATEGORYVIEW */
+/* Section Headers */
 .section-header {
   display: flex;
   justify-content: space-between;
@@ -514,7 +521,7 @@ export default {
   font-weight: 500;
 }
 
-/* Campaigns List - DISESUAIKAN DARI PRODUCTS GRID */
+/* Campaigns List */
 .campaigns-list {
   display: flex;
   flex-direction: column;
@@ -531,6 +538,7 @@ export default {
   transition: all 0.2s;
   align-items: center;
   gap: 1rem;
+  width: 100%;
   max-width: 100%;
   box-sizing: border-box;
 }
@@ -685,7 +693,7 @@ export default {
   transform: translateX(4px);
 }
 
-/* Empty State - SAMA DENGAN CATEGORYVIEW */
+/* Empty State */
 .empty-state {
   text-align: center;
   padding: 3rem 1rem;
@@ -711,7 +719,7 @@ export default {
   line-height: 1.5;
 }
 
-/* Error Section - SAMA DENGAN CATEGORYVIEW */
+/* Error Section */
 .error-section {
   background: #FEF2F2;
   border: 2px solid #FECACA;
@@ -753,7 +761,7 @@ export default {
   transform: translateY(-1px);
 }
 
-/* FIXED FOOTER STYLES - SAMA PERSIS DENGAN CATEGORYVIEW */
+/* Fixed Footer Styles */
 :deep(.bottom-navigation) {
   position: fixed !important;
   bottom: 0 !important;
@@ -789,10 +797,19 @@ export default {
   box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1) !important;
 }
 
-/* Responsive Design - SAMA DENGAN CATEGORYVIEW */
+/* Responsive Design - Updated to match CategoryView margin system */
 @media (min-width: 640px) {
-  .campaign-view {
-    padding-bottom: 100px;
+  .dashboard-section {
+    margin: 0 1.5rem 1.5rem 1.5rem;
+    width: calc(100% - 3rem);
+    max-width: calc(100% - 3rem);
+    padding: 1.25rem;
+  }
+
+  .search-section {
+    margin: 0 1.5rem 1.5rem 1.5rem;
+    width: calc(100% - 3rem);
+    max-width: calc(100% - 3rem);
   }
 }
 
@@ -809,13 +826,15 @@ export default {
 
   .dashboard-section {
     margin: 0 2rem 1.5rem 2rem;
-    padding: 1.5rem;
+    width: calc(100% - 4rem);
     max-width: calc(100% - 4rem);
+    padding: 1.5rem;
   }
 
   .search-section {
     margin: 0 2rem 1.5rem 2rem;
-    padding: 1rem 0;
+    width: calc(100% - 4rem);
+    max-width: calc(100% - 4rem);
   }
 
   .campaign-image {
@@ -866,13 +885,15 @@ export default {
 
   .dashboard-section {
     margin: 0 3rem 2rem 3rem;
-    padding: 2rem;
+    width: calc(100% - 6rem);
     max-width: calc(100% - 6rem);
+    padding: 2rem;
   }
 
   .search-section {
-    margin: 0 3rem 1.5rem 3rem;
-    padding: 1.5rem 0;
+    margin: 0 3rem 2rem 3rem;
+    width: calc(100% - 6rem);
+    max-width: calc(100% - 6rem);
   }
 
   .campaign-card {
@@ -896,13 +917,15 @@ export default {
 @media (min-width: 1200px) {
   .dashboard-section {
     margin: 0 4rem 2rem 4rem;
-    padding: 2.5rem;
+    width: calc(100% - 8rem);
     max-width: calc(100% - 8rem);
+    padding: 2.5rem;
   }
 
   .search-section {
     margin: 0 4rem 2rem 4rem;
-    padding: 2rem 0;
+    width: calc(100% - 8rem);
+    max-width: calc(100% - 8rem);
   }
 
   .campaign-view {
@@ -910,14 +933,29 @@ export default {
   }
 }
 
-/* Prevent content overflow on all screen sizes - SAMA DENGAN CATEGORYVIEW */
+@media (min-width: 1400px) {
+  .dashboard-section {
+    margin: 0 6rem 2.5rem 6rem;
+    width: calc(100% - 12rem);
+    max-width: calc(100% - 12rem);
+    padding: 2.5rem;
+  }
+
+  .search-section {
+    margin: 0 6rem 2.5rem 6rem;
+    width: calc(100% - 12rem);
+    max-width: calc(100% - 12rem);
+  }
+}
+
+/* Prevent content overflow on all screen sizes */
 .campaign-view,
 .campaign-view * {
   max-width: 100%;
   box-sizing: border-box;
 }
 
-/* Last section margin fix - SAMA DENGAN CATEGORYVIEW */
+/* Last section margin fix */
 .dashboard-section:last-of-type {
   margin-bottom: 2rem;
 }

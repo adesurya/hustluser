@@ -238,7 +238,7 @@
             :disabled="isSubmitting || !isFormValid"
           >
             <span v-if="isSubmitting" class="submit-icon">⏳</span>
-            <span v-else class="submit-icon">🎁</span>
+            <span v-else class="submit-icon">📜</span>
             <span class="submit-text">
               {{ isSubmitting ? 'Processing...' : 'Submit Redemption' }}
             </span>

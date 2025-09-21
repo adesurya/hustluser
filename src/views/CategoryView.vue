@@ -1,5 +1,5 @@
 <template>
-  <div class="category-view dashboard-page">
+  <div class="category-view">
     <HustlHeader :isDashboard="true" />
 
     <!-- Loading State -->
@@ -756,24 +756,24 @@ export default {
   position: relative;
 }
 
-/* Container wrapper to control all sections */
+/* Container wrapper to control all sections - Updated to match Dashboard */
 .content-wrapper {
   width: 100%;
   max-width: 100%;
-  padding: 0 1rem;
+  padding: 0;
   box-sizing: border-box;
 }
 
-/* Dashboard sections - Simplified approach */
+/* Dashboard sections - Updated to match Dashboard margin system */
 .dashboard-section {
   background: white;
-  margin-bottom: 1.5rem;
+  margin: 0 1rem 1.5rem 1rem;
   padding: 1rem;
   border-radius: 16px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.9);
-  width: 100%;
-  max-width: 100%;
+  width: calc(100% - 2rem);
+  max-width: calc(100% - 2rem);
   box-sizing: border-box;
   overflow: hidden;
 }
@@ -813,17 +813,21 @@ export default {
   100% { transform: rotate(360deg); }
 }
 
-/* Search Section */
+/* Search Section - Updated to match Dashboard margin system */
 .search-section {
   position: relative;
   padding: 1rem;
   background: transparent;
-  margin-bottom: 1.5rem;
+  margin: 0 1rem 1.5rem 1rem;
   box-shadow: none;
   border: none;
-  width: 100%;
-  max-width: 100%;
+  width: calc(100% - 2rem);
+  max-width: calc(100% - 2rem);
   box-sizing: border-box;
+}
+
+.search-section:first-child {
+  margin-top: 1rem;
 }
 
 .search-container {
@@ -1510,14 +1514,19 @@ export default {
   box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1) !important;
 }
 
-/* Responsive Design */
+/* Responsive Design - Updated to match Dashboard margin system */
 @media (min-width: 640px) {
-  .content-wrapper {
-    padding: 0 1.5rem;
+  .dashboard-section {
+    margin: 0 1.5rem 1.5rem 1.5rem;
+    width: calc(100% - 3rem);
+    max-width: calc(100% - 3rem);
+    padding: 1rem;
   }
   
-  .dashboard-section {
-    padding: 1rem;
+  .search-section {
+    margin: 0 1.5rem 1.5rem 1.5rem;
+    width: calc(100% - 3rem);
+    max-width: calc(100% - 3rem);
   }
 }
 
@@ -1532,23 +1541,17 @@ export default {
     background: transparent !important;
   }
   
-  .content-wrapper {
-    padding: 0 3rem;
-    max-width: calc(100% - 4rem);
-    margin: 0 auto;
-  }
-
   .dashboard-section {
+    margin: 0 2rem 1.5rem 2rem;
+    width: calc(100% - 4rem);
+    max-width: calc(100% - 4rem);
     padding: 1.25rem;
-    margin-bottom: 1.5rem;
-    max-width: 85%;
-    margin-left: auto;
-    margin-right: auto;
   }
 
-  .search-section .search-container {
-    max-width: 85%;
-    margin: 0 auto;
+  .search-section {
+    margin: 0 2rem 1.5rem 2rem;
+    width: calc(100% - 4rem);
+    max-width: calc(100% - 4rem);
   }
 
   .categories-grid {
@@ -1627,23 +1630,17 @@ export default {
     border-radius: 0 !important;
   }
 
-  .content-wrapper {
-    padding: 0 5rem;
-    max-width: calc(100% - 6rem);
-    margin: 0 auto;
-  }
-
   .dashboard-section {
+    margin: 0 3rem 2rem 3rem;
+    width: calc(100% - 6rem);
+    max-width: calc(100% - 6rem);
     padding: 1.75rem;
-    margin-bottom: 2rem;
-    max-width: 80%;
-    margin-left: auto;
-    margin-right: auto;
   }
 
-  .search-section .search-container {
-    max-width: 80%;
-    margin: 0 auto;
+  .search-section {
+    margin: 0 3rem 2rem 3rem;
+    width: calc(100% - 6rem);
+    max-width: calc(100% - 6rem);
   }
 
   .categories-grid {
@@ -1701,23 +1698,17 @@ export default {
 }
 
 @media (min-width: 1200px) {
-  .content-wrapper {
-    padding: 0 6rem;
-    max-width: calc(100% - 8rem);
-    margin: 0 auto;
-  }
-
   .dashboard-section {
+    margin: 0 4rem 2.5rem 4rem;
+    width: calc(100% - 8rem);
+    max-width: calc(100% - 8rem);
     padding: 2rem;
-    margin-bottom: 2.5rem;
-    max-width: 75%;
-    margin-left: auto;
-    margin-right: auto;
   }
 
-  .search-section .search-container {
-    max-width: 75%;
-    margin: 0 auto;
+  .search-section {
+    margin: 0 4rem 2.5rem 4rem;
+    width: calc(100% - 8rem);
+    max-width: calc(100% - 8rem);
   }
 
   .category-view {
@@ -1764,6 +1755,21 @@ export default {
 
   .product-price {
     font-size: 1.0625rem;
+  }
+}
+
+@media (min-width: 1400px) {
+  .dashboard-section {
+    margin: 0 6rem 2.5rem 6rem;
+    width: calc(100% - 12rem);
+    max-width: calc(100% - 12rem);
+    padding: 2rem;
+  }
+
+  .search-section {
+    margin: 0 6rem 2.5rem 6rem;
+    width: calc(100% - 12rem);
+    max-width: calc(100% - 12rem);
   }
 }
 

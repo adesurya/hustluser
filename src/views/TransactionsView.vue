@@ -1,9 +1,9 @@
 <template>
-  <div class="transactions-view dashboard-page">
+  <div class="transactions-view">
     <HustlHeader :isDashboard="true" />
 
     <!-- Header with Back Button -->
-    <div class="dashboard-section header-section">
+    <div class="header-section">
       <div class="header-container">
         <button class="back-btn" @click="goBack">
           <span class="back-icon">←</span>
@@ -412,15 +412,22 @@ export default {
 </script>
 
 <style scoped>
+/* Reset and Base Styles - Following BankAccountView pattern */
+* {
+  box-sizing: border-box;
+}
+
+/* Transactions View Main Container - Same pattern as BankAccountView */
 .transactions-view {
   min-height: 100vh;
   background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%);
   padding-bottom: 100px;
-  display: flex;
-  flex-direction: column;
-  overflow-y: auto;
+  width: 100%;
+  overflow-x: hidden;
+  position: relative;
 }
 
+/* Dashboard sections - Same as BankAccountView with proper margins */
 .dashboard-section {
   background: white;
   margin: 0 1rem 1.5rem 1rem;
@@ -434,17 +441,33 @@ export default {
   margin-top: 1rem;
 }
 
-/* Header Section */
+/* Header Section - Same as BankAccountView search container style */
 .header-section {
-  padding: 1rem 1.25rem;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
+  position: relative;
+  padding: 1rem;
+  background: transparent;
+  margin: 1rem 1rem 1.5rem 1rem;
+  box-shadow: none;
+  border: none;
+  width: auto;
+  max-width: none;
+  box-sizing: border-box;
 }
 
 .header-container {
+  background: white;
+  border-radius: 24px;
+  padding: 1rem 1.25rem;
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.75rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  position: relative;
+  transition: box-shadow 0.2s;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .back-btn {
@@ -460,6 +483,7 @@ export default {
   padding: 0.5rem;
   border-radius: 8px;
   transition: all 0.2s;
+  flex-shrink: 0;
 }
 
 .back-btn:hover {
@@ -472,6 +496,8 @@ export default {
   font-weight: 700;
   color: #1F2937;
   font-family: 'Baloo 2', sans-serif;
+  flex: 1;
+  margin: 0;
 }
 
 /* Loading Section */
@@ -498,6 +524,7 @@ export default {
   color: #1F2937;
   font-family: 'Baloo 2', sans-serif;
   font-weight: 500;
+  margin: 0;
 }
 
 @keyframes spin {
@@ -565,6 +592,8 @@ export default {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 .section-title {
@@ -572,6 +601,7 @@ export default {
   font-weight: 700;
   color: #1F2937;
   font-family: 'Baloo 2', sans-serif;
+  margin: 0;
 }
 
 .transaction-count {
@@ -581,59 +611,73 @@ export default {
   font-weight: 500;
 }
 
-/* Transactions List */
+/* Transactions List - Similar to accounts list */
 .transactions-list {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
-  margin-bottom: 1.5rem;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .transaction-item {
   display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 1rem;
+  flex-direction: row;
   background: #F8FAFC;
   border-radius: 12px;
-  border: 1px solid #E2E8F0;
-  transition: all 0.2s;
+  padding: 0.75rem;
+  border: 2px solid #E2E8F0;
   cursor: pointer;
+  transition: all 0.2s;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  align-items: center;
+  overflow: hidden;
 }
 
 .transaction-item:hover {
-  background: #F1F5F9;
-  border-color: #CBD5E1;
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+  border-color: #4FC3F7;
+  box-shadow: 0 6px 16px rgba(79, 195, 247, 0.15);
 }
 
 .transaction-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
   font-weight: 700;
-  font-size: 1.125rem;
+  font-size: 1.5rem;
   flex-shrink: 0;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+  margin-right: 0.5rem;
 }
 
 .transaction-info {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.125rem;
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
 }
 
 .transaction-title {
-  font-size: 0.9rem;
+  font-size: 0.875rem;
   font-weight: 600;
   color: #1F2937;
   font-family: 'Baloo 2', sans-serif;
   margin: 0;
-  line-height: 1.3;
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .transaction-date {
@@ -642,31 +686,37 @@ export default {
   font-family: 'Baloo 2', sans-serif;
   font-weight: 500;
   margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .transaction-meta {
   display: flex;
-  gap: 0.75rem;
+  gap: 0.5rem;
   align-items: center;
+  margin-top: 0.125rem;
+  flex-wrap: wrap;
 }
 
 .transaction-type {
-  font-size: 0.7rem;
+  font-size: 0.625rem;
   color: #4FC3F7;
   font-family: 'Baloo 2', sans-serif;
   font-weight: 600;
   background: rgba(79, 195, 247, 0.1);
-  padding: 0.125rem 0.5rem;
-  border-radius: 8px;
+  padding: 0.125rem 0.375rem;
+  border-radius: 6px;
 }
 
 .transaction-status {
-  font-size: 0.7rem;
+  font-size: 0.625rem;
   font-weight: 600;
-  padding: 0.125rem 0.5rem;
-  border-radius: 8px;
+  padding: 0.125rem 0.375rem;
+  border-radius: 6px;
   font-family: 'Baloo 2', sans-serif;
   text-transform: uppercase;
+  letter-spacing: 0.025em;
 }
 
 .transaction-status.completed {
@@ -693,6 +743,9 @@ export default {
   font-size: 0.875rem;
   font-weight: 700;
   font-family: 'Baloo 2', sans-serif;
+  flex-shrink: 0;
+  text-align: right;
+  min-width: 60px;
 }
 
 .transaction-amount.credit {
@@ -781,12 +834,20 @@ export default {
 /* Pagination */
 .pagination {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 2rem;
+  padding: 1.5rem 0;
+  border-top: 1px solid #E5E7EB;
+}
+
+.pagination-pages {
+  display: flex;
   align-items: center;
   gap: 0.5rem;
-  margin-top: 1.5rem;
-  padding-top: 1rem;
-  border-top: 1px solid #E5E7EB;
+  flex-wrap: wrap;
+  justify-content: center;
 }
 
 .page-btn {
@@ -837,5 +898,214 @@ export default {
 
 .page-icon {
   font-size: 0.875rem;
+}
+
+/* Fixed Footer Styles - EXACT COPY from category and bank account view */
+:deep(.bottom-navigation) {
+  position: fixed !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  z-index: 1000 !important;
+  background: white !important;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1) !important;
+}
+
+.bottom-navigation {
+  position: fixed !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  z-index: 1000 !important;
+  background: white !important;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1) !important;
+}
+
+::v-deep .bottom-navigation,
+/deep/ .bottom-navigation,
+>>> .bottom-navigation {
+  position: fixed !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  z-index: 1000 !important;
+  background: white !important;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Responsive Design */
+@media (max-width: 640px) {
+  .dashboard-section {
+    margin: 0 0.75rem 1rem 0.75rem;
+    padding: 1rem;
+  }
+
+  .header-section {
+    margin: 0.75rem 0.75rem 1rem 0.75rem;
+    padding: 0.875rem 1rem;
+  }
+
+  .transaction-item {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+    padding: 1rem;
+  }
+
+  .transaction-icon {
+    align-self: flex-start;
+    margin-right: 0;
+    margin-bottom: 0.5rem;
+  }
+
+  .transaction-amount {
+    text-align: left;
+    margin-top: 0.5rem;
+    font-size: 1rem;
+  }
+
+  .transaction-meta {
+    gap: 0.375rem;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 768px) {
+  .dashboard-section {
+    margin: 0 1.5rem 1.5rem 1.5rem;
+    padding: 1.125rem;
+  }
+
+  .header-section {
+    margin: 1rem 1.5rem 1.5rem 1.5rem;
+  }
+}
+
+@media (min-width: 769px) {
+  .transactions-view {
+    background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%) !important;
+    padding-bottom: 100px;
+  }
+  
+  .page-container,
+  .app-main {
+    background: transparent !important;
+  }
+
+  .dashboard-section {
+    margin: 0 2rem 1.5rem 2rem;
+    padding: 1.5rem;
+  }
+
+  .header-section {
+    margin: 1rem 2rem 1.5rem 2rem;
+  }
+
+  .transaction-title {
+    font-size: 0.9375rem;
+  }
+
+  .transaction-date {
+    font-size: 0.8125rem;
+  }
+
+  .transaction-amount {
+    font-size: 0.9375rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  body {
+    background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%) !important;
+  }
+  
+  .transactions-view {
+    background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%) !important;
+    min-height: auto !important;
+    padding-bottom: 100px;
+  }
+  
+  .page-container {
+    background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%) !important;
+    min-height: 100vh !important;
+    height: auto !important;
+    padding: 0 !important;
+    justify-content: flex-start !important;
+    align-items: stretch !important;
+  }
+  
+  .app-main {
+    background: transparent !important;
+    box-shadow: none !important;
+    min-height: auto !important;
+    max-height: none !important;
+    height: auto !important;
+    overflow: visible !important;
+    max-width: none !important;
+    width: 100% !important;
+    border-radius: 0 !important;
+  }
+
+  .dashboard-section {
+    margin: 0 3rem 2rem 3rem;
+    padding: 1.75rem;
+  }
+
+  .header-section {
+    margin: 1rem 3rem 2rem 3rem;
+  }
+
+  .transaction-title {
+    font-size: 1rem;
+  }
+
+  .transaction-date {
+    font-size: 0.875rem;
+  }
+
+  .transaction-amount {
+    font-size: 1rem;
+  }
+}
+
+@media (min-width: 1200px) {
+  .dashboard-section {
+    margin: 0 4rem 2.5rem 4rem;
+    padding: 2rem;
+  }
+
+  .header-section {
+    margin: 1rem 4rem 2.5rem 4rem;
+  }
+
+  .transactions-view {
+    padding-bottom: 100px;
+  }
+
+  .transaction-title {
+    font-size: 1.0625rem;
+  }
+
+  .transaction-date {
+    font-size: 0.9375rem;
+  }
+
+  .transaction-amount {
+    font-size: 1.0625rem;
+  }
+}
+
+/* Prevent content overflow on all screen sizes */
+.transactions-view,
+.transactions-view * {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Last section margin fix */
+.dashboard-section:last-of-type {
+  margin-bottom: 2rem;
 }
 </style>

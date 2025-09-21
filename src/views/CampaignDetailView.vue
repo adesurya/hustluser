@@ -46,7 +46,7 @@
         </div>
         
         <!-- <div class="campaign-reward">
-          <span class="reward-icon">🎁</span>
+          <span class="reward-icon">📜</span>
           <span class="reward-text">{{ getStatusMessage(campaign.status) }}</span>
         </div> -->
       </div>

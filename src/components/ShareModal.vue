@@ -73,15 +73,32 @@
       </div>
     </div>
   </div>
+
+  <!-- Mission Completed Popup -->
+  <MissionCompletedPopup 
+    :isVisible="showMissionCompletedPopup"
+    :sharePoints="missionData.sharePoints"
+    :bonusPoints="missionData.bonusPoints"
+    :newBalance="missionData.newBalance"
+    :currentProgress="missionData.currentProgress"
+    :targetProgress="missionData.targetProgress"
+    :activityName="missionData.activityName"
+    :bonusMessage="missionData.bonusMessage"
+    @close="closeMissionCompletedPopup"
+  />
 </template>
 
 <script>
 import { ref } from 'vue'
 import apiService from '../services/api'
 import { useAuthStore } from '../stores/auth'
+import MissionCompletedPopup from './MissionCompletedPopup.vue'
 
 export default {
   name: 'ShareModal',
+  components: {
+    MissionCompletedPopup
+  },
   props: {
     isVisible: {
       type: Boolean,
@@ -92,7 +109,7 @@ export default {
       default: null
     }
   },
-  emits: ['close', 'shared', 'points-earned'],
+  emits: ['close', 'shared', 'points-earned', 'mission-completed'],
   setup(props, { emit }) {
     const authStore = useAuthStore()
     
@@ -103,6 +120,18 @@ export default {
     const errorMessage = ref('')
     const pointsEarned = ref(0)
     const generatedAffiliateLink = ref(null)
+
+    // Mission Completed State
+    const showMissionCompletedPopup = ref(false)
+    const missionData = ref({
+      sharePoints: 0,
+      bonusPoints: 0,
+      newBalance: 0,
+      currentProgress: 0,
+      targetProgress: 20,
+      activityName: '',
+      bonusMessage: ''
+    })
 
     // Mobile detection for UI indicators
     const isMobileDevice = () => {
@@ -215,6 +244,7 @@ export default {
       }
     }
 
+    // UPDATED: Enhanced trackShare method to handle new response structure
     const trackShare = async (platform, affiliateLinkId) => {
       const shareData = {
         affiliateLinkId: affiliateLinkId,
@@ -233,6 +263,44 @@ export default {
       const response = await apiService.shareAffiliateLink(shareData)
       
       if (response.success) {
+        console.log('Share tracking response:', response.data)
+        
+        // NEW: Handle mission completion logic
+        if (response.data.missionCompleted === true && response.data.gamification?.mission?.bonusAwarded) {
+          console.log('Mission completed! Preparing popup data...')
+          
+          // Prepare mission data for popup
+          missionData.value = {
+            sharePoints: response.data.pointsEarned || 0,
+            bonusPoints: response.data.gamification.mission.bonus?.points || 0,
+            newBalance: response.data.gamification.mission.bonus?.newBalance || response.data.newBalance || 0,
+            currentProgress: response.data.gamification.mission.progress?.current || 0,
+            targetProgress: response.data.gamification.mission.progress?.target || 20,
+            activityName: response.data.activityName || 'Daily Mission',
+            bonusMessage: response.data.bonusMessage || response.data.gamification.mission.bonus?.message || 'Mission Complete!'
+          }
+          
+          console.log('Mission data prepared:', missionData.value)
+          
+          // Show mission completed popup after a short delay
+          setTimeout(() => {
+            showMissionCompletedPopup.value = true
+          }, 1500)
+          
+          // Emit mission completed event
+          emit('mission-completed', {
+            sharePoints: missionData.value.sharePoints,
+            bonusPoints: missionData.value.bonusPoints,
+            totalPoints: missionData.value.sharePoints + missionData.value.bonusPoints,
+            newBalance: missionData.value.newBalance,
+            progress: {
+              current: missionData.value.currentProgress,
+              target: missionData.value.targetProgress,
+              percentage: (missionData.value.currentProgress / missionData.value.targetProgress) * 100
+            }
+          })
+        }
+        
         return response.data
       } else {
         throw new Error(response.message || 'Failed to track share')
@@ -411,6 +479,7 @@ export default {
       }
     }
 
+    // UPDATED: Enhanced handleShare method
     const handleShare = async (platform) => {
       isLoading.value = true
       loadingMessage.value = 'Generating share link...'
@@ -423,12 +492,12 @@ export default {
         
         loadingMessage.value = 'Preparing share options...'
         
-        // Step 2: Track the share
+        // Step 2: Track the share and handle mission completion
         const shareResult = await trackShare(platform, affiliateData.id)
         
         // Prepare share content
         const shareUrl = affiliateData.affiliateUrl || affiliateData.allAffiliateUrls?.[0]?.url
-        const shareText = `Check out this amazing product: ${props.product.title} - ${props.product.formattedPrice}. Get it now and earn coins!`
+        const shareText = `Coba produk ini sekarang juga ! : ${props.product.title} - ${props.product.formattedPrice}.`
         
         loadingMessage.value = 'Opening share options...'
         
@@ -474,7 +543,8 @@ export default {
           pointsEarned: pointsEarned.value,
           shareUrl,
           affiliateData,
-          shareMethod: shareAction.method
+          shareMethod: shareAction.method,
+          missionCompleted: shareResult.missionCompleted || false
         })
         
         if (pointsEarned.value > 0) {
@@ -485,8 +555,16 @@ export default {
           platform,
           method: shareAction.method,
           pointsEarned: pointsEarned.value,
-          shareUrl
+          shareUrl,
+          missionCompleted: shareResult.missionCompleted
         })
+
+        // NEW: Auto-close share modal if mission completed (to show mission popup)
+        if (shareResult.missionCompleted) {
+          setTimeout(() => {
+            closeModal()
+          }, 2000) // Give user time to see success message first
+        }
 
       } catch (error) {
         console.error('Share error:', error)
@@ -497,6 +575,17 @@ export default {
       }
     }
 
+    // NEW: Mission completed popup handlers
+    const closeMissionCompletedPopup = () => {
+      showMissionCompletedPopup.value = false
+      
+      // Refresh gamification data after mission completion
+      setTimeout(() => {
+        // Emit event to parent to refresh gamification data
+        emit('mission-completed-closed')
+      }, 500)
+    }
+
     return {
       isLoading,
       loadingMessage,
@@ -504,17 +593,22 @@ export default {
       errorMessage,
       pointsEarned,
       shareOptions,
+      showMissionCompletedPopup,
+      missionData,
       isMobileDevice,
       closeModal,
       clearError,
-      handleShare
+      handleShare,
+      closeMissionCompletedPopup
     }
   }
 }
 </script>
 
+<!-- Update bagian style di ShareModal.vue -->
+
 <style scoped>
-/* Modal Overlay */
+/* Modal Overlay - FIXED for desktop */
 .share-modal-overlay {
   position: fixed;
   top: 0;
@@ -525,21 +619,23 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: 2000; /* Increased z-index */
   padding: 1rem;
   backdrop-filter: blur(4px);
 }
 
-/* Modal Container */
+/* Modal Container - FIXED sizing and positioning */
 .share-modal {
   background: white;
   border-radius: 20px;
   width: 100%;
-  max-width: 400px;
-  max-height: 90vh;
+  max-width: 420px; /* Increased max-width for desktop */
+  max-height: 85vh; /* Reduced from 90vh to prevent cut-off */
   overflow-y: auto;
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
   animation: modalSlideUp 0.3s ease-out;
+  position: relative; /* Added for proper positioning */
+  margin: auto; /* Center the modal */
 }
 
 @keyframes modalSlideUp {
@@ -560,6 +656,10 @@ export default {
   align-items: center;
   padding: 1.5rem 1.5rem 1rem;
   border-bottom: 1px solid #E5E7EB;
+  position: sticky; /* Make header sticky */
+  top: 0;
+  background: white;
+  z-index: 10;
 }
 
 .modal-title {
@@ -582,6 +682,7 @@ export default {
   cursor: pointer;
   transition: all 0.2s;
   color: #6B7280;
+  flex-shrink: 0; /* Prevent shrinking */
 }
 
 .close-btn:hover {
@@ -622,7 +723,7 @@ export default {
 
 .product-info {
   flex: 1;
-  min-width: 0;
+  min-width: 0; /* Allow text to truncate */
 }
 
 .product-name {
@@ -652,6 +753,7 @@ export default {
   justify-content: center;
   padding: 2rem 1.5rem;
   text-align: center;
+  min-height: 120px; /* Minimum height to prevent jumping */
 }
 
 .loading-spinner {
@@ -679,6 +781,7 @@ export default {
 /* Share Options */
 .share-options {
   padding: 1.5rem;
+  flex: 1; /* Allow to take remaining space */
 }
 
 .options-title {
@@ -708,6 +811,7 @@ export default {
   transition: all 0.2s;
   font-family: 'Baloo 2', sans-serif;
   position: relative;
+  min-height: 80px; /* Consistent height */
 }
 
 .share-option-btn:hover:not(:disabled) {
@@ -861,6 +965,7 @@ export default {
   cursor: pointer;
   transition: all 0.2s;
   font-family: 'Baloo 2', sans-serif;
+  flex-shrink: 0;
 }
 
 .retry-btn:hover {
@@ -868,12 +973,179 @@ export default {
   transform: translateY(-1px);
 }
 
-/* Mobile Responsiveness */
+/* DESKTOP RESPONSIVENESS - FIXED */
+@media (min-width: 768px) {
+  .share-modal-overlay {
+    padding: 2rem; /* More padding on desktop */
+  }
+  
+  .share-modal {
+    max-width: 480px; /* Larger on tablet */
+    max-height: 80vh; /* More conservative height */
+  }
+  
+  .share-buttons {
+    grid-template-columns: repeat(3, 1fr); /* 3 columns on tablet */
+    gap: 1.25rem;
+  }
+  
+  .share-option-btn {
+    padding: 1.25rem;
+    min-height: 90px;
+  }
+  
+  .option-icon {
+    font-size: 1.75rem;
+    width: 36px;
+    height: 36px;
+  }
+  
+  .option-label {
+    font-size: 0.8rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .share-modal-overlay {
+    padding: 3rem; /* Even more padding on desktop */
+    align-items: center; /* Ensure vertical centering */
+    justify-content: center; /* Ensure horizontal centering */
+  }
+  
+  .share-modal {
+    max-width: 520px; /* Larger on desktop */
+    max-height: 75vh; /* Conservative height for desktop */
+    min-height: auto;
+    position: relative;
+    margin: 0; /* Reset margin */
+  }
+  
+  .modal-header {
+    padding: 2rem 2rem 1.5rem;
+  }
+  
+  .modal-title {
+    font-size: 1.375rem;
+  }
+  
+  .close-btn {
+    width: 36px;
+    height: 36px;
+  }
+  
+  .product-preview {
+    padding: 1.5rem 2rem;
+  }
+  
+  .product-image {
+    width: 70px;
+    height: 70px;
+  }
+  
+  .product-name {
+    font-size: 1rem;
+  }
+  
+  .product-price {
+    font-size: 1rem;
+  }
+  
+  .share-options {
+    padding: 2rem;
+  }
+  
+  .options-title {
+    font-size: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .share-buttons {
+    grid-template-columns: repeat(3, 1fr); /* 3 columns on desktop */
+    gap: 1.5rem;
+  }
+  
+  .share-option-btn {
+    padding: 1.5rem 1rem;
+    min-height: 100px;
+    border-radius: 16px;
+  }
+  
+  .option-icon {
+    font-size: 2rem;
+    width: 40px;
+    height: 40px;
+  }
+  
+  .option-label {
+    font-size: 0.875rem;
+  }
+  
+  .loading-section {
+    padding: 3rem 2rem;
+    min-height: 150px;
+  }
+  
+  .loading-spinner {
+    width: 40px;
+    height: 40px;
+    border-width: 4px;
+  }
+  
+  .loading-text {
+    font-size: 1rem;
+  }
+  
+  .success-section,
+  .error-section {
+    padding: 2rem;
+  }
+  
+  .success-text,
+  .error-text {
+    font-size: 1rem;
+  }
+  
+  .points-earned {
+    font-size: 1rem;
+  }
+}
+
+@media (min-width: 1200px) {
+  .share-modal {
+    max-width: 560px; /* Even larger on large desktop */
+    max-height: 70vh; /* More conservative height */
+  }
+  
+  .share-buttons {
+    gap: 2rem;
+  }
+  
+  .share-option-btn {
+    padding: 2rem 1.25rem;
+    min-height: 110px;
+  }
+}
+
+/* Ensure modal doesn't get cut off on very tall screens */
+@media (min-height: 800px) {
+  .share-modal {
+    max-height: 600px; /* Fixed max height on tall screens */
+  }
+}
+
+@media (min-height: 1000px) {
+  .share-modal {
+    max-height: 650px; /* Slightly larger on very tall screens */
+  }
+}
+
+/* Mobile Responsiveness - Keep existing */
 @media (max-width: 480px) {
   .share-modal {
     margin: 0.5rem;
     max-width: none;
     border-radius: 16px;
+    max-height: 90vh;
   }
   
   .modal-header {
@@ -895,6 +1167,7 @@ export default {
   
   .share-option-btn {
     padding: 0.75rem;
+    min-height: 70px;
   }
   
   .option-icon {
@@ -906,5 +1179,16 @@ export default {
   .option-label {
     font-size: 0.6875rem;
   }
+}
+
+/* Fix z-index conflicts */
+.share-modal-overlay {
+  z-index: 2000 !important;
+}
+
+/* Ensure proper stacking context */
+.share-modal {
+  z-index: 2001;
+  isolation: isolate;
 }
 </style>

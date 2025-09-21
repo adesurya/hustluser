@@ -1,109 +1,112 @@
 <template>
-  <div class="bank-account-view dashboard-page">
+  <div class="bank-account-view">
     <HustlHeader :isDashboard="true" />
 
-    <!-- Header with Back Button -->
-    <div class="dashboard-section header-section">
-      <div class="header-container">
-        <button class="back-btn" @click="goBack">
-          <span class="back-icon">←</span>
-          <span class="back-text">Back</span>
-        </button>
-        <h3 class="page-title">Bank Accounts</h3>
-        <button class="add-btn" @click="showAddModal = true" :disabled="isLoading">
-          <span class="add-icon">+</span>
-        </button>
+    <!-- Content wrapper seperti category view -->
+    <div class="content-wrapper">
+      <!-- Header dengan style search container -->
+      <div class="header-section">
+        <div class="header-container">
+          <button class="back-btn" @click="goBack">
+            <span class="back-icon">←</span>
+            <span class="back-text">Back</span>
+          </button>
+          <h3 class="page-title">Bank Accounts</h3>
+          <button class="add-btn" @click="showAddModal = true" :disabled="isLoading">
+            <span class="add-icon">+</span>
+          </button>
+        </div>
       </div>
-    </div>
 
-    <!-- Loading State -->
-    <div v-if="isLoading" class="dashboard-section loading-section">
-      <div class="loading-spinner"></div>
-      <p class="loading-text">Loading bank accounts...</p>
-    </div>
-
-    <!-- Bank Accounts List -->
-    <div v-else-if="bankAccounts.length > 0" class="dashboard-section accounts-section">
-      <div class="section-header">
-        <h3 class="section-title">Your Bank Accounts</h3>
-        <span class="account-count">{{ bankAccounts.length }} account{{ bankAccounts.length > 1 ? 's' : '' }}</span>
+      <!-- Loading State -->
+      <div v-if="isLoading" class="dashboard-section loading-section">
+        <div class="loading-spinner"></div>
+        <p class="loading-text">Loading bank accounts...</p>
       </div>
-      
-      <div class="accounts-list">
-        <div 
-          v-for="account in bankAccounts" 
-          :key="account.id" 
-          class="account-item"
-          :class="{ 'primary-account': account.isPrimary }"
-        >
-          <div class="account-icon">
-            <span>🏦</span>
-          </div>
-          <div class="account-info">
-            <h4 class="account-bank-name">{{ formatBankName(account.bankName) }}</h4>
-            <p class="account-name">{{ account.accountName }}</p>
-            <p class="account-number">{{ account.maskedAccountNumber || formatAccountNumber(account.accountNumber) }}</p>
-            <div v-if="account.notes" class="account-notes">
-              <span class="notes-text">{{ account.notes }}</span>
+
+      <!-- Bank Accounts List -->
+      <div v-else-if="bankAccounts.length > 0" class="dashboard-section accounts-section">
+        <div class="section-header">
+          <h3 class="section-title">Your Bank Accounts</h3>
+          <span class="account-count">{{ bankAccounts.length }} account{{ bankAccounts.length > 1 ? 's' : '' }}</span>
+        </div>
+        
+        <div class="accounts-list">
+          <div 
+            v-for="account in bankAccounts" 
+            :key="account.id" 
+            class="account-item"
+            :class="{ 'primary-account': account.isPrimary }"
+          >
+            <div class="account-icon">
+              <span>🏦</span>
             </div>
-            <div class="account-meta">
-              <span class="account-date">Added {{ formatDate(account.created_at) }}</span>
-              <div class="account-badges">
-                <span v-if="account.isPrimary" class="badge primary-badge">Primary</span>
-                <span v-if="account.isVerified" class="badge verified-badge">Verified</span>
-                <span v-else class="badge unverified-badge">Unverified</span>
+            <div class="account-info">
+              <h4 class="account-bank-name">{{ formatBankName(account.bankName) }}</h4>
+              <p class="account-name">{{ account.accountName }}</p>
+              <p class="account-number">{{ account.maskedAccountNumber || formatAccountNumber(account.accountNumber) }}</p>
+              <div v-if="account.notes" class="account-notes">
+                <span class="notes-text">{{ account.notes }}</span>
+              </div>
+              <div class="account-meta">
+                <span class="account-date">Added {{ formatDate(account.created_at) }}</span>
+                <div class="account-badges">
+                  <span v-if="account.isPrimary" class="badge primary-badge">Primary</span>
+                  <span v-if="account.isVerified" class="badge verified-badge">Verified</span>
+                  <span v-else class="badge unverified-badge">Unverified</span>
+                </div>
               </div>
             </div>
-          </div>
-          <div class="account-actions">
-            <button 
-              class="action-btn edit-btn" 
-              @click="editAccount(account)"
-              :disabled="isSubmitting"
-            >
-              ✏️
-            </button>
-            <button 
-              v-if="!account.isPrimary" 
-              class="action-btn primary-btn" 
-              @click="setPrimary(account.id)"
-              :disabled="isSubmitting"
-              title="Set as Primary"
-            >
-              ⭐
-            </button>
-            <button 
-              class="action-btn delete-btn" 
-              @click="deleteAccount(account.id)"
-              :disabled="isSubmitting || account.isPrimary"
-              :title="account.isPrimary ? 'Cannot delete primary account' : 'Delete account'"
-            >
-              🗑️
-            </button>
+            <div class="account-actions">
+              <button 
+                class="action-btn edit-btn" 
+                @click="editAccount(account)"
+                :disabled="isSubmitting"
+              >
+                ✏️
+              </button>
+              <button 
+                v-if="!account.isPrimary" 
+                class="action-btn primary-btn" 
+                @click="setPrimary(account.id)"
+                :disabled="isSubmitting"
+                title="Set as Primary"
+              >
+                ⭐
+              </button>
+              <button 
+                class="action-btn delete-btn" 
+                @click="deleteAccount(account.id)"
+                :disabled="isSubmitting || account.isPrimary"
+                :title="account.isPrimary ? 'Cannot delete primary account' : 'Delete account'"
+              >
+                🗑️
+              </button>
+            </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- Empty State -->
-    <div v-else-if="!isLoading" class="dashboard-section empty-section">
-      <div class="empty-state">
-        <div class="empty-icon">🏦</div>
-        <h4 class="empty-title">No bank accounts yet</h4>
-        <p class="empty-message">Add your first bank account to start receiving payments</p>
-        <button class="add-first-account-btn" @click="showAddModal = true">
-          <span class="btn-icon">+</span>
-          <span class="btn-text">Add Bank Account</span>
-        </button>
+      <!-- Empty State -->
+      <div v-else-if="!isLoading" class="dashboard-section empty-section">
+        <div class="empty-state">
+          <div class="empty-icon">🏦</div>
+          <h4 class="empty-title">No bank accounts yet</h4>
+          <p class="empty-message">Add your first bank account to start receiving payments</p>
+          <button class="add-first-account-btn" @click="showAddModal = true">
+            <span class="btn-icon">+</span>
+            <span class="btn-text">Add Bank Account</span>
+          </button>
+        </div>
       </div>
-    </div>
 
-    <!-- Error State -->
-    <div v-if="error" class="dashboard-section error-section">
-      <div class="error-message">
-        <span class="error-icon">⚠️</span>
-        <span class="error-text">{{ error }}</span>
-        <button class="retry-btn" @click="loadBankAccounts">Retry</button>
+      <!-- Error State -->
+      <div v-if="error" class="dashboard-section error-section">
+        <div class="error-message">
+          <span class="error-icon">⚠️</span>
+          <span class="error-text">{{ error }}</span>
+          <button class="retry-btn" @click="loadBankAccounts">Retry</button>
+        </div>
       </div>
     </div>
 
@@ -260,7 +263,7 @@
       <span class="success-text">{{ successMessage }}</span>
     </div>
 
-    <!-- Bottom Navigation -->
+    <!-- Footer di luar content-wrapper, akan otomatis sticky -->
     <BottomNavigation />
   </div>
 </template>
@@ -597,40 +600,75 @@ export default {
 </script>
 
 <style scoped>
+/* Reset and Base Styles - Following category view pattern */
+* {
+  box-sizing: border-box;
+}
+
+/* Bank Account View Main Container - Exact pattern from category */
 .bank-account-view {
   min-height: 100vh;
   background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%);
   padding-bottom: 100px;
-  display: flex;
-  flex-direction: column;
-  overflow-y: auto;
+  width: 100%;
+  overflow-x: hidden;
+  position: relative;
 }
 
+/* Container wrapper to control all sections */
+.content-wrapper {
+  width: 100%;
+  max-width: 100%;
+  padding: 0 1rem;
+  box-sizing: border-box;
+}
+
+/* Dashboard sections - Same as category view */
 .dashboard-section {
   background: white;
-  margin: 0 1rem 1.5rem 1rem;
-  padding: 1.25rem;
+  margin-bottom: 1.5rem;
+  padding: 1rem;
   border-radius: 16px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.9);
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .dashboard-section:first-child {
   margin-top: 1rem;
 }
 
-/* Header Section */
+/* Header Section - Same as category */
 .header-section {
-  padding: 1rem 1.25rem;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
+  position: relative;
+  padding: 1rem;
+  background: transparent;
+  margin-bottom: 1.5rem;
+  box-shadow: none;
+  border: none;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .header-container {
+  background: white;
+  border-radius: 24px;
+  padding: 1rem 1.25rem;
   display: flex;
   align-items: center;
+  gap: 0.75rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  position: relative;
+  transition: box-shadow 0.2s;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
   justify-content: space-between;
-  gap: 1rem;
 }
 
 .back-btn {
@@ -711,16 +749,15 @@ export default {
   margin-bottom: 1rem;
 }
 
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
 .loading-text {
   color: #1F2937;
   font-family: 'Baloo 2', sans-serif;
   font-weight: 500;
-  margin: 0;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 /* Section Headers */
@@ -738,7 +775,6 @@ export default {
   font-weight: 700;
   color: #1F2937;
   font-family: 'Baloo 2', sans-serif;
-  margin: 0;
 }
 
 .account-count {
@@ -752,25 +788,32 @@ export default {
 .accounts-list {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.75rem;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .account-item {
   display: flex;
-  align-items: flex-start;
-  gap: 1rem;
-  padding: 1.25rem;
+  flex-direction: row;
   background: #F8FAFC;
   border-radius: 12px;
+  padding: 0.75rem;
   border: 2px solid #E2E8F0;
+  cursor: pointer;
   transition: all 0.2s;
-  position: relative;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  align-items: center;
+  overflow: hidden;
 }
 
 .account-item:hover {
-  background: #F1F5F9;
-  border-color: #CBD5E1;
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+  border-color: #4FC3F7;
+  box-shadow: 0 6px 16px rgba(79, 195, 247, 0.15);
 }
 
 .account-item.primary-account {
@@ -792,35 +835,41 @@ export default {
 .account-icon {
   width: 50px;
   height: 50px;
-  background: linear-gradient(135deg, #4FC3F7, #29B6F6);
   border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 1.5rem;
   flex-shrink: 0;
-  box-shadow: 0 4px 12px rgba(79, 195, 247, 0.25);
+  background: linear-gradient(135deg, #4FC3F7, #29B6F6);
+  color: white;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+  margin-right: 0.5rem;
 }
 
 .account-info {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 0.375rem;
+  gap: 0.125rem;
   min-width: 0;
+  width: 100%;
+  max-width: 100%;
 }
 
 .account-bank-name {
-  font-size: 1rem;
-  font-weight: 700;
+  font-size: 0.875rem;
   color: #1F2937;
   font-family: 'Baloo 2', sans-serif;
-  margin: 0;
-  line-height: 1.3;
+  font-weight: 600;
+  margin-bottom: 0.0625rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .account-name {
-  font-size: 0.875rem;
+  font-size: 0.75rem;
   color: #374151;
   font-family: 'Baloo 2', sans-serif;
   font-weight: 600;
@@ -831,7 +880,7 @@ export default {
 }
 
 .account-number {
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   color: #6B7280;
   font-family: 'Courier New', monospace;
   font-weight: 500;
@@ -855,13 +904,12 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 0.5rem;
-  flex-wrap: wrap;
-  gap: 0.5rem;
+  margin-top: 0.125rem;
+  gap: 0.25rem;
 }
 
 .account-date {
-  font-size: 0.7rem;
+  font-size: 0.5625rem;
   color: #9CA3AF;
   font-family: 'Baloo 2', sans-serif;
   font-weight: 500;
@@ -869,15 +917,15 @@ export default {
 
 .account-badges {
   display: flex;
-  gap: 0.375rem;
+  gap: 0.25rem;
   flex-wrap: wrap;
 }
 
 .badge {
-  font-size: 0.65rem;
+  font-size: 0.5rem;
   font-weight: 600;
-  padding: 0.25rem 0.5rem;
-  border-radius: 12px;
+  padding: 0.125rem 0.25rem;
+  border-radius: 8px;
   font-family: 'Baloo 2', sans-serif;
   text-transform: uppercase;
   letter-spacing: 0.025em;
@@ -901,20 +949,20 @@ export default {
 .account-actions {
   display: flex;
   flex-direction: column;
-  gap: 0.375rem;
+  gap: 0.25rem;
   flex-shrink: 0;
 }
 
 .action-btn {
   background: white;
   border: 2px solid #E5E7EB;
-  border-radius: 8px;
-  width: 36px;
-  height: 36px;
+  border-radius: 6px;
+  width: 24px;
+  height: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.875rem;
+  font-size: 0.75rem;
   cursor: pointer;
   transition: all 0.2s;
 }
@@ -940,27 +988,20 @@ export default {
 }
 
 /* Empty State */
-.empty-section {
-  padding: 3rem 1.25rem;
-  text-align: center;
-}
-
 .empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  text-align: center;
+  padding: 3rem 1rem;
   color: #6B7280;
 }
 
 .empty-icon {
-  font-size: 4rem;
-  margin-bottom: 1.5rem;
-  opacity: 0.7;
+  font-size: 3rem;
+  margin-bottom: 1rem;
 }
 
 .empty-title {
-  font-size: 1.25rem;
-  font-weight: 700;
+  font-size: 1.125rem;
+  font-weight: 600;
   color: #374151;
   margin-bottom: 0.5rem;
   font-family: 'Baloo 2', sans-serif;
@@ -969,35 +1010,33 @@ export default {
 .empty-message {
   font-size: 0.875rem;
   font-family: 'Baloo 2', sans-serif;
-  line-height: 1.6;
-  margin-bottom: 2rem;
-  max-width: 300px;
+  margin-bottom: 1.5rem;
 }
 
 .add-first-account-btn {
-  background: linear-gradient(135deg, #4FC3F7, #29B6F6);
+  background: #4FC3F7;
   color: white;
   border: none;
-  border-radius: 12px;
-  padding: 1rem 2rem;
-  font-family: 'Baloo 2', sans-serif;
-  font-weight: 600;
+  border-radius: 8px;
+  padding: 0.75rem 1.5rem;
   font-size: 0.875rem;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
+  font-family: 'Baloo 2', sans-serif;
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  box-shadow: 0 4px 12px rgba(79, 195, 247, 0.25);
+  gap: 0.5rem;
+  margin: 0 auto;
 }
 
 .add-first-account-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(79, 195, 247, 0.3);
+  background: #29B6F6;
+  transform: translateY(-1px);
 }
 
 .btn-icon {
-  font-size: 1.125rem;
+  font-size: 1rem;
 }
 
 /* Error Section */
@@ -1042,7 +1081,7 @@ export default {
   transform: translateY(-1px);
 }
 
-/* Modal Styles */
+/* Modal Styles - Single container approach */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -1051,24 +1090,29 @@ export default {
   bottom: 0;
   background: rgba(0, 0, 0, 0.5);
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   z-index: 1000;
-  padding: 1rem;
+  padding: 2rem 1rem;
   box-sizing: border-box;
+  backdrop-filter: blur(4px);
+  overflow-y: auto;
 }
 
 .modal-content {
   background: white;
   border-radius: 16px;
   width: 100%;
-  max-width: 480px;
-  max-height: 90vh;
-  overflow: hidden;
+  max-width: 520px;
+  min-height: auto;
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
   box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
+  margin: auto 0;
+}
+
+.modal-body {
+  padding: 1.5rem;
+  overflow: visible;
 }
 
 .modal-header {
@@ -1376,17 +1420,72 @@ export default {
   font-size: 1.125rem;
 }
 
+/* Fixed Footer Styles - EXACT COPY from category view */
+:deep(.bottom-navigation) {
+  position: fixed !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  z-index: 1000 !important;
+  background: white !important;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1) !important;
+}
+
+.bottom-navigation {
+  position: fixed !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  z-index: 1000 !important;
+  background: white !important;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1) !important;
+}
+
+::v-deep .bottom-navigation,
+/deep/ .bottom-navigation,
+>>> .bottom-navigation {
+  position: fixed !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  z-index: 1000 !important;
+  background: white !important;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1) !important;
+}
+
 /* Responsive Design */
 @media (max-width: 640px) {
+  .content-wrapper {
+    padding: 0 1rem;
+  }
+  
+  .dashboard-section {
+    padding: 1rem;
+  }
+
   .modal-content {
     margin: 0.5rem;
     max-width: calc(100% - 1rem);
+    max-height: calc(100vh - 120px); /* Increased space to avoid footer cutoff */
+  }
+
+  .modal-header {
+    padding: 1rem;
+  }
+
+  .modal-body {
+    padding: 1rem;
+    max-height: calc(100vh - 220px); /* Increased space for buttons */
   }
   
   .account-item {
     flex-direction: column;
     align-items: stretch;
     gap: 0.75rem;
+    padding: 1rem;
   }
   
   .account-actions {
@@ -1407,12 +1506,156 @@ export default {
     left: 1rem;
     max-width: calc(100% - 2rem);
   }
+
+  .form-actions {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .cancel-btn,
+  .submit-btn {
+    width: 100%;
+  }
 }
 
 @media (min-width: 768px) {
-  .dashboard-section {
-    margin: 0 2rem 1.5rem 2rem;
-    padding: 1.5rem;
+  .bank-account-view {
+    background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%) !important;
+    padding-bottom: 100px;
   }
+  
+  .page-container,
+  .app-main {
+    background: transparent !important;
+  }
+  
+  .content-wrapper {
+    padding: 0 2rem;
+    max-width: calc(100% - 2rem);
+    margin: 0 auto;
+  }
+
+  .dashboard-section {
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
+    max-width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .header-section .header-container {
+    max-width: 100%;
+    margin: 0 auto;
+  }
+}
+
+@media (min-width: 1024px) {
+  body {
+    background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%) !important;
+  }
+  
+  .bank-account-view {
+    background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%) !important;
+    min-height: auto !important;
+    padding-bottom: 100px;
+  }
+  
+  .page-container {
+    background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 100%) !important;
+    min-height: 100vh !important;
+    height: auto !important;
+    padding: 0 !important;
+    justify-content: flex-start !important;
+    align-items: stretch !important;
+  }
+  
+  .app-main {
+    background: transparent !important;
+    box-shadow: none !important;
+    min-height: auto !important;
+    max-height: none !important;
+    height: auto !important;
+    overflow: visible !important;
+    max-width: none !important;
+    width: 100% !important;
+    border-radius: 0 !important;
+  }
+
+  .content-wrapper {
+    padding: 0 3rem;
+    max-width: calc(100% - 4rem);
+    margin: 0 auto;
+  }
+
+  .dashboard-section {
+    padding: 1.75rem;
+    margin-bottom: 2rem;
+    max-width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .header-section .header-container {
+    max-width: 100%;
+    margin: 0 auto;
+  }
+}
+
+@media (min-width: 1200px) {
+  .content-wrapper {
+    padding: 0 4rem;
+    max-width: calc(100% - 6rem);
+    margin: 0 auto;
+  }
+
+  .dashboard-section {
+    padding: 2rem;
+    margin-bottom: 2.5rem;
+    max-width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .header-section .header-container {
+    max-width: 100%;
+    margin: 0 auto;
+  }
+
+  .bank-account-view {
+    padding-bottom: 100px;
+  }
+
+  /* Desktop modal improvements */
+  .modal-content {
+    max-width: 600px;
+    max-height: calc(100vh - 6rem);
+    margin: 3rem 0;
+  }
+
+  .modal-body {
+    max-height: calc(100vh - 250px);
+    padding: 2rem;
+  }
+
+  .modal-header {
+    padding: 2rem 2rem 1rem 2rem;
+  }
+
+  .form-actions {
+    padding-top: 1.5rem;
+    margin-top: 2rem;
+  }
+}
+
+/* Prevent content overflow on all screen sizes */
+.bank-account-view,
+.bank-account-view * {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Last section margin fix */
+.dashboard-section:last-of-type {
+  margin-bottom: 2rem;
 }
 </style>

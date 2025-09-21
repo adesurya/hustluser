@@ -21,7 +21,7 @@
               <h2 class="page-title">
                 <span class="title-highlight">Affiliate</span> Links
               </h2>
-              <p class="page-subtitle">Monitor performance & maximize your earnings</p>
+              <p class="page-subtitle">Your History Link to Share</p>
               <div class="page-badge">
                 <span class="badge-icon">📊</span>
                 <span class="badge-text">Analytics Dashboard</span>
@@ -31,7 +31,7 @@
         </div>
 
         <!-- Filter Section -->
-        <div class="dashboard-section filter-section">
+        <!-- <div class="dashboard-section filter-section">
           <div class="section-header">
             <h3 class="section-title">Filter Links</h3>
             <button class="refresh-btn" @click="refreshLinks" :disabled="loading">
@@ -48,18 +48,19 @@
             </select>
             
             <select v-model="sortBy" @change="loadAffiliateLinks" class="filter-select">
-              <option value="created_at">Sort by Date</option>
+              <option value="createdAt">Sort by Date</option>
               <option value="earnings">Sort by Earnings</option>
               <option value="clicksCount">Sort by Clicks</option>
               <option value="conversionsCount">Sort by Conversions</option>
             </select>
+
             
             <select v-model="sortOrder" @change="loadAffiliateLinks" class="filter-select">
               <option value="DESC">Newest First</option>
               <option value="ASC">Oldest First</option>
             </select>
           </div>
-        </div>
+        </div> -->
 
         <!-- Affiliate Links List -->
         <div v-if="affiliateLinks.length > 0" class="dashboard-section links-section">
@@ -124,22 +125,6 @@
                     <div class="metric-details">
                       <span class="metric-value">{{ link.conversionsCount || 0 }}</span>
                       <span class="metric-label">Conversions</span>
-                    </div>
-                  </div>
-                  
-                  <div class="metric-item">
-                    <span class="metric-icon">💰</span>
-                    <div class="metric-details">
-                      <span class="metric-value">{{ formatEarnings(link.earnings) }}</span>
-                      <span class="metric-label">Earnings</span>
-                    </div>
-                  </div>
-                  
-                  <div class="metric-item">
-                    <span class="metric-icon">📊</span>
-                    <div class="metric-details">
-                      <span class="metric-value">{{ link.conversionRate || '0' }}%</span>
-                      <span class="metric-label">Rate</span>
                     </div>
                   </div>
                 </div>
@@ -348,7 +333,7 @@ export default {
     
     // Filter states
     const selectedStatus = ref('')
-    const sortBy = ref('created_at')
+    const sortBy = ref('createdAt')
     const sortOrder = ref('DESC')
 
     // Share platforms configuration
@@ -404,15 +389,34 @@ export default {
     // Load affiliate links
     const loadAffiliateLinks = async (page = 1, append = false) => {
       try {
+        console.log('Loading affiliate links - page:', page, 'append:', append)
+        
         const params = {
           page,
-          limit: 20,
-          status: selectedStatus.value || null,
-          sortBy: sortBy.value,
-          sortOrder: sortOrder.value
+          limit: 20
+        }
+        
+        // Only add status if it's selected and not empty
+        if (selectedStatus.value && selectedStatus.value.trim() !== '') {
+          params.status = selectedStatus.value
+        }
+        
+        // Add sorting parameters for client-side processing
+        if (sortBy.value) {
+          params.sortBy = sortBy.value
+        }
+        
+        if (sortOrder.value) {
+          params.sortOrder = sortOrder.value
         }
 
-        const response = await getAffiliateLinks(params)
+        console.log('Loading affiliate links with params:', params)
+        
+        const response = await getAffiliateLinks(params, { 
+          forceRefresh: false // Try cache first
+        })
+        
+        console.log('Affiliate links response:', response)
         
         if (response && response.success) {
           const newLinks = response.data || []
@@ -428,13 +432,67 @@ export default {
           const pagination = response.meta?.pagination
           if (pagination) {
             hasMoreLinks.value = pagination.hasNextPage
+            console.log('Pagination info:', pagination)
           } else {
             hasMoreLinks.value = newLinks.length === 20
           }
+          
+          console.log('Successfully loaded affiliate links:', {
+            count: newLinks.length,
+            total: affiliateLinks.value.length,
+            hasMore: hasMoreLinks.value
+          })
+          
+          // Clear any previous errors
+          error.value = ''
+          
+        } else {
+          console.warn('Unexpected response format:', response)
+          affiliateLinks.value = []
+          error.value = 'Unexpected response format from server'
         }
+        
       } catch (err) {
         console.error('Failed to load affiliate links:', err)
-        affiliateLinks.value = []
+        
+        // Enhanced error handling based on error type
+        if (err.message.includes('Server is currently unavailable')) {
+          error.value = 'Server is temporarily unavailable. Please try again in a few moments.'
+        } else if (err.message.includes('Network error')) {
+          error.value = 'Network connection error. Please check your internet connection.'
+        } else if (err.message.includes('500')) {
+          error.value = 'Server error occurred. Our team has been notified.'
+        } else if (err.message.includes('401') || err.message.includes('403')) {
+          error.value = 'Authentication error. Please try logging in again.'
+        } else {
+          error.value = 'Failed to load affiliate links. Please try again.'
+        }
+        
+        // Don't clear existing data on error unless it's the first load
+        if (!append && affiliateLinks.value.length === 0) {
+          affiliateLinks.value = []
+        }
+        
+        // Try a fallback request with minimal parameters
+        if (!append && affiliateLinks.value.length === 0) {
+          try {
+            console.log('Attempting fallback request...')
+            const fallbackResponse = await getAffiliateLinks({ 
+              page: 1, 
+              limit: 20 
+            }, { 
+              forceRefresh: true 
+            })
+            
+            if (fallbackResponse && fallbackResponse.success) {
+              affiliateLinks.value = fallbackResponse.data || []
+              error.value = 'Loaded with limited functionality. Some features may be unavailable.'
+              console.log('Fallback request succeeded')
+            }
+          } catch (fallbackError) {
+            console.error('Fallback request also failed:', fallbackError)
+          }
+        }
       }
     }
 
